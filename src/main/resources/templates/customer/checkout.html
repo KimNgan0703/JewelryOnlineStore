@@ -111,15 +111,29 @@
                         <div class="fw-semibold" th:text="${item.productName}">Product</div>
                         <div class="small text-muted">Qty: <span th:text="${item.quantity}">1</span></div>
                     </div>
-                    <div th:text="${item.lineTotal}">0</div>
+                    <div th:text="${#numbers.formatInteger(item.lineTotal, 0, 'COMMA')} + ' ₫'">0</div>
                 </div>
 
-                <div class="summary-row"><span>Subtotal</span><span th:text="${cart.subtotal}">0</span></div>
-                <div class="summary-row"><span>Shipping</span><span th:text="${cart.shippingFee}">0</span></div>
-                <div class="summary-row" th:if="${cart.discountAmount != null and cart.discountAmount > 0}"><span>Discount</span><span>-<span th:text="${cart.discountAmount}">0</span></span></div>
-                <div class="summary-row total"><span>Total</span><span th:text="${cart.total}">0</span></div>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span th:text="${#numbers.formatInteger(cart.subtotal, 0, 'COMMA')} + ' ₫'">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span th:text="${#numbers.formatInteger(cart.shippingFee, 0, 'COMMA')} + ' ₫'">0</span>
+                </div>
+                <div class="summary-row" th:if="${cart.discountAmount != null and cart.discountAmount > 0}">
+                    <span>Discount</span>
+                    <span>-<span th:text="${#numbers.formatInteger(cart.discountAmount, 0, 'COMMA')} + ' ₫'">0</span></span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span th:text="${#numbers.formatInteger(cart.total, 0, 'COMMA')} + ' ₫'">0</span>
+                </div>
 
-                <div class="small text-muted mt-2" th:if="${cart.appliedCouponCode != null}">Coupon: <strong th:text="${cart.appliedCouponCode}">CODE</strong></div>
+                <div class="small text-muted mt-2" th:if="${cart.appliedCouponCode != null}">
+                    Coupon: <strong th:text="${cart.appliedCouponCode}">CODE</strong>
+                </div>
             </div>
         </div>
     </div>

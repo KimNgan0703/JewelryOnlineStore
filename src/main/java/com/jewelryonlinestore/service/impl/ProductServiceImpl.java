@@ -199,16 +199,26 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Thêm ảnh mới từ Cloudinary (nếu có)
+        // Đồng bộ ảnh: xóa hết ảnh cũ, lưu lại toàn bộ danh sách URL từ form
+        // (form gửi lên cả ảnh cũ còn giữ + ảnh mới upload, đã được JS quản lý)
         List<String> imageUrls = req.getImageUrlList();
+
+        // Xóa toàn bộ ảnh cũ trong DB
+        if (product.getImages() != null) {
+            product.getImages().clear();
+        }
+
+        // Lưu lại danh sách mới (thứ tự đúng như trên form)
         if (!imageUrls.isEmpty()) {
-            int startOrder = product.getImages() == null ? 0 : product.getImages().size();
+            if (product.getImages() == null) {
+                product.setImages(new java.util.ArrayList<>());
+            }
             for (int i = 0; i < imageUrls.size(); i++) {
                 ProductImage image = ProductImage.builder()
                         .product(product)
                         .imageUrl(imageUrls.get(i))
-                        .isPrimary(startOrder == 0 && i == 0)
-                        .sortOrder(startOrder + i)
+                        .isPrimary(i == 0) // ảnh đầu tiên luôn là primary
+                        .sortOrder(i)
                         .build();
                 product.getImages().add(image);
             }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);" th:fragment="customerHeader">
+<nav class="navbar navbar-expand-lg navbar-light sticky-top" style="background: #ffffff; border-bottom: 1px solid #dee2e6;" th:fragment="customerHeader">
     <div class="container">
-        <a class="navbar-brand" th:href="@{/}" style="color: var(--primary-color) !important; font-weight: bold;">
+        <a class="navbar-brand" th:href="@{/}" style="color: black !important; font-weight: bold;">
             <i class="fas fa-gem"></i> Jewelry Store
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customerNavbar" aria-controls="customerNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -11,19 +11,21 @@
         </button>
         <div class="collapse navbar-collapse" id="customerNavbar">
             <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/products}">Shop</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/}" style="color: black !important;">Home</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/products}" style="color: black !important;">Shop</a></li>
 
                 <li class="nav-item" sec:authorize="isAnonymous()">
-                    <a class="nav-link" th:href="@{/auth/login}">Login</a>
+                    <a class="nav-link" th:href="@{/auth/login}" style="color: black !important;">Login</a>
                 </li>
                 <li class="nav-item" sec:authorize="isAnonymous()">
-                    <a class="nav-link" th:href="@{/auth/register}">Register</a>
+                    <a class="nav-link" th:href="@{/auth/register}" style="color: black !important;">Register</a>
                 </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/cart}"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/cart}" style="color: black !important;"><i class="fas fa-shopping-cart"></i> Cart</a>
+                </li>
 
                 <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                    <a class="nav-link dropdown-toggle" href="#" id="customerUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="customerUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="color: black !important;">
                         <i class="fas fa-user"></i>
                         <span sec:authentication="name">Account</span>
                     </a>
@@ -45,4 +47,3 @@
 </nav>
 </body>
 </html>
-

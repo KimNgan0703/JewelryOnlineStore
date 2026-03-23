@@ -313,23 +313,13 @@
                     <!-- Upload queue (hiển thị progress từng file) -->
                     <div id="uploadQueue"></div>
 
-                    <!-- Preview grid ảnh đã upload thành công -->
+                    <!-- Preview grid — hiển thị TẤT CẢ ảnh (cũ + mới), JS quản lý -->
                     <div id="imagePreviewGrid"></div>
                     <div id="previewCount" class="mt-1" style="font-size:0.78rem;"></div>
-
-                    <!-- Ảnh hiện tại (edit mode) -->
-                    <div th:if="${isEdit and product.allImageUrls != null and !product.allImageUrls.isEmpty()}" class="mt-3">
-                        <p class="mb-2 text-muted"><small>Ảnh hiện tại:</small></p>
-                        <div class="d-flex flex-wrap gap-2">
-                            <div th:each="imgUrl, iterStat : ${product.allImageUrls}" class="existing-img-item">
-                                <img th:src="${imgUrl}" alt="product image">
-                                <span class="overlay-label">Ảnh [[${iterStat.index + 1}]]</span>
-                            </div>
-                        </div>
-                        <p class="mt-2 mb-0 text-muted" style="font-size:0.78rem;">
-                            <i class="fas fa-info-circle me-1"></i>Chọn ảnh mới bên trên để bổ sung.
-                        </p>
-                    </div>
+                    <p class="mt-1 mb-0 text-muted" th:if="${isEdit}" style="font-size:0.75rem;">
+                        <i class="fas fa-info-circle me-1 text-primary"></i>
+                        Ảnh hiện tại đã được load — bạn có thể xóa bớt hoặc thêm ảnh mới.
+                    </p>
                 </div>
 
                 <div class="form-card mb-0">
