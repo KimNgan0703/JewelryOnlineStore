@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Jewelry Online Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #d4af37;
+            --secondary-color: #2c3e50;
+        }
+        .orders-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .order-card {
+            border-bottom: 1px solid #ecf0f1;
+            padding: 20px;
+        }
+        .order-card:last-child {
+            border-bottom: none;
+        }
+        .order-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .order-status.pending {
+            background: #fef5e7;
+            color: #d68910;
+        }
+        .order-status.processing,
+        .order-status.preparing {
+            background: #ebf5fb;
+            color: #2980b9;
+        }
+        .order-status.shipping {
+            background: #e8f8f5;
+            color: #0e6251;
+        }
+        .order-status.delivered {
+            background: #eafaf1;
+            color: #186a3b;
+        }
+        .order-status.cancelled,
+        .order-status.returned {
+            background: #fadbd8;
+            color: #922b21;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{layout/customer-header :: customerHeader}"></div>
+
+<div class="container my-5">
+    <h1 class="mb-4" style="color: var(--secondary-color);">My Orders</h1>
+
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+        <a class="btn btn-sm" th:classappend="${activeStatus == null} ? 'btn-warning' : 'btn-outline-secondary'" th:href="@{/orders}">All</a>
+        <a class="btn btn-sm" th:classappend="${activeStatus == 'pending'} ? 'btn-warning' : 'btn-outline-secondary'" th:href="@{/orders(status='pending')}">Pending</a>
+        <a class="btn btn-sm" th:classappend="${activeStatus == 'processing'} ? 'btn-warning' : 'btn-outline-secondary'" th:href="@{/orders(status='processing')}">Processing</a>
+        <a class="btn btn-sm" th:classappend="${activeStatus == 'shipping'} ? 'btn-warning' : 'btn-outline-secondary'" th:href="@{/orders(status='shipping')}">Shipping</a>
+        <a class="btn btn-sm" th:classappend="${activeStatus == 'delivered'} ? 'btn-warning' : 'btn-outline-secondary'" th:href="@{/orders(status='delivered')}">Delivered</a>
+        <a class="btn btn-sm" th:classappend="${activeStatus == 'cancelled'} ? 'btn-warning' : 'btn-outline-secondary'" th:href="@{/orders(status='cancelled')}">Cancelled</a>
+    </div>
+
+    <div class="orders-container" th:if="${orders != null and !orders.isEmpty()}">
+        <div class="order-card" th:each="order : ${orders}">
+            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+                <div>
+                    <div class="fw-bold">Order #<span th:text="${order.orderNumber}">ORD-001</span></div>
+                    <div class="text-muted small" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</div>
+                </div>
+                <span class="order-status" th:classappend="${order.orderStatus}" th:text="${order.orderStatusLabel}">Pending</span>
+            </div>
+
+            <div class="small text-muted mb-2">
+                <span th:text="${order.itemCount} + ' item(s)'">1 item(s)</span>
+                <span th:if="${order.firstProductName != null}"> - <span th:text="${order.firstProductName}">Product</span></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div><strong>Total:</strong> <span th:text="${order.total}">0</span> | <strong>Payment:</strong> <span th:text="${order.paymentStatus}">pending</span></div>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-sm btn-warning" th:href="@{/orders/{orderNumber}(orderNumber=${order.orderNumber})}">View Details</a>
+                    <button class="btn btn-sm btn-outline-danger" th:if="${order.canCancel}" type="button">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center py-5 text-muted" th:if="${orders == null or orders.isEmpty()}">
+        <i class="fas fa-inbox fa-3x mb-3"></i>
+        <h4>No orders yet</h4>
+        <a th:href="@{/products}" class="btn btn-warning mt-2">Start Shopping</a>
+    </div>
+
+    <nav th:if="${totalPages != null and totalPages > 1}" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/orders(page=${currentPage - 1},status=${activeStatus})}">Previous</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link" th:href="@{/orders(page=${i},status=${activeStatus})}" th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                <a class="page-link" th:href="@{/orders(page=${currentPage + 1},status=${activeStatus})}">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

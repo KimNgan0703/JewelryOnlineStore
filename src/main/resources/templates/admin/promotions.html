@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promotions Management - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #d4af37;
+            --secondary-color: #2c3e50;
+        }
+        .page-shell {
+            padding: 30px;
+            background-color: #f8f9fa;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            height: 100%;
+        }
+        .summary-value {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+        .toolbar {
+            display: grid;
+            grid-template-columns: 1fr 180px 180px auto;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .table-wrap {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .table thead {
+            background: var(--secondary-color);
+            color: white;
+        }
+        .code-badge {
+            background: #f1ede1;
+            color: #8a6d1d;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+<div class="page-shell">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-0" style="color: var(--secondary-color);">Promotions</h1>
+            <p class="text-muted mb-0">Create and control discount campaigns.</p>
+        </div>
+        <a class="btn btn-dark" th:href="@{/admin/promotions/new}"><i class="fas fa-plus"></i> New Promotion</a>
+    </div>
+
+    <form class="row g-2 mb-3" method="get" th:action="@{/admin/promotions}">
+        <div class="col-md-6"><input class="form-control" type="text" name="keyword" placeholder="Search by code or name..." th:value="${param.keyword}"></div>
+        <div class="col-md-3">
+            <select class="form-select" name="isActive">
+                <option value="">All status</option>
+                <option value="true" th:selected="${param.isActive != null and param.isActive[0] == 'true'}">Active</option>
+                <option value="false" th:selected="${param.isActive != null and param.isActive[0] == 'false'}">Inactive</option>
+            </select>
+        </div>
+        <div class="col-md-3"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+    </form>
+
+    <div class="table-responsive bg-white rounded shadow-sm mb-3">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Value</th>
+                <th>Usage</th>
+                <th>Period</th>
+                <th>Status</th>
+                <th class="text-center">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${promotions == null or promotions.isEmpty()}"><td colspan="8" class="text-center text-muted py-4">No promotions found.</td></tr>
+            <tr th:each="promo : ${promotions}">
+                <td><span class="badge text-bg-light" th:text="${promo.code}">CODE</span></td>
+                <td th:text="${promo.name}">Name</td>
+                <td th:text="${promo.type}">PERCENTAGE</td>
+                <td>
+                    <span th:if="${promo.type.name() == 'PERCENTAGE'}" th:text="${promo.value} + '%'">10%</span>
+                    <span th:if="${promo.type.name() == 'FIXED'}" th:text="${promo.value}">10000</span>
+                </td>
+                <td th:text="${promo.usedCount} + ' / ' + ${promo.usageLimit != null ? promo.usageLimit : '-'}">0 / -</td>
+                <td>
+                    <span th:text="${#temporals.format(promo.startDate, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+                    -
+                    <span th:text="${#temporals.format(promo.endDate, 'dd/MM/yyyy HH:mm')}">01/02/2026</span>
+                </td>
+                <td><span class="badge" th:classappend="${promo.isActive} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${promo.isActive} ? 'Active' : 'Inactive'">Active</span></td>
+                <td class="text-center"><a class="btn btn-sm btn-outline-primary" th:href="@{/admin/promotions/{id}/edit(id=${promo.id})}"><i class="fas fa-pen"></i></a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <nav th:if="${totalPages != null and totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/admin/promotions(page=${currentPage - 1},keyword=${param.keyword},isActive=${param.isActive})}">Previous</a>
+            </li>
+            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                <a class="page-link" th:href="@{/admin/promotions(page=${i},keyword=${param.keyword},isActive=${param.isActive})}" th:text="${i + 1}">1</a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                <a class="page-link" th:href="@{/admin/promotions(page=${currentPage + 1},keyword=${param.keyword},isActive=${param.isActive})}">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

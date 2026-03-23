@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: #d4af37;
+        }
+        .email-body {
+            padding: 30px 20px;
+        }
+        .greeting {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .order-number {
+            background-color: #f1ede1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+            border-left: 4px solid #d4af37;
+        }
+        .order-number strong {
+            color: #d4af37;
+            font-size: 1.2rem;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1rem;
+            margin: 20px 0 15px 0;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 10px;
+        }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+        .item-info {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .item-qty {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        .item-price {
+            text-align: right;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        .summary-table {
+            width: 100%;
+            margin: 20px 0;
+            border-collapse: collapse;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .summary-row.total {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 1.1rem;
+            border-top: 2px solid #d4af37;
+            padding-top: 15px;
+        }
+        .summary-row.total .amount {
+            color: #d4af37;
+        }
+        .address-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        .address-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .address-text {
+            color: #555;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .button {
+            display: inline-block;
+            background-color: #d4af37;
+            color: #2c3e50;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .next-steps {
+            background-color: #eafaf1;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .next-steps strong {
+            color: #186a3b;
+        }
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        .footer-links a {
+            color: #d4af37;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .thank-you {
+            color: #2c3e50;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <!-- Header -->
+        <div class="email-header">
+            <h1>✓ Order Confirmed</h1>
+        </div>
+
+        <!-- Body -->
+        <div class="email-body">
+            <!-- Greeting -->
+            <p class="greeting">
+                Hello <strong th:text="${customer.firstName}">Customer</strong>,
+            </p>
+
+            <p class="thank-you">
+                Thank you for your order! We're thrilled you've chosen our jewelry. Your order has been received and is now being prepared for shipment.
+            </p>
+
+            <!-- Order Number -->
+            <div class="order-number">
+                Order #<strong th:text="${order.orderNumber}">ORD-001001</strong>
+                <br>
+                <span style="font-size: 0.9rem; color: #7f8c8d;" th:text="${#dates.format(order.createdAt, 'MMMM dd, yyyy')}">January 01, 2026</span>
+            </div>
+
+            <!-- Order Items -->
+            <div class="section-title">Order Items</div>
+            <div th:each="item : ${order.items}" class="order-item">
+                <div class="item-info">
+                    <div class="item-name" th:text="${item.productName}">Product Name</div>
+                    <div class="item-qty">Quantity: <span th:text="${item.quantity}">1</span></div>
+                </div>
+                <div class="item-price">$<span th:text="${item.subtotal}">199.99</span></div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="summary-table">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>$<span th:text="${order.subtotal}">199.99</span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span>$<span th:text="${order.shippingCost}">5.00</span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax</span>
+                    <span>$<span th:text="${order.tax}">16.00</span></span>
+                </div>
+                <div class="summary-row total">
+                    <span>Order Total</span>
+                    <span class="amount">$<span th:text="${order.totalAmount}">220.99</span></span>
+                </div>
+            </div>
+
+            <!-- Shipping Address -->
+            <div class="section-title">Shipping Information</div>
+            <div class="address-section">
+                <div class="address-title">Delivery Address</div>
+                <div class="address-text">
+                    <p th:text="${order.shippingAddress?.firstName} + ' ' + ${order.shippingAddress?.lastName}">John Doe</p>
+                    <p th:text="${order.shippingAddress?.street}">123 Main St</p>
+                    <p th:text="${order.shippingAddress?.city} + ', ' + ${order.shippingAddress?.state} + ' ' + ${order.shippingAddress?.zipCode}">City, ST 12345</p>
+                </div>
+            </div>
+
+            <!-- Expected Delivery -->
+            <div class="next-steps">
+                <strong>Expected Delivery:</strong> <br>
+                <span th:text="${#dates.format(order.expectedDeliveryDate, 'MMMM dd, yyyy')}">January 10, 2026</span> <br>
+                <span style="font-size: 0.9rem;">We'll send you a tracking number as soon as your order ships.</span>
+            </div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center;">
+                <a href="[[${trackingUrl}]]" class="button">
+                    Track Your Order
+                </a>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="section-title">What's Next?</div>
+            <ul style="color: #555; line-height: 2;">
+                <li>We're preparing your order for shipment</li>
+                <li>You'll receive a tracking number via email shortly</li>
+                <li>Your package will be carefully packaged and shipped</li>
+                <li>Once delivered, you can review and rate your purchase</li>
+            </ul>
+
+            <!-- Support -->
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                <p style="color: #2c3e50; margin: 0; font-weight: bold;">Need Help?</p>
+                <p style="color: #555; margin: 5px 0 0 0;">
+                    If you have any questions, please don't hesitate to contact our customer support team at
+                    <a href="mailto:support@jewelrystore.com" style="color: #d4af37; text-decoration: none;">support@jewelrystore.com</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="email-footer">
+            <p style="margin: 0 0 10px 0;">&copy; 2026 Jewelry Online Store. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="[[${companyUrl}]]">Visit Website</a> |
+                <a href="[[${privacyUrl}]]">Privacy Policy</a> |
+                <a href="[[${contactUrl}]]">Contact Us</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

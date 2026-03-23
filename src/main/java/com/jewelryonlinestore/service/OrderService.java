@@ -1,0 +1,25 @@
+package com.jewelryonlinestore.service;
+
+import com.jewelryonlinestore.dto.request.*;
+import com.jewelryonlinestore.dto.response.*;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
+import java.time.LocalDateTime;
+
+public interface OrderService {
+    OrderDetailResponse  placeOrder(PlaceOrderRequest req, Authentication auth, HttpSession session);
+    OrderDetailResponse  getOrderDetail(String orderNumber, Authentication auth);
+    OrderDetailResponse  getOrderDetailAdmin(String orderNumber);
+    Page<OrderSummaryResponse> getMyOrders(Authentication auth, String status, int page, int size);
+    void                 cancelOrder(String orderNumber, String reason, Authentication auth);
+    int                  reorder(String orderNumber, Authentication auth, HttpSession session);
+
+    // Admin
+    Page<OrderSummaryResponse> adminSearchOrders(String keyword, String status,
+                                                 LocalDateTime from, LocalDateTime to,
+                                                 int page, int size);
+    OrderDetailResponse  updateOrderStatus(String orderNumber,
+                                           UpdateOrderStatusRequest req, Authentication auth);
+    long                 countByStatus(String status);
+}

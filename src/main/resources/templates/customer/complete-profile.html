@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoan tat ho so - Jewelry Online Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="mb-3">Hoan tat tai khoan</h4>
+                    <p class="text-muted mb-4">Vui long dat mat khau va cap nhat thong tin ca nhan de tiep tuc.</p>
+
+                    <form th:action="@{/auth/complete-profile}" th:object="${completeProfileRequest}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Ho va ten</label>
+                            <input type="text" class="form-control" th:field="*{fullName}" required>
+                            <small class="text-danger" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">So dien thoai</label>
+                            <input type="text" class="form-control" th:field="*{phone}">
+                            <small class="text-danger" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Gioi tinh</label>
+                            <select class="form-select" th:field="*{gender}">
+                                <option value="">-- Chon --</option>
+                                <option value="male">Nam</option>
+                                <option value="female">Nu</option>
+                                <option value="other">Khac</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ngay sinh</label>
+                            <input type="date" class="form-control" th:field="*{birthDate}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Mat khau</label>
+                            <input type="password" class="form-control" th:field="*{password}" required>
+                            <small class="text-danger" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Xac nhan mat khau</label>
+                            <input type="password" class="form-control" th:field="*{confirmPassword}" required>
+                            <small class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Luu va tiep tuc</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

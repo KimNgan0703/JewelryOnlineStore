@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Jewelry Online Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .card-box { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+        .status-badge { display: inline-block; border-radius: 20px; padding: 6px 12px; font-weight: bold; }
+        .status-badge.pending { background: #fef5e7; color: #d68910; }
+        .status-badge.processing, .status-badge.preparing { background: #ebf5fb; color: #2980b9; }
+        .status-badge.shipping { background: #e8f8f5; color: #0e6251; }
+        .status-badge.delivered { background: #eafaf1; color: #186a3b; }
+        .status-badge.cancelled, .status-badge.returned { background: #fadbd8; color: #922b21; }
+        .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ececec; }
+        .summary-row.total { border-top: 2px solid #ececec; border-bottom: 0; margin-top: 8px; padding-top: 12px; font-weight: bold; }
+        .order-item { display: flex; gap: 14px; border-bottom: 1px solid #ececec; padding: 14px 0; }
+        .order-item:last-child { border-bottom: none; }
+        .order-item img { width: 78px; height: 78px; object-fit: cover; border-radius: 6px; }
+    </style>
+</head>
+<body>
+<div th:replace="~{layout/customer-header :: customerHeader}"></div>
+
+<div class="container my-5">
+    <a class="btn btn-outline-secondary btn-sm mb-3" th:href="@{/orders}"><i class="fas fa-arrow-left"></i> Back to Orders</a>
+
+    <h1 class="mb-1">Order #<span th:text="${order.orderNumber}">ORD-001</span></h1>
+    <p class="text-muted" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</p>
+
+    <div class="card-box d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span class="status-badge" th:classappend="${order.orderStatus}" th:text="${order.orderStatusLabel}">Pending</span>
+            <span class="ms-2 text-muted" th:if="${order.cancelledReason != null}">Reason: <span th:text="${order.cancelledReason}">Reason</span></span>
+        </div>
+        <div class="text-muted">Updated: <span th:text="${#temporals.format(order.updatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</span></div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card-box">
+                <h5 class="mb-3"><i class="fas fa-shopping-bag"></i> Order Items</h5>
+                <div class="order-item" th:each="item : ${order.items}">
+                    <img th:src="${item.imageUrl}" src="https://via.placeholder.com/80" th:alt="${item.productName}">
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold" th:text="${item.productName}">Product</div>
+                        <div class="small text-muted" th:if="${item.variantSize != null}">Size: <span th:text="${item.variantSize}">M</span></div>
+                        <div class="small text-muted">Qty: <span th:text="${item.quantity}">1</span></div>
+                        <div class="small" th:text="${item.price}">0</div>
+                    </div>
+                    <div class="fw-bold" th:text="${item.total}">0</div>
+                </div>
+            </div>
+
+            <div class="card-box">
+                <h5 class="mb-3"><i class="fas fa-map-marker-alt"></i> Shipping Address</h5>
+                <div><strong th:text="${order.snapRecipientName}">Recipient</strong></div>
+                <div th:text="${order.snapPhone}">Phone</div>
+                <div th:text="${order.snapAddress}">Address</div>
+                <div class="mt-2" th:if="${order.note != null and !#strings.isEmpty(order.note)}"><strong>Note:</strong> <span th:text="${order.note}">Note</span></div>
+            </div>
+
+            <div class="card-box" th:if="${order.statusHistory != null and !order.statusHistory.isEmpty()}">
+                <h5 class="mb-3"><i class="fas fa-clock"></i> Status History</h5>
+                <div class="border-bottom pb-2 mb-2" th:each="history : ${order.statusHistory}">
+                    <div class="fw-semibold" th:text="${history.newStatusLabel}">Status</div>
+                    <div class="small text-muted" th:text="${#temporals.format(history.createdAt, 'dd/MM/yyyy HH:mm')} + ' - ' + ${history.changedByName}">Date</div>
+                    <div class="small" th:if="${history.note != null}" th:text="${history.note}">Note</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card-box">
+                <h5 class="mb-3"><i class="fas fa-receipt"></i> Summary</h5>
+                <div class="summary-row"><span>Subtotal</span><span th:text="${order.subtotal}">0</span></div>
+                <div class="summary-row"><span>Shipping</span><span th:text="${order.shippingFee}">0</span></div>
+                <div class="summary-row" th:if="${order.discountAmount != null and order.discountAmount > 0}"><span>Discount</span><span>-<span th:text="${order.discountAmount}">0</span></span></div>
+                <div class="summary-row" th:if="${order.appliedCouponCode != null}"><span>Coupon</span><span th:text="${order.appliedCouponCode}">CODE</span></div>
+                <div class="summary-row total"><span>Total</span><span th:text="${order.total}">0</span></div>
+            </div>
+
+            <div class="card-box">
+                <h5 class="mb-3"><i class="fas fa-credit-card"></i> Payment</h5>
+                <div><strong th:text="${order.paymentMethodLabel}">COD</strong></div>
+                <div>Status: <span th:text="${order.paymentStatus}">pending</span></div>
+                <div class="small text-muted" th:if="${order.paidAt != null}">Paid at: <span th:text="${#temporals.format(order.paidAt, 'dd/MM/yyyy HH:mm')}">Date</span></div>
+            </div>
+
+            <div class="card-box d-grid gap-2">
+                <button class="btn btn-outline-danger" type="button" th:if="${order.canCancel}">Cancel Order</button>
+                <button class="btn btn-warning" type="button" th:if="${order.canReview}">Review Products</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

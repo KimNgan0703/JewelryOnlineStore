@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.name} + ' - Jewelry Online Store'">Product Detail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .box { background: white; border-radius: 8px; padding: 20px; }
+        .main-image { width: 100%; height: 460px; object-fit: cover; border-radius: 8px; }
+        .thumbnail { width: 78px; height: 78px; border: 2px solid #eee; border-radius: 6px; object-fit: cover; }
+        .price { color: var(--primary-color); font-size: 1.9rem; font-weight: bold; }
+        .price-old { color: #7f8c8d; text-decoration: line-through; margin-left: 8px; font-size: 1.1rem; }
+        .stock.in { color: #198754; }
+        .stock.out { color: #dc3545; }
+        .card-product { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); height: 100%; }
+        .card-product img { width: 100%; height: 180px; object-fit: cover; }
+    </style>
+</head>
+<body>
+<div th:replace="~{layout/customer-header :: customerHeader}"></div>
+
+<div class="container my-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/products}">Products</a></li>
+            <li class="breadcrumb-item active" th:text="${product.categoryName}">Category</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="box">
+                <img class="main-image mb-3" th:src="${(product.allImageUrls != null and !product.allImageUrls.isEmpty()) ? product.allImageUrls[0] : product.primaryImageUrl}" src="https://via.placeholder.com/560" th:alt="${product.name}">
+                <div class="d-flex gap-2 flex-wrap" th:if="${product.allImageUrls != null}">
+                    <img class="thumbnail" th:each="img : ${product.allImageUrls}" th:src="${img}" src="https://via.placeholder.com/80" alt="thumb">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="box">
+                <h1 class="mb-3" th:text="${product.name}">Product</h1>
+                <div class="mb-3 text-muted">
+                    <i class="fas fa-star text-warning"></i>
+                    <span th:text="${reviewSummary.averageRating ?: 0}">0</span>
+                    (<span th:text="${reviewSummary.totalReviews ?: 0}">0</span> reviews)
+                </div>
+                <div class="mb-3">
+                    <span class="price" th:text="${product.basePrice}">0</span>
+                    <span class="price-old" th:if="${product.comparePrice != null and product.comparePrice > product.basePrice}" th:text="${product.comparePrice}">0</span>
+                </div>
+                <div class="mb-3">
+                    <span class="badge text-bg-danger me-2" th:if="${product.hasDiscount and product.discountPercent != null}" th:text="'-' + ${product.discountPercent} + '%'">-10%</span>
+                    <span class="stock" th:classappend="${product.inStock} ? 'in' : 'out'" th:text="${product.inStock} ? 'In stock' : 'Out of stock'">In stock</span>
+                </div>
+                <div class="mb-3">
+                    <strong>SKU:</strong> <span th:text="${product.sku}">SKU</span><br>
+                    <strong>Category:</strong> <span th:text="${product.categoryName}">Category</span><br>
+                    <strong>Material:</strong> <span th:text="${product.materialName}">Material</span><br>
+                    <strong>Brand:</strong> <span th:text="${product.brandName}">Brand</span>
+                </div>
+                <p th:text="${product.description}">Description</p>
+
+                <div class="mb-3" th:if="${product.variants != null and !product.variants.isEmpty()}">
+                    <label class="form-label"><strong>Size</strong></label>
+                    <select class="form-select" id="variantId">
+                        <option th:each="v : ${product.variants}" th:value="${v.id}" th:text="${v.size} + ' - stock: ' + ${v.stockQuantity}" th:disabled="${!v.isActive or v.stockQuantity <= 0}">Size</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="quantity"><strong>Quantity</strong></label>
+                    <input id="quantity" type="number" class="form-control" min="1" max="99" value="1">
+                </div>
+
+                <div id="productActionMessage" class="alert d-none" role="alert"></div>
+
+                <div class="d-grid gap-2">
+                    <button id="addToCartBtn" class="btn btn-warning" type="button" th:disabled="${!product.inStock}"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                    <button id="wishlistBtn" class="btn btn-outline-danger" type="button" th:attr="data-product-id=${product.id}"><i class="fas fa-heart"></i> Add to Wishlist</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="box mt-4">
+        <h4 class="mb-3">Reviews (<span th:text="${reviewSummary.totalReviews ?: 0}">0</span>)</h4>
+        <div th:if="${reviewSummary.reviews == null or reviewSummary.reviews.isEmpty()}" class="text-muted">No reviews yet.</div>
+        <div th:each="review : ${reviewSummary.reviews}" class="border-bottom pb-3 mb-3">
+            <div class="fw-semibold" th:text="${review.customerName}">Customer</div>
+            <div class="text-warning mb-1"><i class="fas fa-star"></i> <span th:text="${review.rating}">5</span>/5</div>
+            <div class="small text-muted mb-2" th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</div>
+            <div th:text="${review.comment}">Comment</div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h4 class="mb-3">Related Products</h4>
+        <div class="row g-3">
+            <div class="col-sm-6 col-lg-3" th:each="related : ${relatedProducts}">
+                <div class="card-product">
+                    <a th:href="@{/products/{slug}(slug=${related.slug})}">
+                        <img th:src="${related.primaryImageUrl}" src="https://via.placeholder.com/200" th:alt="${related.name}">
+                    </a>
+                    <div class="p-3">
+                        <div class="fw-semibold" th:text="${related.name}">Related</div>
+                        <div class="text-warning fw-bold" th:text="${related.basePrice}">0</div>
+                        <a class="btn btn-sm btn-outline-dark w-100 mt-2" th:href="@{/products/{slug}(slug=${related.slug})}">View</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+    const productId = /*[[${product.id}]]*/ 0;
+
+    const addToCartBtn = document.getElementById('addToCartBtn');
+    const wishlistBtn = document.getElementById('wishlistBtn');
+    const variantSelect = document.getElementById('variantId');
+    const quantityInput = document.getElementById('quantity');
+    const messageBox = document.getElementById('productActionMessage');
+
+    function showMessage(text, isSuccess) {
+        messageBox.textContent = text;
+        messageBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+        messageBox.classList.add(isSuccess ? 'alert-success' : 'alert-danger');
+    }
+
+    function setWishlistButtonState(isWishlisted) {
+        if (!wishlistBtn) {
+            return;
+        }
+        wishlistBtn.innerHTML = isWishlisted
+            ? '<i class="fas fa-heart"></i> Remove from Wishlist'
+            : '<i class="fas fa-heart"></i> Add to Wishlist';
+        wishlistBtn.classList.toggle('btn-danger', isWishlisted);
+        wishlistBtn.classList.toggle('btn-outline-danger', !isWishlisted);
+    }
+
+    async function checkWishlistState() {
+        if (!wishlistBtn) {
+            return;
+        }
+        try {
+            const response = await fetch(`/wishlist/check/${productId}`);
+            if (!response.ok) {
+                return;
+            }
+            const result = await response.json();
+            setWishlistButtonState(!!result.data);
+        } catch (error) {
+            // Keep default button state when request fails.
+        }
+    }
+
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', async function() {
+            if (!variantSelect || !variantSelect.value) {
+                showMessage('Please choose a variant before adding to cart.', false);
+                return;
+            }
+            const quantity = parseInt(quantityInput?.value || '1', 10);
+            if (Number.isNaN(quantity) || quantity < 1) {
+                showMessage('Quantity must be at least 1.', false);
+                return;
+            }
+
+            try {
+                const response = await fetch('/cart/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [csrfHeader]: csrfToken
+                    },
+                    body: JSON.stringify({
+                        variantId: Number(variantSelect.value),
+                        quantity: quantity
+                    })
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                    return;
+                }
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showMessage(result.message || 'Added to cart successfully.', true);
+                } else {
+                    showMessage(result.message || 'Cannot add to cart.', false);
+                }
+            } catch (error) {
+                showMessage('Cannot add to cart right now. Please try again.', false);
+            }
+        });
+    }
+
+    if (wishlistBtn) {
+        wishlistBtn.addEventListener('click', async function() {
+            try {
+                const response = await fetch(`/wishlist/toggle/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        [csrfHeader]: csrfToken
+                    }
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+                    return;
+                }
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    setWishlistButtonState(!!result.data);
+                    showMessage(result.message || 'Wishlist updated.', true);
+                } else {
+                    showMessage(result.message || 'Cannot update wishlist.', false);
+                }
+            } catch (error) {
+                showMessage('Cannot update wishlist right now. Please try again.', false);
+            }
+        });
+    }
+
+    checkWishlistState();
+</script>
+</body>
+</html>
