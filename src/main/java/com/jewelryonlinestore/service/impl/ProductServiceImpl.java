@@ -8,7 +8,6 @@ import com.jewelryonlinestore.entity.*;
 import com.jewelryonlinestore.repository.CategoryRepository;
 import com.jewelryonlinestore.repository.ProductRepository;
 import com.jewelryonlinestore.repository.ProductVariantRepository;
-import com.jewelryonlinestore.service.FileStorageService;
 import com.jewelryonlinestore.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,7 +30,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository productVariantRepository;
     private final CategoryRepository categoryRepository;
-    private final FileStorageService fileStorageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -142,7 +140,7 @@ public class ProductServiceImpl implements ProductService {
                         .sku(saved.getSku() + "-" + v.getSize())
                         .size(v.getSize())
                         .price(v.getPrice())
-                        .stockQuantity(v.getStockQuantity())
+                        .stockQuantity(v.getStockQuantity() == null ? 0 : v.getStockQuantity())
                         .lowStockThreshold(v.getLowStockThreshold() == null ? 5 : v.getLowStockThreshold())
                         .isActive(true)
                         .build();
@@ -150,19 +148,17 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        if (req.getImages() != null && !req.getImages().isEmpty()) {
-            int primaryIndex = req.getPrimaryImageIndex() == null ? 0 : req.getPrimaryImageIndex();
-            for (int i = 0; i < req.getImages().size(); i++) {
-                var imageFile = req.getImages().get(i);
-                if (imageFile != null && !imageFile.isEmpty()) {
-                    ProductImage image = ProductImage.builder()
-                            .product(saved)
-                            .imageUrl(fileStorageService.store(imageFile, "products"))
-                            .isPrimary(i == primaryIndex)
-                            .sortOrder(i)
-                            .build();
-                    saved.getImages().add(image);
-                }
+        // Ảnh đã được upload lên Cloudinary từ browser — chỉ cần lưu URL vào DB
+        List<String> imageUrls = req.getImageUrlList();
+        if (!imageUrls.isEmpty()) {
+            for (int i = 0; i < imageUrls.size(); i++) {
+                ProductImage image = ProductImage.builder()
+                        .product(saved)
+                        .imageUrl(imageUrls.get(i))
+                        .isPrimary(i == 0)   // ảnh đầu tiên là primary
+                        .sortOrder(i)
+                        .build();
+                saved.getImages().add(image);
             }
             productRepository.save(saved);
         }
@@ -176,6 +172,48 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
         applyRequest(product, req);
+
+        // Cập nhật variant đầu tiên (biến thể mặc định)
+        if (req.getVariants() != null && !req.getVariants().isEmpty()) {
+            AdminProductRequest.VariantRequest vReq = req.getVariants().get(0);
+            if (product.getVariants() != null && !product.getVariants().isEmpty()) {
+                // Sửa variant hiện có
+                ProductVariant existing = product.getVariants().get(0);
+                existing.setSize(vReq.getSize());
+                existing.setPrice(vReq.getPrice());
+                existing.setStockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity());
+                existing.setLowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold());
+                productVariantRepository.save(existing);
+            } else {
+                // Tạo mới nếu chưa có
+                ProductVariant variant = ProductVariant.builder()
+                        .product(product)
+                        .sku(product.getSku() + "-" + vReq.getSize())
+                        .size(vReq.getSize())
+                        .price(vReq.getPrice())
+                        .stockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity())
+                        .lowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold())
+                        .isActive(true)
+                        .build();
+                productVariantRepository.save(variant);
+            }
+        }
+
+        // Thêm ảnh mới từ Cloudinary (nếu có)
+        List<String> imageUrls = req.getImageUrlList();
+        if (!imageUrls.isEmpty()) {
+            int startOrder = product.getImages() == null ? 0 : product.getImages().size();
+            for (int i = 0; i < imageUrls.size(); i++) {
+                ProductImage image = ProductImage.builder()
+                        .product(product)
+                        .imageUrl(imageUrls.get(i))
+                        .isPrimary(startOrder == 0 && i == 0)
+                        .sortOrder(startOrder + i)
+                        .build();
+                product.getImages().add(image);
+            }
+        }
+
         productRepository.save(product);
     }
 
@@ -205,6 +243,11 @@ public class ProductServiceImpl implements ProductService {
         req.setShortDescription(p.getShortDescription());
         req.setDescription(p.getDescription());
         req.setCategoryId(p.getCategory() != null ? p.getCategory().getId() : null);
+        req.setBrandId(p.getBrand() != null ? p.getBrand().getId() : null);
+        req.setCollectionId(p.getCollection() != null ? p.getCollection().getId() : null);
+        req.setMaterialId(p.getMaterial() != null ? p.getMaterial().getId() : null);
+        req.setGender(p.getGender() != null ? p.getGender().name().toLowerCase(java.util.Locale.ROOT) : null);
+        req.setWeightGram(p.getWeightGram());
         req.setBasePrice(p.getBasePrice());
         req.setComparePrice(p.getComparePrice());
         req.setActive(p.isActive());
@@ -212,6 +255,35 @@ public class ProductServiceImpl implements ProductService {
         req.setBestSeller(p.isBestSeller());
         req.setMetaTitle(p.getMetaTitle());
         req.setMetaDescription(p.getMetaDescription());
+
+        // FIX: map variants từ DB vào DTO — nếu thiếu thì @NotEmpty/@NotNull sẽ fail khi submit
+        if (p.getVariants() != null && !p.getVariants().isEmpty()) {
+            java.util.List<AdminProductRequest.VariantRequest> variantRequests = p.getVariants().stream()
+                    .filter(v -> v.isActive())
+                    .map(v -> {
+                        AdminProductRequest.VariantRequest vr = new AdminProductRequest.VariantRequest();
+                        vr.setSize(v.getSize());
+                        vr.setPrice(v.getPrice());
+                        vr.setStockQuantity(v.getStockQuantity());
+                        vr.setLowStockThreshold(v.getLowStockThreshold());
+                        return vr;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            req.setVariants(variantRequests);
+        } else {
+            // Đảm bảo luôn có ít nhất 1 variant rỗng để form render được
+            AdminProductRequest.VariantRequest emptyVariant = new AdminProductRequest.VariantRequest();
+            req.setVariants(java.util.List.of(emptyVariant));
+        }
+
+        // Truyền URLs ảnh hiện tại vào hidden field để form edit hiển thị đúng
+        if (p.getImages() != null && !p.getImages().isEmpty()) {
+            String urls = p.getImages().stream()
+                    .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
+                    .map(ProductImage::getImageUrl)
+                    .collect(java.util.stream.Collectors.joining(","));
+            req.setImageUrls(urls);
+        }
         return req;
     }
 
@@ -330,5 +402,3 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 }
-
-
