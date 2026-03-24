@@ -7,306 +7,197 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
-        }
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
         body {
             background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px 0;
+            display: flex; align-items: center; justify-content: center; padding: 20px 0;
         }
         .register-container {
-            max-width: 500px;
-            width: 100%;
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 500px; width: 100%; background: white; padding: 40px;
+            border-radius: 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
-        .register-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .register-header h1 {
-            color: var(--primary-color);
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .register-header p {
-            color: #7f8c8d;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-label {
-            color: var(--secondary-color);
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .form-control {
-            border: 1px solid #bdc3c7;
-            border-radius: 5px;
-            padding: 10px 15px;
-        }
-        .form-control:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
-        }
-        .form-control.is-invalid {
-            border-color: #e74c3c;
-        }
-        .invalid-feedback {
-            color: #e74c3c;
-            font-size: 0.85rem;
-        }
+        .register-header { text-align: center; margin-bottom: 30px; }
+        .register-header h1 { color: var(--primary-color); font-size: 2rem; font-weight: bold; margin-bottom: 10px; }
+        .register-header p { color: #7f8c8d; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { color: var(--secondary-color); font-weight: bold; margin-bottom: 8px; }
+        .form-control { border: 1px solid #bdc3c7; border-radius: 5px; padding: 10px 15px; }
+        .form-control:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25); }
+        .form-control.is-invalid { border-color: #e74c3c; }
+        .invalid-feedback { color: #e74c3c; font-size: 0.85rem; }
         .btn-register {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: var(--secondary-color);
-            font-weight: bold;
-            padding: 10px 20px;
-            width: 100%;
-            margin-top: 10px;
+            background-color: var(--primary-color); border-color: var(--primary-color);
+            color: white; font-weight: bold; padding: 10px 20px; width: 100%; margin-top: 10px;
         }
-        .btn-register:hover {
-            background-color: #c09b2d;
-            border-color: #c09b2d;
-        }
-        .form-check {
-            margin-bottom: 15px;
-        }
-        .form-check-input {
-            border-color: #bdc3c7;
-        }
-        .form-check-input:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .terms-text {
-            font-size: 0.85rem;
-            color: #7f8c8d;
-        }
-        .terms-text a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        .terms-text a:hover {
-            text-decoration: underline;
-        }
+        .btn-register:hover { background-color: #c09b2d; color: white; }
+        .form-check { margin-bottom: 15px; }
+        .form-check-input { border-color: #bdc3c7; }
+        .form-check-input:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
+        .terms-text { font-size: 0.85rem; color: #7f8c8d; }
+        .terms-text a { color: var(--primary-color); text-decoration: none; }
+        .terms-text a:hover { text-decoration: underline; }
         .login-section {
-            text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #ecf0f1;
+            text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ecf0f1;
         }
-        .login-section p {
-            color: #7f8c8d;
-            margin-bottom: 0;
-        }
-        .login-section a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .login-section a:hover {
-            text-decoration: underline;
-        }
-        .alert {
-            border-left: 4px solid var(--primary-color);
-            background-color: #f1ede1;
-            color: var(--secondary-color);
-            margin-bottom: 20px;
-        }
-        .alert-danger {
-            border-left-color: #e74c3c;
-            background-color: #fadbd8;
-            color: #c0392b;
-        }
-        .password-strength {
-            margin-top: 5px;
-        }
-        .strength-meter {
-            height: 5px;
-            background-color: #ecf0f1;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .strength-bar {
-            height: 100%;
-            width: 0%;
-            transition: all 0.3s ease;
-        }
-        .strength-bar.weak {
-            width: 33%;
-            background-color: #e74c3c;
-        }
-        .strength-bar.medium {
-            width: 66%;
-            background-color: #f39c12;
-        }
-        .strength-bar.strong {
-            width: 100%;
-            background-color: #27ae60;
-        }
-        .strength-text {
-            font-size: 0.75rem;
-            margin-top: 3px;
-        }
+        .login-section p { color: #7f8c8d; margin-bottom: 0; }
+        .login-section a { color: var(--primary-color); text-decoration: none; font-weight: bold; }
+        .login-section a:hover { text-decoration: underline; }
+        .alert { border-left: 4px solid var(--primary-color); background-color: #f1ede1; color: var(--secondary-color); margin-bottom: 20px; }
+        .alert-danger { border-left-color: #e74c3c; background-color: #fadbd8; color: #c0392b; }
+        .password-strength { margin-top: 5px; }
+        .strength-meter { height: 5px; background-color: #ecf0f1; border-radius: 3px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: all 0.3s ease; }
+        .strength-bar.weak { width: 33%; background-color: #e74c3c; }
+        .strength-bar.medium { width: 66%; background-color: #f39c12; }
+        .strength-bar.strong { width: 100%; background-color: #27ae60; }
+        .strength-text { font-size: 0.75rem; margin-top: 3px; }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <!-- Register Header -->
-        <div class="register-header">
-            <h1><i class="fas fa-gem"></i></h1>
-            <h1>Jewelry Store</h1>
-            <p>Create a new account</p>
-        </div>
-
-        <!-- Alert Messages -->
-        <div th:if="${param.error}" class="alert alert-danger" role="alert">
-            <i class="fas fa-exclamation-circle"></i> An error occurred during registration. Please try again.
-        </div>
-        <div th:if="${param.registered}" class="alert alert-success" role="alert">
-            <i class="fas fa-check-circle"></i> Registration successful! Please check your email to verify your account.
-        </div>
-
-        <!-- Registration Form -->
-        <form method="post" action="/register" id="registerForm" novalidate>
-            <div class="form-group">
-                <label for="firstName" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="firstName" name="firstName" placeholder="John" required>
-                <div class="invalid-feedback">First name is required.</div>
-            </div>
-
-            <div class="form-group">
-                <label for="lastName" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="lastName" name="lastName" placeholder="Doe" required>
-                <div class="invalid-feedback">Last name is required.</div>
-            </div>
-
-            <div class="form-group">
-                <label for="email" class="form-label">Email Address</label>
-                <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
-                <div class="invalid-feedback">Please provide a valid email address.</div>
-            </div>
-
-            <div class="form-group">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
-                <div class="invalid-feedback">Password is required.</div>
-                <div class="password-strength">
-                    <div class="strength-meter">
-                        <div class="strength-bar" id="strengthBar"></div>
-                    </div>
-                    <div class="strength-text" id="strengthText"></div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="confirmPassword" class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
-                <div class="invalid-feedback">Passwords do not match.</div>
-            </div>
-
-            <div class="form-group">
-                <label for="phone" class="form-label">Phone Number (Optional)</label>
-                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+1 (555) 000-0000">
-            </div>
-
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
-                <label class="form-check-label terms-text" for="terms">
-                    I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>
-                </label>
-                <div class="invalid-feedback">You must agree to the terms and conditions.</div>
-            </div>
-
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="newsletter" name="newsletter">
-                <label class="form-check-label" for="newsletter">
-                    Subscribe to our newsletter for exclusive offers
-                </label>
-            </div>
-
-            <button type="submit" class="btn btn-register">Create Account</button>
-        </form>
-
-        <!-- Login Section -->
-        <div class="login-section">
-            <p>Already have an account? <a href="/login">Sign in here</a></p>
-        </div>
+<div class="register-container">
+    <div class="register-header">
+        <h1><i class="fas fa-gem"></i></h1>
+        <h1>Jewelry Store</h1>
+        <p>Create a new account</p>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('registerForm');
-            const passwordField = document.getElementById('password');
-            const confirmPasswordField = document.getElementById('confirmPassword');
-            const strengthBar = document.getElementById('strengthBar');
-            const strengthText = document.getElementById('strengthText');
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle"></i> <span th:text="${errorMessage}"></span>
+    </div>
 
-            // Password strength checker
-            passwordField.addEventListener('input', function() {
-                const password = this.value;
-                let strength = 0;
-                let strengthLabel = '';
+    <form method="post" th:action="@{/auth/register}" th:object="${registerRequest}" id="registerForm" novalidate>
 
-                if (password.length >= 8) strength++;
-                if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-                if (/\d/.test(password)) strength++;
-                if (/[!@#$%^&*]/.test(password)) strength++;
+        <input type="hidden" id="fullName" th:field="*{fullName}">
 
-                strengthBar.classList.remove('weak', 'medium', 'strong');
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="firstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="firstName" placeholder="John" required>
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="lastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="lastName" placeholder="Doe" required>
+            </div>
+        </div>
+        <small class="text-danger" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></small>
 
-                if (password.length === 0) {
-                    strengthBar.style.width = '0%';
-                    strengthText.textContent = '';
-                } else if (strength <= 1) {
-                    strengthBar.classList.add('weak');
-                    strengthText.textContent = 'Weak password';
-                } else if (strength <= 2) {
-                    strengthBar.classList.add('medium');
-                    strengthText.textContent = 'Medium password';
-                } else {
-                    strengthBar.classList.add('strong');
-                    strengthText.textContent = 'Strong password';
-                }
-            });
+        <div class="form-group">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="you@example.com" required>
+            <div class="invalid-feedback">Please provide a valid email address.</div>
+            <small class="text-danger" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+        </div>
 
-            // Form validation
-            form.addEventListener('submit', function(e) {
-                if (!form.checkValidity()) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
+        <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" th:field="*{password}" placeholder="••••••••" required>
+            <div class="invalid-feedback">Password is required.</div>
 
-                // Check if passwords match
-                if (passwordField.value !== confirmPasswordField.value) {
-                    confirmPasswordField.classList.add('is-invalid');
-                    e.preventDefault();
-                    e.stopPropagation();
-                } else {
-                    confirmPasswordField.classList.remove('is-invalid');
-                }
+            <small class="text-danger fw-bold" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
 
-                form.classList.add('was-validated');
-            });
+            <div class="password-strength mt-2">
+                <div class="strength-meter">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="strength-text" id="strengthText"></div>
+            </div>
+        </div>
 
-            // Remove validation on input
-            const inputs = form.querySelectorAll('.form-control, .form-check-input');
-            inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    this.classList.remove('is-invalid');
-                });
+        <div class="form-group">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}" placeholder="••••••••" required>
+            <div class="invalid-feedback">Passwords do not match.</div>
+            <small class="text-danger" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+        </div>
+
+        <div class="form-group">
+            <label for="phone" class="form-label">Phone Number (Optional)</label>
+            <input type="tel" class="form-control" id="phone" th:field="*{phone}" placeholder="09xxxxxxxx">
+            <small class="text-danger" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></small>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+            <label class="form-check-label terms-text" for="terms">
+                I agree to the <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>
+            </label>
+            <div class="invalid-feedback">You must agree to the terms and conditions.</div>
+        </div>
+
+        <button type="submit" class="btn btn-register">Create Account</button>
+    </form>
+
+    <div class="login-section">
+        <p>Already have an account? <a th:href="@{/auth/login}">Sign in here</a></p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('registerForm');
+        const passwordField = document.getElementById('password');
+        const confirmPasswordField = document.getElementById('confirmPassword');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+
+        // Hiệu ứng check độ mạnh mật khẩu
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+            if (/\d/.test(password)) strength++;
+            if (/[!@#$%^&*]/.test(password)) strength++;
+
+            strengthBar.classList.remove('weak', 'medium', 'strong');
+
+            if (password.length === 0) {
+                strengthBar.style.width = '0%';
+                strengthText.textContent = '';
+            } else if (strength <= 1) {
+                strengthBar.classList.add('weak');
+                strengthText.textContent = 'Weak password';
+            } else if (strength <= 2) {
+                strengthBar.classList.add('medium');
+                strengthText.textContent = 'Medium password';
+            } else {
+                strengthBar.classList.add('strong');
+                strengthText.textContent = 'Strong password';
+            }
+        });
+
+        form.addEventListener('submit', function(e) {
+            // 1. Gộp First Name và Last Name vào trường ẩn FullName cho Backend
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            document.getElementById('fullName').value = firstName + " " + lastName;
+
+            // 2. Validate mật khẩu khớp nhau
+            if (passwordField.value !== confirmPasswordField.value) {
+                confirmPasswordField.classList.add('is-invalid');
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                confirmPasswordField.classList.remove('is-invalid');
+            }
+
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        const inputs = form.querySelectorAll('.form-control, .form-check-input');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>

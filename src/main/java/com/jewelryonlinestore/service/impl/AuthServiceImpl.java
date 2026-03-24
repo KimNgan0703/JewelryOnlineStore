@@ -5,6 +5,7 @@ import com.jewelryonlinestore.entity.Address;
 import com.jewelryonlinestore.entity.Customer;
 import com.jewelryonlinestore.entity.User;
 import com.jewelryonlinestore.entity.VerificationToken;
+import com.jewelryonlinestore.repository.AddressRepository;
 import com.jewelryonlinestore.repository.CustomerRepository;
 import com.jewelryonlinestore.repository.UserRepository;
 import com.jewelryonlinestore.repository.VerificationTokenRepository;
@@ -28,42 +29,56 @@ public class AuthServiceImpl implements AuthService {
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final AddressRepository addressRepository;
 
     @Override
     @Transactional
     public void register(RegisterRequest req) {
+        // 1. Kiểm tra Email trùng
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalArgumentException("Email này đã được đăng ký trong hệ thống!");
         }
 
-        User user = userRepository.save(User.builder()
+        // 2. Kiểm tra Số điện thoại trùng
+        if (req.getPhone() != null && !req.getPhone().trim().isEmpty()) {
+            if (customerRepository.existsByPhone(req.getPhone().trim())) {
+                throw new IllegalArgumentException("Số điện thoại này đã được sử dụng bởi tài khoản khác!");
+            }
+        }
+
+        // 3. Tạo tài khoản User
+        User user = User.builder()
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
-                .role(User.Role.CUSTOMER)
-                .status(User.Status.ACTIVE)
-                .build());
+                .role(User.Role.CUSTOMER) // Hoặc Role.CUSTOMER tùy cấu hình import của bạn
+                .status(User.Status.ACTIVE) // Hoặc Status.ACTIVE tùy cấu hình import của bạn
+                .build();
+        userRepository.save(user);
 
+        // 4. Tạo Hồ sơ Khách hàng (Customer)
         Customer customer = Customer.builder()
                 .user(user)
                 .fullName(req.getFullName())
                 .phone(req.getPhone())
-                .gender(parseGender(req.getGender()))
-                .birthDate(req.getBirthDate())
                 .build();
-
-        Address defaultAddress = Address.builder()
-                .customer(customer)
-                .recipientName(req.getRecipientName())
-                .phone(req.getRecipientPhone())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .streetAddress(req.getStreetAddress())
-                .isDefault(true)
-                .build();
-
-        customer.getAddresses().add(defaultAddress);
         customerRepository.save(customer);
+
+        // 5. THÊM ĐIỀU KIỆN IF VÀO ĐÂY:
+        // Chỉ lưu Address nếu form thực sự có gửi lên trường district (Quận/Huyện)
+        if (req.getDistrict() != null && !req.getDistrict().trim().isEmpty()) {
+            Address address = Address.builder()
+                    .customer(customer)
+                    .recipientName(req.getRecipientName() != null ? req.getRecipientName() : req.getFullName())
+                    .phone(req.getRecipientPhone() != null ? req.getRecipientPhone() : req.getPhone())
+                    .province(req.getProvince())
+                    .district(req.getDistrict())
+                    .ward(req.getWard())
+                    .streetAddress(req.getStreetAddress())
+                    .isDefault(true)
+                    .isDeleted(false)
+                    .build();
+            addressRepository.save(address);
+        }
     }
 
     @Override

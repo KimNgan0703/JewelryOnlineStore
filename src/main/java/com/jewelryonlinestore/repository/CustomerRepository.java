@@ -43,4 +43,5 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         WHERE MONTH(c.createdAt) = :month AND YEAR(c.createdAt) = :year
     """)
     Long countNewCustomersInMonth(@Param("month") int month, @Param("year") int year);
+    boolean existsByPhone(String phone);
 }

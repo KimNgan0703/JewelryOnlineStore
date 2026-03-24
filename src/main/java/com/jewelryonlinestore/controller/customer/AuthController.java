@@ -54,29 +54,40 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute RegisterRequest req,
-                           BindingResult result,
-                           HttpServletRequest httpReq,
-                           HttpServletResponse httpRes,
-                           Model model,
-                           RedirectAttributes redirectAttr) {
-        // Validate password == confirmPassword
-        if (!req.getPassword().equals(req.getConfirmPassword())) {
-            result.rejectValue("confirmPassword", "match", "Mật khẩu xác nhận không khớp");
+    public String register(@Valid @ModelAttribute("registerRequest") RegisterRequest registerRequest,
+                           BindingResult result, Model model,
+                           HttpServletRequest request, HttpServletResponse response) {
+
+        // 1. Kiểm tra mật khẩu xác nhận
+        if (registerRequest.getPassword() != null && !registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
+            result.rejectValue("confirmPassword", "match", "Mật khẩu xác nhận không khớp!");
         }
+
+        // 2. Trả về form nếu có lỗi Validation (như mật khẩu không đủ mạnh)
         if (result.hasErrors()) {
             model.addAttribute("pageTitle", "Đăng Ký");
             return "customer/register";
         }
 
         try {
-            authService.register(req);
-            // Auto-login sau khi đăng ký thành công
-            autoLogin(req.getEmail(), req.getPassword(), httpReq, httpRes);
-            redirectAttr.addFlashAttribute("toast_success", "Đăng ký thành công! Chào mừng bạn.");
+            // 3. Đăng ký (sẽ ném lỗi nếu trùng email/sđt)
+            authService.register(registerRequest);
+
+            // 4. Đăng nhập tự động
+            autoLogin(registerRequest.getEmail(), registerRequest.getPassword(), request, response);
+
+            // 5. CHUYỂN TRANG VỀ TRANG CHỦ KHI THÀNH CÔNG
             return "redirect:/";
+
         } catch (IllegalArgumentException e) {
+            // BẮT LỖI TRÙNG EMAIL HOẶC SỐ ĐIỆN THOẠI
             model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("pageTitle", "Đăng Ký");
+            return "customer/register";
+
+        } catch (Exception e) {
+            log.error("Lỗi đăng ký tài khoản: ", e);
+            model.addAttribute("errorMessage", "Hệ thống đang bận, vui lòng thử lại sau.");
             model.addAttribute("pageTitle", "Đăng Ký");
             return "customer/register";
         }
