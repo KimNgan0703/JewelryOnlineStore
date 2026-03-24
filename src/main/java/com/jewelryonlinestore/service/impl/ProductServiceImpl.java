@@ -5,15 +5,13 @@ import com.jewelryonlinestore.dto.request.ProductFilterRequest;
 import com.jewelryonlinestore.dto.response.ProductCardResponse;
 import com.jewelryonlinestore.dto.response.ProductResponse;
 import com.jewelryonlinestore.entity.*;
-import com.jewelryonlinestore.repository.CategoryRepository;
-import com.jewelryonlinestore.repository.ProductRepository;
-import com.jewelryonlinestore.repository.ProductVariantRepository;
+import com.jewelryonlinestore.repository.*;
 import com.jewelryonlinestore.service.FileStorageService;
 import com.jewelryonlinestore.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,25 +23,41 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
-    private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");
+    private static final Pattern NONLATIN   = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
 
-    private final ProductRepository productRepository;
+    private final ProductRepository        productRepository;
     private final ProductVariantRepository productVariantRepository;
-    private final CategoryRepository categoryRepository;
-    private final FileStorageService fileStorageService;
+    private final CategoryRepository       categoryRepository;
+    private final FileStorageService       fileStorageService;
+    // ✅ Inject trực tiếp thay vì dùng findAll() + map
+    private final BrandRepository          brandRepository;
+    private final MaterialRepository       materialRepository;
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductCardResponse> filterProducts(ProductFilterRequest filter) {
+        Sort sort = buildSort(filter.getSortBy());
         Page<Product> page = productRepository.filterProducts(
                 filter.getCategoryId(),
                 filter.getBrandId(),
                 filter.getMinPrice(),
                 filter.getMaxPrice(),
                 filter.getGender(),
-                PageRequest.of(filter.getPage(), filter.getSize()));
+                PageRequest.of(filter.getPage(), filter.getSize(), sort));
         return page.map(this::toCard);
+    }
+
+    private Sort buildSort(String sortBy) {
+        if (sortBy == null) return Sort.by(Sort.Direction.DESC, "createdAt");
+        return switch (sortBy) {
+            case "price_asc"   -> Sort.by(Sort.Direction.ASC,  "basePrice");
+            case "price_desc"  -> Sort.by(Sort.Direction.DESC, "basePrice");
+            case "best_seller" -> Sort.by(Sort.Direction.DESC, "isBestSeller")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+            case "rating"      -> Sort.by(Sort.Direction.DESC, "createdAt");
+            default            -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
     }
 
     @Override
@@ -65,40 +79,30 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductCardResponse> getBestSellers(int limit) {
-        return productRepository.findTop8ByIsActiveTrueAndIsBestSellerTrueOrderByCreatedAtDesc().stream()
-                .limit(limit)
-                .map(this::toCard)
-                .toList();
+        return productRepository.findTop8ByIsActiveTrueAndIsBestSellerTrueOrderByCreatedAtDesc()
+                .stream().limit(limit).map(this::toCard).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductCardResponse> getNewProducts(int limit) {
-        return productRepository.findTop8ByIsActiveTrueAndIsNewTrueOrderByCreatedAtDesc().stream()
-                .limit(limit)
-                .map(this::toCard)
-                .toList();
+        return productRepository.findTop8ByIsActiveTrueAndIsNewTrueOrderByCreatedAtDesc()
+                .stream().limit(limit).map(this::toCard).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ProductCardResponse> getRelatedProducts(Long productId, Long categoryId, int limit) {
-        if (categoryId == null) {
-            return Collections.emptyList();
-        }
-        return productRepository.findRelatedProducts(categoryId, productId, PageRequest.of(0, limit)).stream()
-                .map(this::toCard)
-                .toList();
+        if (categoryId == null) return Collections.emptyList();
+        return productRepository.findRelatedProducts(categoryId, productId, PageRequest.of(0, limit))
+                .stream().map(this::toCard).toList();
     }
 
+    // ✅ Lấy trực tiếp từ BrandRepository
     @Override
     @Transactional(readOnly = true)
     public List<Brand> getAllBrands() {
-        return productRepository.findAll().stream()
-                .map(Product::getBrand)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
+        return brandRepository.findByIsActiveTrueOrderByNameAsc();
     }
 
     @Override
@@ -111,21 +115,18 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
+    // ✅ Lấy trực tiếp từ MaterialRepository
     @Override
     @Transactional(readOnly = true)
     public List<Material> getAllMaterials() {
-        return productRepository.findAll().stream()
-                .map(Product::getMaterial)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
+        return materialRepository.findAllByOrderByNameAsc();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> adminSearchProducts(String keyword, Long categoryId, Boolean isActive, int page, int size) {
-        Page<Product> products = productRepository.findAll(PageRequest.of(page, size));
-        return products.map(this::toResponse);
+    public Page<ProductResponse> adminSearchProducts(String keyword, Long categoryId,
+                                                     Boolean isActive, int page, int size) {
+        return productRepository.findAll(PageRequest.of(page, size)).map(this::toResponse);
     }
 
     @Override
@@ -215,11 +216,12 @@ public class ProductServiceImpl implements ProductService {
         return req;
     }
 
+    // ── Private helpers ──────────────────────────────────
+
     private void applyRequest(Product product, AdminProductRequest req) {
         product.setName(req.getName());
         product.setSku(req.getSku());
-        String slug = toUniqueSlug(req.getName(), product.getId());
-        product.setSlug(slug);
+        product.setSlug(toUniqueSlug(req.getName(), product.getId()));
         product.setShortDescription(req.getShortDescription());
         product.setDescription(req.getDescription());
         product.setBasePrice(req.getBasePrice());
@@ -240,10 +242,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private String toUniqueSlug(String input, Long id) {
-        String base = toSlug(input);
+        String base      = toSlug(input);
         String candidate = base;
-        int i = 1;
-        Long exclude = id == null ? -1L : id;
+        int    i         = 1;
+        Long   exclude   = id == null ? -1L : id;
         while (productRepository.existsBySlugAndIdNot(candidate, exclude)) {
             candidate = base + "-" + i++;
         }
@@ -259,9 +261,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product.Gender parseGender(String gender) {
-        if (gender == null || gender.isBlank()) {
-            return null;
-        }
+        if (gender == null || gender.isBlank()) return null;
         return Product.Gender.valueOf(gender.trim().toUpperCase(Locale.ROOT));
     }
 
@@ -330,5 +330,3 @@ public class ProductServiceImpl implements ProductService {
                 .build();
     }
 }
-
-
