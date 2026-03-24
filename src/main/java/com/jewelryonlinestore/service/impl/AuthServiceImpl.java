@@ -5,6 +5,7 @@ import com.jewelryonlinestore.entity.Address;
 import com.jewelryonlinestore.entity.Customer;
 import com.jewelryonlinestore.entity.User;
 import com.jewelryonlinestore.entity.VerificationToken;
+import com.jewelryonlinestore.repository.AddressRepository;
 import com.jewelryonlinestore.repository.CustomerRepository;
 import com.jewelryonlinestore.repository.UserRepository;
 import com.jewelryonlinestore.repository.VerificationTokenRepository;
@@ -28,42 +29,56 @@ public class AuthServiceImpl implements AuthService {
     private final VerificationTokenRepository verificationTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final AddressRepository addressRepository;
 
     @Override
     @Transactional
     public void register(RegisterRequest req) {
+        // 1. Kiểm tra Email trùng
         if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new IllegalArgumentException("Email này đã được đăng ký trong hệ thống!");
         }
 
-        User user = userRepository.save(User.builder()
+        // 2. Kiểm tra Số điện thoại trùng
+        if (req.getPhone() != null && !req.getPhone().trim().isEmpty()) {
+            if (customerRepository.existsByPhone(req.getPhone().trim())) {
+                throw new IllegalArgumentException("Số điện thoại này đã được sử dụng bởi tài khoản khác!");
+            }
+        }
+
+        // 3. Tạo tài khoản User
+        User user = User.builder()
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
-                .role(User.Role.CUSTOMER)
-                .status(User.Status.ACTIVE)
-                .build());
+                .role(User.Role.CUSTOMER) // Hoặc Role.CUSTOMER tùy cấu hình import của bạn
+                .status(User.Status.ACTIVE) // Hoặc Status.ACTIVE tùy cấu hình import của bạn
+                .build();
+        userRepository.save(user);
 
+        // 4. Tạo Hồ sơ Khách hàng (Customer)
         Customer customer = Customer.builder()
                 .user(user)
                 .fullName(req.getFullName())
                 .phone(req.getPhone())
-                .gender(parseGender(req.getGender()))
-                .birthDate(req.getBirthDate())
                 .build();
-
-        Address defaultAddress = Address.builder()
-                .customer(customer)
-                .recipientName(req.getRecipientName())
-                .phone(req.getRecipientPhone())
-                .province(req.getProvince())
-                .district(req.getDistrict())
-                .ward(req.getWard())
-                .streetAddress(req.getStreetAddress())
-                .isDefault(true)
-                .build();
-
-        customer.getAddresses().add(defaultAddress);
         customerRepository.save(customer);
+
+        // 5. THÊM ĐIỀU KIỆN IF VÀO ĐÂY:
+        // Chỉ lưu Address nếu form thực sự có gửi lên trường district (Quận/Huyện)
+        if (req.getDistrict() != null && !req.getDistrict().trim().isEmpty()) {
+            Address address = Address.builder()
+                    .customer(customer)
+                    .recipientName(req.getRecipientName() != null ? req.getRecipientName() : req.getFullName())
+                    .phone(req.getRecipientPhone() != null ? req.getRecipientPhone() : req.getPhone())
+                    .province(req.getProvince())
+                    .district(req.getDistrict())
+                    .ward(req.getWard())
+                    .streetAddress(req.getStreetAddress())
+                    .isDefault(true)
+                    .isDeleted(false)
+                    .build();
+            addressRepository.save(address);
+        }
     }
 
     @Override
@@ -84,34 +99,42 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void sendPasswordResetEmail(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            String token = UUID.randomUUID().toString();
-            verificationTokenRepository.invalidateOldTokens(
-                    user.getId(), VerificationToken.TokenType.PASSWORD_RESET.name(), LocalDateTime.now());
-            verificationTokenRepository.save(VerificationToken.builder()
-                    .user(user)
-                    .token(token)
-                    .type(VerificationToken.TokenType.PASSWORD_RESET)
-                    .expiresAt(LocalDateTime.now().plusHours(2))
-                    .build());
-            emailService.sendPasswordResetEmail(email, token);
-        });
+        // Kiểm tra email, nếu không có sẽ ném ra lỗi để Controller bắt
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Email không tồn tại trong hệ thống!"));
+
+        String token = UUID.randomUUID().toString();
+
+        // Chú ý: Không có .name() ở tham số PASSWORD_RESET
+        verificationTokenRepository.invalidateOldTokens(
+                user.getId(), VerificationToken.TokenType.PASSWORD_RESET, LocalDateTime.now());
+
+        verificationTokenRepository.save(VerificationToken.builder()
+                .user(user)
+                .token(token)
+                .type(VerificationToken.TokenType.PASSWORD_RESET)
+                .expiresAt(LocalDateTime.now().plusHours(2))
+                .build());
+
+        emailService.sendPasswordResetEmail(email, token);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isValidResetToken(String token) {
+        // Chú ý: Không có .name() ở tham số PASSWORD_RESET
         return verificationTokenRepository
-                .findValidToken(token, VerificationToken.TokenType.PASSWORD_RESET.name(), LocalDateTime.now())
+                .findValidToken(token, VerificationToken.TokenType.PASSWORD_RESET, LocalDateTime.now())
                 .isPresent();
     }
 
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest req) {
+        // Chú ý: Không có .name() ở tham số PASSWORD_RESET
         VerificationToken token = verificationTokenRepository
-                .findValidToken(req.getToken(), VerificationToken.TokenType.PASSWORD_RESET.name(), LocalDateTime.now())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
+                .findValidToken(req.getToken(), VerificationToken.TokenType.PASSWORD_RESET, LocalDateTime.now())
+                .orElseThrow(() -> new IllegalArgumentException("Đường dẫn đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."));
 
         User user = token.getUser();
         user.setPassword(passwordEncoder.encode(req.getNewPassword()));

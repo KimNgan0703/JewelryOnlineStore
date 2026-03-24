@@ -4,7 +4,7 @@ import com.jewelryonlinestore.dto.request.AdminProductRequest;
 import com.jewelryonlinestore.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -13,9 +13,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/**
- * A03 — Quản lý sản phẩm, danh mục, thương hiệu, chất liệu.
- */
 @Controller
 @RequestMapping("/admin/products")
 @RequiredArgsConstructor
@@ -24,6 +21,12 @@ public class AdminProductController {
 
     private final ProductService  productService;
     private final CategoryService categoryService;
+
+    @Value("${cloudinary.cloud-name}")
+    private String cloudinaryCloudName;
+
+    @Value("${cloudinary.upload-preset}")
+    private String cloudinaryUploadPreset;
 
     // ── Danh sách sản phẩm ───────────────────────────────
     @GetMapping
@@ -47,12 +50,9 @@ public class AdminProductController {
     @GetMapping("/new")
     public String newProductForm(Model model) {
         model.addAttribute("productRequest", new AdminProductRequest());
-        model.addAttribute("categories",     categoryService.getAllCategories());
-        model.addAttribute("brands",         productService.getAllBrands());
-        model.addAttribute("collections",    productService.getAllCollections());
-        model.addAttribute("materials",      productService.getAllMaterials());
-        model.addAttribute("pageTitle",      "Thêm Sản Phẩm Mới");
-        model.addAttribute("isEdit",         false);
+        populateFormModel(model);
+        model.addAttribute("pageTitle", "Thêm Sản Phẩm Mới");
+        model.addAttribute("isEdit",    false);
         return "admin/product-form";
     }
 
@@ -63,17 +63,21 @@ public class AdminProductController {
                                 Model model,
                                 RedirectAttributes redirectAttr) {
         if (result.hasErrors()) {
+            model.addAttribute("productRequest", req); // FIX
             populateFormModel(model);
             model.addAttribute("pageTitle", "Thêm Sản Phẩm Mới");
+            model.addAttribute("isEdit", false);
             return "admin/product-form";
         }
         try {
-            Long id = productService.createProduct(req);
+            productService.createProduct(req);
             redirectAttr.addFlashAttribute("toast_success", "Đã thêm sản phẩm thành công!");
-            return "redirect:/admin/products/" + id + "/edit";
+            return "redirect:/admin/products";
         } catch (Exception e) {
             model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("productRequest", req); // FIX: Thymeleaf cần object này
             populateFormModel(model);
+            model.addAttribute("isEdit", false);
             return "admin/product-form";
         }
     }
@@ -97,13 +101,26 @@ public class AdminProductController {
                                 Model model,
                                 RedirectAttributes redirectAttr) {
         if (result.hasErrors()) {
+            model.addAttribute("productRequest", req); // FIX
+            model.addAttribute("product", productService.getProductById(id));
             populateFormModel(model);
+            model.addAttribute("pageTitle", "Sửa Sản Phẩm");
             model.addAttribute("isEdit", true);
             return "admin/product-form";
         }
-        productService.updateProduct(id, req);
-        redirectAttr.addFlashAttribute("toast_success", "Đã cập nhật sản phẩm!");
-        return "redirect:/admin/products/" + id + "/edit";
+        try {
+            productService.updateProduct(id, req);
+            redirectAttr.addFlashAttribute("toast_success", "Đã cập nhật sản phẩm!");
+            return "redirect:/admin/products";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("productRequest", req); // FIX: Thymeleaf cần object này
+            model.addAttribute("product", productService.getProductById(id));
+            populateFormModel(model);
+            model.addAttribute("pageTitle", "Sửa Sản Phẩm");
+            model.addAttribute("isEdit", true);
+            return "admin/product-form";
+        }
     }
 
     // ── Toggle active (AJAX) ──────────────────────────────
@@ -116,7 +133,7 @@ public class AdminProductController {
                 active ? "Đã hiện sản phẩm" : "Đã ẩn sản phẩm", active));
     }
 
-    // ── Xóa (soft delete / cứng) ─────────────────────────
+    // ── Xóa ─────────────────────────────────────────────
     @DeleteMapping("/{id}")
     @ResponseBody
     public ResponseEntity<com.jewelryonlinestore.dto.response.ApiResponse<Void>> deleteProduct(
@@ -133,10 +150,13 @@ public class AdminProductController {
         return "admin/products";
     }
 
+    // ── Helper ───────────────────────────────────────────
     private void populateFormModel(Model model) {
-        model.addAttribute("categories",  categoryService.getAllCategories());
-        model.addAttribute("brands",      productService.getAllBrands());
-        model.addAttribute("collections", productService.getAllCollections());
-        model.addAttribute("materials",   productService.getAllMaterials());
+        model.addAttribute("categories",             categoryService.getAllCategories());
+        model.addAttribute("brands",                 productService.getAllBrands());
+        model.addAttribute("collections",            productService.getAllCollections());
+        model.addAttribute("materials",              productService.getAllMaterials());
+        model.addAttribute("cloudinaryCloudName",    cloudinaryCloudName);
+        model.addAttribute("cloudinaryUploadPreset", cloudinaryUploadPreset);
     }
 }

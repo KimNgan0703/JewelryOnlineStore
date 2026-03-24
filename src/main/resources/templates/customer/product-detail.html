@@ -50,8 +50,10 @@
                     (<span th:text="${reviewSummary.totalReviews ?: 0}">0</span> reviews)
                 </div>
                 <div class="mb-3">
-                    <span class="price" th:text="${product.basePrice}">0</span>
-                    <span class="price-old" th:if="${product.comparePrice != null and product.comparePrice > product.basePrice}" th:text="${product.comparePrice}">0</span>
+                    <span class="price" th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0</span>
+                    <span class="price-old"
+                          th:if="${product.comparePrice != null and product.comparePrice > product.basePrice}"
+                          th:text="${#numbers.formatInteger(product.comparePrice, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
                 <div class="mb-3">
                     <span class="badge text-bg-danger me-2" th:if="${product.hasDiscount and product.discountPercent != null}" th:text="'-' + ${product.discountPercent} + '%'">-10%</span>

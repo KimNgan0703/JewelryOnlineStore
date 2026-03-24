@@ -62,11 +62,15 @@
                 </td>
                 <td th:text="${product.sku}">SKU</td>
                 <td th:text="${product.categoryName}">Category</td>
-                <td th:text="${product.basePrice}">0</td>
+                <td th:text="${#numbers.formatDecimal(product.basePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
                 <td><span class="badge" th:classappend="${product.inStock} ? 'text-bg-success' : 'text-bg-danger'" th:text="${product.inStock} ? 'In Stock' : 'Out of Stock'">Stock</span></td>
-                <td><span class="badge" th:classappend="${product.isActive} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${product.isActive} ? 'Active' : 'Inactive'">Status</span></td>
+                <td><span class="badge" th:classappend="${product.active} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${product.active} ? 'Active' : 'Inactive'">Status</span></td>
                 <td class="text-center">
-                    <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/products/{id}/edit(id=${product.id})}"><i class="fas fa-pen"></i></a>
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/admin/products/{id}/edit(id=${product.id})}"
+                       th:title="${'Edit #' + product.id}">
+                        <i class="fas fa-pen"></i>
+                    </a>
                 </td>
             </tr>
             </tbody>

@@ -161,179 +161,178 @@
     </style>
 </head>
 <body>
-    <!-- Admin Base Layout -->
-    <div style="display: flex; height: 100vh;">
-        <!-- Sidebar (from admin-base.html) -->
+<!-- Admin Base Layout -->
+<div style="display: flex; height: 100vh;">
+    <!-- Sidebar (from admin-base.html) -->
 
-        <div style="flex: 1; display: flex; flex-direction: column; margin-left: 250px;">
-            <!-- Top Bar -->
-            <div style="background: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;">
-                <h2 style="margin: 0; color: var(--secondary-color);">Dashboard</h2>
-                <div style="display: flex; gap: 15px; align-items: center;">
-                    <input class="form-control form-control-sm" style="width: 200px;" type="text" placeholder="Search...">
-                    <div class="dropdown">
-                        <a href="#" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle" style="font-size: 1.5rem; color: var(--secondary-color);"></i>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/admin/profile">My Profile</a></li>
-                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                        </ul>
+    <div style="flex: 1; display: flex; flex-direction: column; margin-left: 250px;">
+        <!-- Top Bar -->
+        <div style="background: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; color: var(--secondary-color);">Dashboard</h2>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <input class="form-control form-control-sm" style="width: 200px;" type="text" placeholder="Search...">
+                <div class="dropdown">
+                    <a href="#" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle" style="font-size: 1.5rem; color: var(--secondary-color);"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/admin/profile">My Profile</a></li>
+                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div style="padding: 30px; flex: 1; overflow-y: auto; background-color: #f8f9fa;">
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <a href="/admin/products" class="action-btn">
+                    <i class="fas fa-box-open"></i>
+                    <span>Sản phẩm</span>
+                </a>
+                <a href="/admin/orders" class="action-btn">
+                    <i class="fas fa-list-check"></i>
+                    <span>New Orders</span>
+                </a>
+                <a href="/admin/customers" class="action-btn">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </a>
+                <a href="/admin/promotions" class="action-btn">
+                    <i class="fas fa-percentage"></i>
+                    <span>Promotions</span>
+                </a>
+            </div>
+
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Sales</div>
+                        <div class="stat-value">$<span th:text="${totalSales}">25,890</span></div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i> 12% from last month
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Orders</div>
+                        <div class="stat-value" th:text="${totalOrders}">1,245</div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i> 8% from last month
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Customers</div>
+                        <div class="stat-value" th:text="${totalCustomers}">456</div>
+                        <div class="stat-change">
+                            <i class="fas fa-arrow-up"></i> 5% from last month
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Pending Orders</div>
+                        <div class="stat-value" th:text="${pendingOrders}">23</div>
+                        <div class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i> 15% from last week
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Page Content -->
-            <div style="padding: 30px; flex: 1; overflow-y: auto; background-color: #f8f9fa;">
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <a href="/admin/products/new" class="action-btn">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>New Product</span>
-                    </a>
-                    <a href="/admin/orders" class="action-btn">
-                        <i class="fas fa-list-check"></i>
-                        <span>New Orders</span>
-                    </a>
-                    <a href="/admin/customers" class="action-btn">
-                        <i class="fas fa-users"></i>
-                        <span>Customers</span>
-                    </a>
-                    <a href="/admin/promotions" class="action-btn">
-                        <i class="fas fa-percentage"></i>
-                        <span>Promotions</span>
-                    </a>
+            <!-- Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <div class="chart-title">Sales Trend (Last 7 Days)</div>
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <div class="chart-title">Order Status Distribution</div>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Statistics -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-label">Total Sales</div>
-                            <div class="stat-value">$<span th:text="${totalSales}">25,890</span></div>
-                            <div class="stat-change">
-                                <i class="fas fa-arrow-up"></i> 12% from last month
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-label">Total Orders</div>
-                            <div class="stat-value" th:text="${totalOrders}">1,245</div>
-                            <div class="stat-change">
-                                <i class="fas fa-arrow-up"></i> 8% from last month
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-label">Total Customers</div>
-                            <div class="stat-value" th:text="${totalCustomers}">456</div>
-                            <div class="stat-change">
-                                <i class="fas fa-arrow-up"></i> 5% from last month
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-label">Pending Orders</div>
-                            <div class="stat-value" th:text="${pendingOrders}">23</div>
-                            <div class="stat-change negative">
-                                <i class="fas fa-arrow-down"></i> 15% from last week
-                            </div>
-                        </div>
+            <!-- Recent Orders -->
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="table-container">
+                        <h5 style="padding: 20px 20px 0; font-weight: bold; color: var(--secondary-color);">Recent Orders</h5>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="order : ${recentOrders}">
+                                <td><strong th:text="${order.orderNumber}">ORD-001</strong></td>
+                                <td th:text="${order.customerName}">John Doe</td>
+                                <td><strong style="color: var(--primary-color);">$<span th:text="${order.totalAmount}">199.99</span></strong></td>
+                                <td>
+                                    <span th:classappend="'status-' + ${order.status?.toLowerCase()}" class="status-badge" th:text="${order.status}">Pending</span>
+                                </td>
+                                <td th:text="${#dates.format(order.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- Charts -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <div class="chart-title">Sales Trend (Last 7 Days)</div>
-                            <canvas id="salesChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="chart-container">
-                            <div class="chart-title">Order Status Distribution</div>
-                            <canvas id="statusChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+                <!-- Activity Log -->
+                <div class="col-md-4">
+                    <div class="activity-log">
+                        <h5 style="font-weight: bold; color: var(--secondary-color); margin-bottom: 20px;">Recent Activity</h5>
 
-                <!-- Recent Orders -->
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="table-container">
-                            <h5 style="padding: 20px 20px 0; font-weight: bold; color: var(--secondary-color);">Recent Orders</h5>
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Order #</th>
-                                        <th>Customer</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr th:each="order : ${recentOrders}">
-                                        <td><strong th:text="${order.orderNumber}">ORD-001</strong></td>
-                                        <td th:text="${order.customerName}">John Doe</td>
-                                        <td><strong style="color: var(--primary-color);">$<span th:text="${order.totalAmount}">199.99</span></strong></td>
-                                        <td>
-                                            <span th:classappend="'status-' + ${order.status?.toLowerCase()}" class="status-badge" th:text="${order.status}">Pending</span>
-                                        </td>
-                                        <td th:text="${#dates.format(order.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Activity Log -->
-                    <div class="col-md-4">
-                        <div class="activity-log">
-                            <h5 style="font-weight: bold; color: var(--secondary-color); margin-bottom: 20px;">Recent Activity</h5>
-
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <i class="fas fa-shopping-bag"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">New Order</div>
-                                    <div class="activity-time">2 minutes ago</div>
-                                </div>
+                        <div class="activity-item">
+                            <div class="activity-icon">
+                                <i class="fas fa-shopping-bag"></i>
                             </div>
-
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background-color: #ebf5fb; color: #3498db;">
-                                    <i class="fas fa-user-plus"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">New Customer</div>
-                                    <div class="activity-time">15 minutes ago</div>
-                                </div>
+                            <div class="activity-content">
+                                <div class="activity-title">New Order</div>
+                                <div class="activity-time">2 minutes ago</div>
                             </div>
+                        </div>
 
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background-color: #eafaf1; color: #27ae60;">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Order Shipped</div>
-                                    <div class="activity-time">1 hour ago</div>
-                                </div>
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background-color: #ebf5fb; color: #3498db;">
+                                <i class="fas fa-user-plus"></i>
                             </div>
+                            <div class="activity-content">
+                                <div class="activity-title">New Customer</div>
+                                <div class="activity-time">15 minutes ago</div>
+                            </div>
+                        </div>
 
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background-color: #fadbd8; color: #e74c3c;">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <div class="activity-title">Low Stock Alert</div>
-                                    <div class="activity-time">2 hours ago</div>
-                                </div>
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background-color: #eafaf1; color: #27ae60;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Order Shipped</div>
+                                <div class="activity-time">1 hour ago</div>
+                            </div>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-icon" style="background-color: #fadbd8; color: #e74c3c;">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">Low Stock Alert</div>
+                                <div class="activity-time">2 hours ago</div>
                             </div>
                         </div>
                     </div>
@@ -341,64 +340,65 @@
             </div>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Sales Chart
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        new Chart(salesCtx, {
-            type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Sales',
-                    data: [1200, 1900, 1600, 2100, 2500, 2200, 2800],
-                    borderColor: '#d4af37',
-                    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Sales',
+                data: [1200, 1900, 1600, 2100, 2500, 2200, 2800],
+                borderColor: '#d4af37',
+                backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+            scales: {
+                y: {
+                    beginAtZero: true
                 }
             }
-        });
+        }
+    });
 
-        // Status Chart
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Completed', 'Processing', 'Pending', 'Cancelled'],
-                datasets: [{
-                    data: [300, 100, 50, 20],
-                    backgroundColor: [
-                        '#27ae60',
-                        '#3498db',
-                        '#f39c12',
-                        '#e74c3c'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Completed', 'Processing', 'Pending', 'Cancelled'],
+            datasets: [{
+                data: [300, 100, 50, 20],
+                backgroundColor: [
+                    '#27ae60',
+                    '#3498db',
+                    '#f39c12',
+                    '#e74c3c'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
                 }
             }
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>

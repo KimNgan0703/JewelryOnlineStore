@@ -54,29 +54,40 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(@Valid @ModelAttribute RegisterRequest req,
-                           BindingResult result,
-                           HttpServletRequest httpReq,
-                           HttpServletResponse httpRes,
-                           Model model,
-                           RedirectAttributes redirectAttr) {
-        // Validate password == confirmPassword
-        if (!req.getPassword().equals(req.getConfirmPassword())) {
-            result.rejectValue("confirmPassword", "match", "Mật khẩu xác nhận không khớp");
+    public String register(@Valid @ModelAttribute("registerRequest") RegisterRequest registerRequest,
+                           BindingResult result, Model model,
+                           HttpServletRequest request, HttpServletResponse response) {
+
+        // 1. Kiểm tra mật khẩu xác nhận
+        if (registerRequest.getPassword() != null && !registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
+            result.rejectValue("confirmPassword", "match", "Mật khẩu xác nhận không khớp!");
         }
+
+        // 2. Trả về form nếu có lỗi Validation (như mật khẩu không đủ mạnh)
         if (result.hasErrors()) {
             model.addAttribute("pageTitle", "Đăng Ký");
             return "customer/register";
         }
 
         try {
-            authService.register(req);
-            // Auto-login sau khi đăng ký thành công
-            autoLogin(req.getEmail(), req.getPassword(), httpReq, httpRes);
-            redirectAttr.addFlashAttribute("toast_success", "Đăng ký thành công! Chào mừng bạn.");
+            // 3. Đăng ký (sẽ ném lỗi nếu trùng email/sđt)
+            authService.register(registerRequest);
+
+            // 4. Đăng nhập tự động
+            autoLogin(registerRequest.getEmail(), registerRequest.getPassword(), request, response);
+
+            // 5. CHUYỂN TRANG VỀ TRANG CHỦ KHI THÀNH CÔNG
             return "redirect:/";
+
         } catch (IllegalArgumentException e) {
+            // BẮT LỖI TRÙNG EMAIL HOẶC SỐ ĐIỆN THOẠI
             model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("pageTitle", "Đăng Ký");
+            return "customer/register";
+
+        } catch (Exception e) {
+            log.error("Lỗi đăng ký tài khoản: ", e);
+            model.addAttribute("errorMessage", "Hệ thống đang bận, vui lòng thử lại sau.");
             model.addAttribute("pageTitle", "Đăng Ký");
             return "customer/register";
         }
@@ -120,24 +131,41 @@ public class AuthController {
     public String forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest req,
                                  BindingResult result, Model model) {
         if (result.hasErrors()) return "customer/forgot-password";
-        // Luôn hiển thị thông báo thành công (bảo mật - không lộ email tồn tại)
-        authService.sendPasswordResetEmail(req.getEmail());
-        model.addAttribute("emailSent", true);
+
+        try {
+            // Gọi Service để gửi email
+            authService.sendPasswordResetEmail(req.getEmail());
+
+            // Nếu chạy qua được dòng trên nghĩa là Email tồn tại -> Báo thành công
+            model.addAttribute("successMessage", "Vui lòng kiểm tra email của bạn để nhận liên kết đặt lại mật khẩu.");
+
+        } catch (IllegalArgumentException e) {
+            // Nếu Email không tồn tại -> Báo lỗi đỏ
+            model.addAttribute("errorMessage", e.getMessage());
+
+        } catch (Exception e) {
+            // Nếu lỗi mạng, lỗi Google Mail...
+            log.error("Lỗi khi gửi email đặt lại mật khẩu: ", e);
+            model.addAttribute("errorMessage", "Hệ thống đang bận, không thể gửi email lúc này.");
+        }
+
         model.addAttribute("pageTitle", "Quên Mật Khẩu");
         return "customer/forgot-password";
     }
 
     // ── Đặt lại mật khẩu ─────────────────────────────────
     @GetMapping("/reset-password")
-    public String resetPasswordPage(@RequestParam String token, Model model) {
-        boolean valid = authService.isValidResetToken(token);
-        if (!valid) {
-            model.addAttribute("tokenExpired", true);
-            return "customer/reset-password";
-        }
-        ResetPasswordRequest req = new ResetPasswordRequest();
-        req.setToken(token);
-        model.addAttribute("resetPasswordRequest", req);
+    public String showResetPasswordPage(@RequestParam String token, Model model) {
+        // Kiểm tra token có hợp lệ không
+        boolean isValid = authService.isValidResetToken(token);
+
+        // LUÔN LUÔN gửi biến tokenExpired ra màn hình (true hoặc false), không bao giờ để rỗng
+        model.addAttribute("tokenExpired", !isValid);
+
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setToken(token);
+        model.addAttribute("resetPasswordRequest", request);
+
         model.addAttribute("pageTitle", "Đặt Lại Mật Khẩu");
         return "customer/reset-password";
     }
