@@ -120,24 +120,41 @@ public class AuthController {
     public String forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest req,
                                  BindingResult result, Model model) {
         if (result.hasErrors()) return "customer/forgot-password";
-        // Luôn hiển thị thông báo thành công (bảo mật - không lộ email tồn tại)
-        authService.sendPasswordResetEmail(req.getEmail());
-        model.addAttribute("emailSent", true);
+
+        try {
+            // Gọi Service để gửi email
+            authService.sendPasswordResetEmail(req.getEmail());
+
+            // Nếu chạy qua được dòng trên nghĩa là Email tồn tại -> Báo thành công
+            model.addAttribute("successMessage", "Vui lòng kiểm tra email của bạn để nhận liên kết đặt lại mật khẩu.");
+
+        } catch (IllegalArgumentException e) {
+            // Nếu Email không tồn tại -> Báo lỗi đỏ
+            model.addAttribute("errorMessage", e.getMessage());
+
+        } catch (Exception e) {
+            // Nếu lỗi mạng, lỗi Google Mail...
+            log.error("Lỗi khi gửi email đặt lại mật khẩu: ", e);
+            model.addAttribute("errorMessage", "Hệ thống đang bận, không thể gửi email lúc này.");
+        }
+
         model.addAttribute("pageTitle", "Quên Mật Khẩu");
         return "customer/forgot-password";
     }
 
     // ── Đặt lại mật khẩu ─────────────────────────────────
     @GetMapping("/reset-password")
-    public String resetPasswordPage(@RequestParam String token, Model model) {
-        boolean valid = authService.isValidResetToken(token);
-        if (!valid) {
-            model.addAttribute("tokenExpired", true);
-            return "customer/reset-password";
-        }
-        ResetPasswordRequest req = new ResetPasswordRequest();
-        req.setToken(token);
-        model.addAttribute("resetPasswordRequest", req);
+    public String showResetPasswordPage(@RequestParam String token, Model model) {
+        // Kiểm tra token có hợp lệ không
+        boolean isValid = authService.isValidResetToken(token);
+
+        // LUÔN LUÔN gửi biến tokenExpired ra màn hình (true hoặc false), không bao giờ để rỗng
+        model.addAttribute("tokenExpired", !isValid);
+
+        ResetPasswordRequest request = new ResetPasswordRequest();
+        request.setToken(token);
+        model.addAttribute("resetPasswordRequest", request);
+
         model.addAttribute("pageTitle", "Đặt Lại Mật Khẩu");
         return "customer/reset-password";
     }

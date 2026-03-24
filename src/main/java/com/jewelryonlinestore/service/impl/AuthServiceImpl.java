@@ -84,34 +84,42 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void sendPasswordResetEmail(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            String token = UUID.randomUUID().toString();
-            verificationTokenRepository.invalidateOldTokens(
-                    user.getId(), VerificationToken.TokenType.PASSWORD_RESET.name(), LocalDateTime.now());
-            verificationTokenRepository.save(VerificationToken.builder()
-                    .user(user)
-                    .token(token)
-                    .type(VerificationToken.TokenType.PASSWORD_RESET)
-                    .expiresAt(LocalDateTime.now().plusHours(2))
-                    .build());
-            emailService.sendPasswordResetEmail(email, token);
-        });
+        // Kiểm tra email, nếu không có sẽ ném ra lỗi để Controller bắt
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Email không tồn tại trong hệ thống!"));
+
+        String token = UUID.randomUUID().toString();
+
+        // Chú ý: Không có .name() ở tham số PASSWORD_RESET
+        verificationTokenRepository.invalidateOldTokens(
+                user.getId(), VerificationToken.TokenType.PASSWORD_RESET, LocalDateTime.now());
+
+        verificationTokenRepository.save(VerificationToken.builder()
+                .user(user)
+                .token(token)
+                .type(VerificationToken.TokenType.PASSWORD_RESET)
+                .expiresAt(LocalDateTime.now().plusHours(2))
+                .build());
+
+        emailService.sendPasswordResetEmail(email, token);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean isValidResetToken(String token) {
+        // Chú ý: Không có .name() ở tham số PASSWORD_RESET
         return verificationTokenRepository
-                .findValidToken(token, VerificationToken.TokenType.PASSWORD_RESET.name(), LocalDateTime.now())
+                .findValidToken(token, VerificationToken.TokenType.PASSWORD_RESET, LocalDateTime.now())
                 .isPresent();
     }
 
     @Override
     @Transactional
     public void resetPassword(ResetPasswordRequest req) {
+        // Chú ý: Không có .name() ở tham số PASSWORD_RESET
         VerificationToken token = verificationTokenRepository
-                .findValidToken(req.getToken(), VerificationToken.TokenType.PASSWORD_RESET.name(), LocalDateTime.now())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
+                .findValidToken(req.getToken(), VerificationToken.TokenType.PASSWORD_RESET, LocalDateTime.now())
+                .orElseThrow(() -> new IllegalArgumentException("Đường dẫn đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."));
 
         User user = token.getUser();
         user.setPassword(passwordEncoder.encode(req.getNewPassword()));
