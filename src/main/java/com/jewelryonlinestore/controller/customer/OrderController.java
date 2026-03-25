@@ -40,10 +40,10 @@ public class OrderController {
         placeOrderRequest.setNewAddress(new AddressRequest());
         placeOrderRequest.setPaymentMethod("cod");
 
-        model.addAttribute("cart",               cart);
-        model.addAttribute("addresses",          addressService.getMyAddresses(auth));
-        model.addAttribute("placeOrderRequest",  placeOrderRequest);
-        model.addAttribute("pageTitle",          "Thanh Toán");
+        model.addAttribute("cart",              cart);
+        model.addAttribute("addresses",         addressService.getMyAddresses(auth));
+        model.addAttribute("placeOrderRequest", placeOrderRequest);
+        model.addAttribute("pageTitle",         "Thanh Toán");
         return "customer/checkout";
     }
 
@@ -60,15 +60,15 @@ public class OrderController {
                 req.setNewAddress(new AddressRequest());
             }
             CartResponse cart = cartService.getCart(auth, session);
-            model.addAttribute("cart",     cart);
-            model.addAttribute("addresses", addressService.getMyAddresses(auth));
+            model.addAttribute("cart",              cart);
+            model.addAttribute("addresses",         addressService.getMyAddresses(auth));
             model.addAttribute("placeOrderRequest", req);
             return "customer/checkout";
         }
         try {
             OrderDetailResponse order = orderService.placeOrder(req, auth, session);
-            redirectAttr.addFlashAttribute("order",        order);
-            redirectAttr.addFlashAttribute("toast_success","Đặt hàng thành công!");
+            redirectAttr.addFlashAttribute("order",         order);
+            redirectAttr.addFlashAttribute("toast_success", "Đặt hàng thành công!");
             return "redirect:/orders/success/" + order.getOrderNumber();
         } catch (Exception e) {
             redirectAttr.addFlashAttribute("toast_error", e.getMessage());
@@ -117,8 +117,17 @@ public class OrderController {
             @PathVariable String orderNumber,
             @RequestParam(required = false) String reason,
             Authentication auth) {
-        orderService.cancelOrder(orderNumber, reason, auth);
-        return ResponseEntity.ok(ApiResponse.ok("Đơn hàng đã được hủy", null));
+        try {
+            orderService.cancelOrder(orderNumber, reason, auth);
+            return ResponseEntity.ok(ApiResponse.ok("Đơn hàng đã được hủy", null));
+        } catch (IllegalStateException e) {
+            // canCancel() = false
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     // ── Mua lại (C07) ────────────────────────────────────
@@ -131,5 +140,4 @@ public class OrderController {
                 "Đã thêm " + added + " sản phẩm vào giỏ hàng.");
         return "redirect:/cart";
     }
-
 }

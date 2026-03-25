@@ -39,11 +39,13 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductCardResponse> filterProducts(ProductFilterRequest filter) {
         Sort sort = buildSort(filter.getSortBy());
         Page<Product> page = productRepository.filterProducts(
+                filter.getKeyword(),        // ← thêm
                 filter.getCategoryId(),
                 filter.getBrandId(),
+                filter.getMaterialId(),     // ← thêm
                 filter.getMinPrice(),
                 filter.getMaxPrice(),
-                filter.getGender(),
+                filter.getInStockOnly(),    // ← thêm
                 PageRequest.of(filter.getPage(), filter.getSize(), sort));
         return page.map(this::toCard);
     }

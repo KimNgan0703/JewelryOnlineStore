@@ -4,6 +4,7 @@ import com.jewelryonlinestore.dto.request.CartItemRequest;
 import com.jewelryonlinestore.dto.response.CartResponse;
 import com.jewelryonlinestore.entity.Cart;
 import com.jewelryonlinestore.entity.CartItem;
+import com.jewelryonlinestore.entity.Promotion;
 import com.jewelryonlinestore.entity.ProductVariant;
 import com.jewelryonlinestore.entity.User;
 import com.jewelryonlinestore.repository.CartItemRepository;
@@ -11,6 +12,7 @@ import com.jewelryonlinestore.repository.CartRepository;
 import com.jewelryonlinestore.repository.ProductVariantRepository;
 import com.jewelryonlinestore.repository.UserRepository;
 import com.jewelryonlinestore.service.CartService;
+import com.jewelryonlinestore.service.PromotionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -20,15 +22,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class CartServiceImpl implements CartService {
 
-    private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
-    private final ProductVariantRepository productVariantRepository;
-    private final UserRepository userRepository;
+    private final CartRepository            cartRepository;
+    private final CartItemRepository        cartItemRepository;
+    private final ProductVariantRepository  productVariantRepository;
+    private final UserRepository            userRepository;
+    private final PromotionService          promotionService;   // ← thêm
 
     @Override
     @Transactional(readOnly = true)
@@ -94,15 +98,26 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponse applyCoupon(String code, Authentication auth, HttpSession session) {
         CartResponse cart = getCart(auth, session);
+
+        // Validate coupon thực sự
+        Optional<Promotion> promotionOpt = promotionService.validateCoupon(code, cart.getSubtotal());
+        if (promotionOpt.isEmpty()) {
+            throw new IllegalArgumentException("Mã giảm giá không hợp lệ hoặc đã hết hạn");
+        }
+
+        Promotion promotion   = promotionOpt.get();
+        BigDecimal discount   = promotionService.calculateDiscount(promotion, cart.getSubtotal());
+        BigDecimal total      = cart.getSubtotal().add(cart.getShippingFee()).subtract(discount);
+
         return CartResponse.builder()
                 .cartId(cart.getCartId())
                 .items(cart.getItems())
                 .subtotal(cart.getSubtotal())
-                .discountAmount(BigDecimal.ZERO)
+                .discountAmount(discount)
                 .shippingFee(cart.getShippingFee())
-                .total(cart.getTotal())
+                .total(total.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : total)
                 .appliedCouponCode(code)
-                .couponMessage("Coupon saved for checkout")
+                .couponMessage(buildCouponMessage(promotion, discount))
                 .totalItems(cart.getTotalItems())
                 .build();
     }
@@ -142,8 +157,8 @@ public class CartServiceImpl implements CartService {
                 .orElseGet(() -> cartRepository.save(Cart.builder().user(User.builder().id(userId).build()).build()));
 
         for (CartItem guestItem : guest.getItems()) {
-            CartItem existing = cartItemRepository.findByCartIdAndVariantId(userCart.getId(), guestItem.getVariant().getId())
-                    .orElse(null);
+            CartItem existing = cartItemRepository.findByCartIdAndVariantId(
+                    userCart.getId(), guestItem.getVariant().getId()).orElse(null);
             if (existing == null) {
                 guestItem.setCart(userCart);
                 cartItemRepository.save(guestItem);
@@ -156,16 +171,19 @@ public class CartServiceImpl implements CartService {
         cartRepository.delete(guest);
     }
 
+    // ── Private helpers ──────────────────────────────────
+
     private Cart findCart(Authentication auth, HttpSession session, boolean createIfMissing) {
         User user = resolveUser(auth);
         if (user != null) {
             return cartRepository.findByUserIdWithItems(user.getId())
-                    .orElseGet(() -> createIfMissing ? cartRepository.save(Cart.builder().user(user).build()) : null);
+                    .orElseGet(() -> createIfMissing
+                            ? cartRepository.save(Cart.builder().user(user).build()) : null);
         }
-
         String sessionId = session.getId();
         return cartRepository.findBySessionIdWithItems(sessionId)
-                .orElseGet(() -> createIfMissing ? cartRepository.save(Cart.builder().sessionId(sessionId).build()) : null);
+                .orElseGet(() -> createIfMissing
+                        ? cartRepository.save(Cart.builder().sessionId(sessionId).build()) : null);
     }
 
     private User resolveUser(Authentication auth) {
@@ -173,6 +191,14 @@ public class CartServiceImpl implements CartService {
             return null;
         }
         return userRepository.findByEmail(auth.getName()).orElse(null);
+    }
+
+    private String buildCouponMessage(Promotion promotion, BigDecimal discount) {
+        if (promotion.getType() == Promotion.PromotionType.PERCENTAGE) {
+            return "Giảm " + promotion.getValue().stripTrailingZeros().toPlainString()
+                    + "% - Tiết kiệm " + String.format("%,.0f", discount) + "₫";
+        }
+        return "Giảm " + String.format("%,.0f", discount) + "₫";
     }
 
     private CartResponse emptyCart() {
@@ -188,20 +214,21 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponse toResponse(Cart cart, String coupon, String couponMessage) {
-        List<CartResponse.CartItemInfo> items = cart.getItems().stream().map(ci -> CartResponse.CartItemInfo.builder()
-                .cartItemId(ci.getId())
-                .variantId(ci.getVariant().getId())
-                .productId(ci.getVariant().getProduct().getId())
-                .productName(ci.getVariant().getProduct().getName())
-                .productSlug(ci.getVariant().getProduct().getSlug())
-                .imageUrl(ci.getVariant().getProduct().getPrimaryImageUrl())
-                .size(ci.getVariant().getSize())
-                .unitPrice(ci.getVariant().getPrice())
-                .quantity(ci.getQuantity())
-                .lineTotal(ci.getLineTotal())
-                .maxQuantity(ci.getVariant().getStockQuantity())
-                .inStock(ci.getVariant().getStockQuantity() > 0)
-                .build()).toList();
+        List<CartResponse.CartItemInfo> items = cart.getItems().stream().map(ci ->
+                CartResponse.CartItemInfo.builder()
+                        .cartItemId(ci.getId())
+                        .variantId(ci.getVariant().getId())
+                        .productId(ci.getVariant().getProduct().getId())
+                        .productName(ci.getVariant().getProduct().getName())
+                        .productSlug(ci.getVariant().getProduct().getSlug())
+                        .imageUrl(ci.getVariant().getProduct().getPrimaryImageUrl())
+                        .size(ci.getVariant().getSize())
+                        .unitPrice(ci.getVariant().getPrice())
+                        .quantity(ci.getQuantity())
+                        .lineTotal(ci.getLineTotal())
+                        .maxQuantity(ci.getVariant().getStockQuantity())
+                        .inStock(ci.getVariant().getStockQuantity() > 0)
+                        .build()).toList();
 
         BigDecimal subtotal = items.stream()
                 .map(CartResponse.CartItemInfo::getLineTotal)
@@ -220,4 +247,3 @@ public class CartServiceImpl implements CartService {
                 .build();
     }
 }
-

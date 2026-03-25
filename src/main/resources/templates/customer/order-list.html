@@ -87,7 +87,10 @@
                 <div><strong>Total:</strong> <span th:text="${order.total}">0</span> | <strong>Payment:</strong> <span th:text="${order.paymentStatus}">pending</span></div>
                 <div class="d-flex gap-2">
                     <a class="btn btn-sm btn-warning" th:href="@{/orders/{orderNumber}(orderNumber=${order.orderNumber})}">View Details</a>
-                    <button class="btn btn-sm btn-outline-danger" th:if="${order.canCancel}" type="button">Cancel</button>
+                    <button class="btn btn-sm btn-outline-danger cancel-btn"
+                            th:if="${order.canCancel}"
+                            type="button"
+                            th:attr="data-order-number=${order.orderNumber}">Cancel</button>
                 </div>
             </div>
         </div>
@@ -115,5 +118,74 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Toast -->
+<div id="orderToast" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999; display:none;">
+    <div class="toast show align-items-center border-0" id="orderToastInner">
+        <div class="d-flex">
+            <div class="toast-body" id="orderToastMsg"></div>
+            <button type="button" class="btn-close me-2 m-auto"
+                    onclick="document.getElementById('orderToast').style.display='none'"></button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const csrfToken  = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
+    function showToast(message, success = true) {
+        const toast  = document.getElementById('orderToast');
+        const inner  = document.getElementById('orderToastInner');
+        const msgEl  = document.getElementById('orderToastMsg');
+        msgEl.textContent = message;
+        inner.className   = 'toast show align-items-center border-0 '
+            + (success ? 'text-bg-success' : 'text-bg-danger');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    document.querySelectorAll('.cancel-btn').forEach(btn => {
+        btn.addEventListener('click', async function () {
+            const orderNumber = this.dataset.orderNumber;
+            const reason = prompt('Lý do hủy đơn hàng (không bắt buộc):');
+            if (reason === null) return;
+
+            // ← Lưu reference trước, KHÔNG dùng this sau async
+            const card        = this.closest('.order-card');
+            const statusBadge = card ? card.querySelector('.order-status') : null;
+            const self        = this;
+
+            try {
+                const url = `/orders/${orderNumber}/cancel`
+                    + (reason.trim() ? `?reason=${encodeURIComponent(reason)}` : '');
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { [csrfHeader]: csrfToken }
+                });
+
+                let data;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    showToast('Có lỗi xảy ra, vui lòng thử lại', false);
+                    return;
+                }
+
+                if (data.success) {
+                    showToast(data.message || 'Đơn hàng đã được hủy');
+                    self.remove();  // ← dùng self thay vì this
+                    if (statusBadge) {
+                        statusBadge.className   = 'order-status cancelled';
+                        statusBadge.textContent = 'Đã hủy';
+                    }
+                } else {
+                    showToast(data.message || 'Không thể hủy đơn hàng', false);
+                }
+            } catch (e) {
+                showToast('Có lỗi xảy ra, vui lòng thử lại', false);
+            }
+        });
+    });
+</script>
 </body>
 </html>

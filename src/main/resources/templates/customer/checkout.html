@@ -13,6 +13,65 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
         .summary-row.total { border-top: 2px solid #ececec; padding-top: 12px; margin-top: 10px; font-weight: bold; }
         .payment-option { border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+
+        /* ── Voucher section ── */
+        .voucher-wrap { display: flex; gap: 8px; }
+        .voucher-wrap .form-control { border-radius: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+        .voucher-wrap .form-control::placeholder { text-transform: none; letter-spacing: 0; font-weight: 400; }
+        .btn-apply {
+            background: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0 20px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: background .2s;
+        }
+        .btn-apply:hover { background: #b8962e; color: #fff; }
+        .btn-apply:disabled { background: #ccc; cursor: not-allowed; }
+
+        .voucher-msg {
+            font-size: 0.85rem;
+            margin-top: 6px;
+            display: none;
+        }
+        .voucher-msg.success { color: #198754; display: block; }
+        .voucher-msg.error   { color: #dc3545; display: block; }
+
+        .applied-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: #fff8e1;
+            border: 1px solid var(--primary-color);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #7a6200;
+            margin-top: 8px;
+        }
+        .applied-badge.show { display: flex; }
+        .applied-badge .remove-coupon {
+            margin-left: auto;
+            cursor: pointer;
+            color: #999;
+            font-size: 1rem;
+            line-height: 1;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .applied-badge .remove-coupon:hover { color: #dc3545; }
+
+        /* discount row — hidden by default */
+        #row-discount { display: none; }
+
+        /* spinner inside button */
+        .btn-apply .spinner-border { width: 14px; height: 14px; border-width: 2px; display: none; }
+        .btn-apply.loading .spinner-border { display: inline-block; }
+        .btn-apply.loading .btn-label { display: none; }
     </style>
 </head>
 <body>
@@ -25,6 +84,8 @@
         <div class="col-lg-8">
             <form th:action="@{/orders/place}" method="post" th:object="${placeOrderRequest}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+                <!-- ── Shipping address ── -->
                 <div class="box">
                     <div class="box-title"><i class="fas fa-map-marker-alt me-2"></i>Shipping Address</div>
 
@@ -69,9 +130,40 @@
                     </div>
                 </div>
 
+                <!-- ── Voucher ── -->
+                <div class="box">
+                    <div class="box-title"><i class="fas fa-tag me-2"></i>Discount Voucher</div>
+
+                    <!-- Hidden field gửi lên khi submit order -->
+                    <input type="hidden" id="couponCodeField" th:field="*{couponCode}" th:value="${cart.appliedCouponCode}">
+
+                    <div class="voucher-wrap">
+                        <input type="text" id="couponInput" class="form-control"
+                               placeholder="Enter voucher code"
+                               th:value="${cart.appliedCouponCode}"
+                               maxlength="50" autocomplete="off">
+                        <button type="button" id="btnApply" class="btn-apply">
+                            <span class="btn-label">Apply</span>
+                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                        </button>
+                    </div>
+
+                    <!-- Thông báo lỗi / thành công -->
+                    <div id="voucherMsg" class="voucher-msg"></div>
+
+                    <!-- Badge hiển thị voucher đã áp dụng -->
+                    <div id="appliedBadge" class="applied-badge">
+                        <i class="fas fa-check-circle text-warning"></i>
+                        <span id="appliedLabel">Code applied</span>
+                        <button type="button" class="remove-coupon" id="btnRemove" title="Remove">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── Payment ── -->
                 <div class="box">
                     <div class="box-title"><i class="fas fa-wallet me-2"></i>Payment</div>
-                    <input type="hidden" th:field="*{couponCode}" th:value="${cart.appliedCouponCode}">
 
                     <div class="row g-2 mb-3">
                         <div class="col-md-6 payment-option">
@@ -97,11 +189,14 @@
                         <textarea class="form-control" rows="3" th:field="*{note}" placeholder="Additional delivery notes"></textarea>
                     </div>
 
-                    <button type="submit" class="btn btn-warning w-100"><i class="fas fa-check-circle"></i> Place Order</button>
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="fas fa-check-circle"></i> Place Order
+                    </button>
                 </div>
             </form>
         </div>
 
+        <!-- ── Order Summary ── -->
         <div class="col-lg-4">
             <div class="box">
                 <div class="box-title"><i class="fas fa-receipt me-2"></i>Order Summary</div>
@@ -116,23 +211,24 @@
 
                 <div class="summary-row">
                     <span>Subtotal</span>
-                    <span th:text="${#numbers.formatInteger(cart.subtotal, 0, 'COMMA')} + ' ₫'">0</span>
+                    <span id="summarySubtotal"
+                          th:text="${#numbers.formatInteger(cart.subtotal, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
                 <div class="summary-row">
                     <span>Shipping</span>
                     <span th:text="${#numbers.formatInteger(cart.shippingFee, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
-                <div class="summary-row" th:if="${cart.discountAmount != null and cart.discountAmount > 0}">
-                    <span>Discount</span>
-                    <span>-<span th:text="${#numbers.formatInteger(cart.discountAmount, 0, 'COMMA')} + ' ₫'">0</span></span>
-                </div>
-                <div class="summary-row total">
-                    <span>Total</span>
-                    <span th:text="${#numbers.formatInteger(cart.total, 0, 'COMMA')} + ' ₫'">0</span>
+
+                <!-- Dòng discount — ẩn mặc định, hiện khi áp voucher -->
+                <div class="summary-row text-success" id="row-discount">
+                    <span>Discount (<span id="discountCode"></span>)</span>
+                    <span id="summaryDiscount">-0 ₫</span>
                 </div>
 
-                <div class="small text-muted mt-2" th:if="${cart.appliedCouponCode != null}">
-                    Coupon: <strong th:text="${cart.appliedCouponCode}">CODE</strong>
+                <div class="summary-row total">
+                    <span>Total</span>
+                    <span id="summaryTotal"
+                          th:text="${#numbers.formatInteger(cart.total, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
             </div>
         </div>
@@ -140,5 +236,173 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // ── Address auto-fill ──────────────────────────────────────────────────
+    const savedAddresses = /*[[${addresses}]]*/ [];
+
+    const addressSelect  = document.querySelector('select[name="addressId"]');
+    const recipientInput = document.querySelector('input[name="newAddress.recipientName"]');
+    const phoneInput     = document.querySelector('input[name="newAddress.phone"]');
+    const provinceInput  = document.querySelector('input[name="newAddress.province"]');
+    const districtInput  = document.querySelector('input[name="newAddress.district"]');
+    const wardInput      = document.querySelector('input[name="newAddress.ward"]');
+    const streetInput    = document.querySelector('input[name="newAddress.streetAddress"]');
+
+    function fillAddress(addr) {
+        if (!addr) {
+            recipientInput.value = phoneInput.value = provinceInput.value =
+                districtInput.value  = wardInput.value  = streetInput.value  = '';
+            return;
+        }
+        recipientInput.value = addr.recipientName  || '';
+        phoneInput.value     = addr.phone          || '';
+        provinceInput.value  = addr.province       || '';
+        districtInput.value  = addr.district       || '';
+        wardInput.value      = addr.ward           || '';
+        streetInput.value    = addr.streetAddress  || '';
+    }
+
+    if (addressSelect) {
+        addressSelect.addEventListener('change', function () {
+            const addr = savedAddresses.find(a => a.id === parseInt(this.value));
+            fillAddress(addr || null);
+        });
+        const defaultAddr = savedAddresses.find(a => a.default === true);
+        if (defaultAddr) { addressSelect.value = defaultAddr.id; fillAddress(defaultAddr); }
+    }
+
+    // ── Voucher ───────────────────────────────────────────────────────────
+    const couponInput    = document.getElementById('couponInput');
+    const couponField    = document.getElementById('couponCodeField');
+    const btnApply       = document.getElementById('btnApply');
+    const btnRemove      = document.getElementById('btnRemove');
+    const voucherMsg     = document.getElementById('voucherMsg');
+    const appliedBadge   = document.getElementById('appliedBadge');
+    const appliedLabel   = document.getElementById('appliedLabel');
+    const rowDiscount    = document.getElementById('row-discount');
+    const discountCode   = document.getElementById('discountCode');
+    const summaryDiscount= document.getElementById('summaryDiscount');
+    const summaryTotal   = document.getElementById('summaryTotal');
+
+    // CSRF token cho POST request
+    const csrfToken  = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
+    function fmt(amount) {
+        return Number(amount).toLocaleString('vi-VN') + ' ₫';
+    }
+
+    function showMsg(text, type) {
+        voucherMsg.textContent = text;
+        voucherMsg.className   = 'voucher-msg ' + type;
+    }
+
+    function clearMsg() {
+        voucherMsg.className = 'voucher-msg';
+        voucherMsg.textContent = '';
+    }
+
+    function setApplied(cart) {
+        // Cập nhật hidden field để gửi lên khi submit
+        couponField.value   = cart.appliedCouponCode || '';
+        couponInput.value   = cart.appliedCouponCode || '';
+
+        // Hiện badge
+        appliedLabel.textContent = 'Voucher "' + cart.appliedCouponCode + '" applied';
+        appliedBadge.classList.add('show');
+        couponInput.disabled  = true;
+        btnApply.disabled     = true;
+
+        // Cập nhật order summary
+        discountCode.textContent   = cart.appliedCouponCode;
+        summaryDiscount.textContent = '-' + fmt(cart.discountAmount);
+        summaryTotal.textContent    = fmt(cart.total);
+        rowDiscount.style.display   = 'flex';
+
+        showMsg(cart.couponMessage || 'Voucher applied successfully!', 'success');
+    }
+
+    function clearApplied() {
+        couponField.value = '';
+        couponInput.value = '';
+        couponInput.disabled = false;
+        btnApply.disabled    = false;
+        appliedBadge.classList.remove('show');
+        rowDiscount.style.display = 'none';
+        clearMsg();
+    }
+
+    // Apply voucher
+    btnApply.addEventListener('click', async function () {
+        const code = couponInput.value.trim().toUpperCase();
+        if (!code) { showMsg('Please enter a voucher code.', 'error'); return; }
+
+        btnApply.classList.add('loading');
+        btnApply.disabled = true;
+        clearMsg();
+
+        try {
+            const res = await fetch('/cart/coupon/apply', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: 'code=' + encodeURIComponent(code)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                // Backend ném lỗi (400 / 422)
+                showMsg(data.message || 'Invalid or expired voucher.', 'error');
+                btnApply.disabled = false;
+            } else {
+                setApplied(data);
+            }
+        } catch (e) {
+            showMsg('Connection error. Please try again.', 'error');
+            btnApply.disabled = false;
+        } finally {
+            btnApply.classList.remove('loading');
+        }
+    });
+
+    // Remove voucher
+    btnRemove.addEventListener('click', async function () {
+        try {
+            await fetch('/cart/coupon/remove', {
+                method: 'POST',
+                headers: { [csrfHeader]: csrfToken }
+            });
+        } catch (_) { /* không cần xử lý lỗi remove */ }
+
+        clearApplied();
+
+        // Reset total về subtotal (lấy từ DOM)
+        const subtotalText = document.getElementById('summarySubtotal').textContent;
+        summaryTotal.textContent = subtotalText;
+    });
+
+    // Cho phép nhấn Enter để apply
+    couponInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); btnApply.click(); }
+    });
+
+    // Nếu server đã có coupon áp dụng sẵn (th:value), hiện badge ngay khi load
+    (function initIfApplied() {
+        const existing = couponField.value.trim();
+        if (!existing) return;
+        const subtotal = /*[[${cart.subtotal}]]*/ 0;
+        const discount = /*[[${cart.discountAmount != null ? cart.discountAmount : 0}]]*/ 0;
+        const total    = /*[[${cart.total}]]*/ 0;
+        setApplied({
+            appliedCouponCode: existing,
+            discountAmount: discount,
+            total: total,
+            couponMessage: 'Voucher "' + existing + '" is being applied.'
+        });
+    })();
+</script>
 </body>
 </html>

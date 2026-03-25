@@ -174,17 +174,28 @@ public class AuthController {
     public String resetPassword(@Valid @ModelAttribute ResetPasswordRequest req,
                                 BindingResult result, Model model,
                                 RedirectAttributes redirectAttr) {
+
         if (!req.getNewPassword().equals(req.getConfirmPassword())) {
             result.rejectValue("confirmPassword", "match", "Mật khẩu xác nhận không khớp");
         }
-        if (result.hasErrors()) return "customer/reset-password";
+
+        if (result.hasErrors()) {
+            model.addAttribute("tokenExpired", false);      // ← thêm dòng này
+            model.addAttribute("resetPasswordRequest", req); // ← thêm dòng này
+            model.addAttribute("pageTitle", "Đặt Lại Mật Khẩu");
+            return "customer/reset-password";
+        }
 
         try {
             authService.resetPassword(req);
-            redirectAttr.addFlashAttribute("toast_success", "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại.");
+            redirectAttr.addFlashAttribute("toast_success",
+                    "Mật khẩu đã được thay đổi. Vui lòng đăng nhập lại.");
             return "redirect:/auth/login";
         } catch (Exception e) {
+            model.addAttribute("tokenExpired", false);      // ← thêm dòng này
+            model.addAttribute("resetPasswordRequest", req); // ← thêm dòng này
             model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("pageTitle", "Đặt Lại Mật Khẩu");
             return "customer/reset-password";
         }
     }

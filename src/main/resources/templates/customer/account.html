@@ -401,6 +401,35 @@
         cancelEditAddress.addEventListener('click', resetAddressForm);
     }
 </script>
+<!-- Toast thông báo -->
+<div th:if="${toast_success}"
+     class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999" id="toastWrap">
+    <div class="toast show align-items-center text-bg-success border-0">
+        <div class="d-flex">
+            <div class="toast-body" th:text="${toast_success}"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    onclick="document.getElementById('toastWrap').remove()"></button>
+        </div>
+    </div>
+</div>
+
+<div th:if="${toast_error}"
+     class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999" id="toastWrapErr">
+    <div class="toast show align-items-center text-bg-danger border-0">
+        <div class="d-flex">
+            <div class="toast-body" th:text="${toast_error}"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    onclick="document.getElementById('toastWrapErr').remove()"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    setTimeout(() => {
+        document.getElementById('toastWrap')?.remove();
+        document.getElementById('toastWrapErr')?.remove();
+    }, 3000);
+</script>
 </body>
 </html>
 

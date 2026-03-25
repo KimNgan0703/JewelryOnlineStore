@@ -10,6 +10,7 @@ import com.jewelryonlinestore.entity.CartItem;
 import com.jewelryonlinestore.entity.Customer;
 import com.jewelryonlinestore.entity.Order;
 import com.jewelryonlinestore.entity.OrderItem;
+import com.jewelryonlinestore.entity.Promotion;
 import com.jewelryonlinestore.entity.User;
 import com.jewelryonlinestore.repository.AddressRepository;
 import com.jewelryonlinestore.repository.CartItemRepository;
@@ -18,6 +19,7 @@ import com.jewelryonlinestore.repository.CustomerRepository;
 import com.jewelryonlinestore.repository.OrderRepository;
 import com.jewelryonlinestore.repository.UserRepository;
 import com.jewelryonlinestore.service.OrderService;
+import com.jewelryonlinestore.service.PromotionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,25 +33,27 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-    private final CustomerRepository customerRepository;
-    private final AddressRepository addressRepository;
-    private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
+    private final OrderRepository     orderRepository;
+    private final UserRepository      userRepository;
+    private final CustomerRepository  customerRepository;
+    private final AddressRepository   addressRepository;
+    private final CartRepository      cartRepository;
+    private final CartItemRepository  cartItemRepository;
+    private final PromotionService    promotionService;   // ← thêm
 
     @Override
     @Transactional
     public OrderDetailResponse placeOrder(PlaceOrderRequest req, Authentication auth, HttpSession session) {
         Customer customer = requireCustomer(auth);
-        Address address = resolveAddress(req, customer);
-        Cart cart = getCheckoutCart(auth, session);
+        Address  address  = resolveAddress(req, customer);
+        Cart     cart     = getCheckoutCart(auth, session);
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
@@ -60,16 +64,30 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderItem::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal shippingFee = BigDecimal.ZERO;
-        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        // ── Áp dụng coupon nếu có ────────────────────────
+        BigDecimal discountAmount  = BigDecimal.ZERO;
+        Promotion  appliedPromotion = null;
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
+            Optional<Promotion> promoOpt = promotionService.validateCoupon(req.getCouponCode(), subtotal);
+            if (promoOpt.isPresent()) {
+                appliedPromotion = promoOpt.get();
+                discountAmount   = promotionService.calculateDiscount(appliedPromotion, subtotal);
+            }
+        }
+
         BigDecimal total = subtotal.add(shippingFee).subtract(discountAmount);
+        if (total.compareTo(BigDecimal.ZERO) < 0) total = BigDecimal.ZERO;
 
         Order order = Order.builder()
-                .orderNumber("ORD" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase(Locale.ROOT))
+                .orderNumber("ORD" + UUID.randomUUID().toString().replace("-", "")
+                        .substring(0, 10).toUpperCase(Locale.ROOT))
                 .customer(customer)
                 .address(address)
                 .snapRecipientName(address.getRecipientName())
                 .snapPhone(address.getPhone())
                 .snapAddress(address.getFullAddress())
+                .promotion(appliedPromotion)        // ← thêm
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
                 .shippingFee(shippingFee)
@@ -84,6 +102,12 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(orderItems);
 
         Order saved = orderRepository.save(order);
+
+        // Tăng usage count nếu có coupon
+        if (appliedPromotion != null) {
+            promotionService.incrementUsedCount(appliedPromotion.getId());
+        }
+
         cartItemRepository.deleteAllByCartId(cart.getId());
         return toDetail(saved);
     }
@@ -113,7 +137,8 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderSummaryResponse> getMyOrders(Authentication auth, String status, int page, int size) {
         Customer customer = requireCustomer(auth);
         Page<Order> orders = (status == null || status.isBlank())
-                ? orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), PageRequest.of(page, size))
+                ? orderRepository.findByCustomerIdOrderByCreatedAtDesc(
+                customer.getId(), PageRequest.of(page, size))
                 : orderRepository.findByCustomerIdAndOrderStatusInOrderByCreatedAtDesc(
                 customer.getId(), List.of(status), PageRequest.of(page, size));
         return orders.map(this::toSummary);
@@ -154,7 +179,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req, Authentication auth) {
+    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req,
+                                                 Authentication auth) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
         order.setOrderStatus(Order.OrderStatus.valueOf(req.getNewStatus().toUpperCase(Locale.ROOT)));
@@ -165,7 +191,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public long countByStatus(String status) {
-        // ✅ Chuyển String → enum trước khi truyền vào repository
         Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status.toUpperCase(Locale.ROOT));
         return orderRepository.countByOrderStatus(orderStatus);
     }
@@ -193,12 +218,18 @@ public class OrderServiceImpl implements OrderService {
         }
 
         if (req.getNewAddress() != null
-                && req.getNewAddress().getRecipientName() != null && !req.getNewAddress().getRecipientName().isBlank()
-                && req.getNewAddress().getPhone() != null && !req.getNewAddress().getPhone().isBlank()
-                && req.getNewAddress().getProvince() != null && !req.getNewAddress().getProvince().isBlank()
-                && req.getNewAddress().getDistrict() != null && !req.getNewAddress().getDistrict().isBlank()
-                && req.getNewAddress().getWard() != null && !req.getNewAddress().getWard().isBlank()
-                && req.getNewAddress().getStreetAddress() != null && !req.getNewAddress().getStreetAddress().isBlank()) {
+                && req.getNewAddress().getRecipientName() != null
+                && !req.getNewAddress().getRecipientName().isBlank()
+                && req.getNewAddress().getPhone() != null
+                && !req.getNewAddress().getPhone().isBlank()
+                && req.getNewAddress().getProvince() != null
+                && !req.getNewAddress().getProvince().isBlank()
+                && req.getNewAddress().getDistrict() != null
+                && !req.getNewAddress().getDistrict().isBlank()
+                && req.getNewAddress().getWard() != null
+                && !req.getNewAddress().getWard().isBlank()
+                && req.getNewAddress().getStreetAddress() != null
+                && !req.getNewAddress().getStreetAddress().isBlank()) {
             if (req.getNewAddress().isDefault()) {
                 addressRepository.clearDefaultByCustomer(customer.getId());
             }
@@ -244,7 +275,7 @@ public class OrderServiceImpl implements OrderService {
             cartItem.getVariant().setStockQuantity(
                     cartItem.getVariant().getStockQuantity() - cartItem.getQuantity());
 
-            BigDecimal price = cartItem.getVariant().getPrice();
+            BigDecimal price     = cartItem.getVariant().getPrice();
             BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
             return OrderItem.builder()
