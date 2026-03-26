@@ -31,11 +31,11 @@ public class JewelryOnlineStoreApplication {
             }
 
             User admin = User.builder()
-                .email(email)
-                .password(passwordEncoder.encode("Admin@123"))
-                .role(User.Role.ADMIN)
-                .status(User.Status.ACTIVE)
-                .build();
+                    .email(email)
+                    .password(passwordEncoder.encode("Admin@123"))
+                    .role(User.Role.ADMIN)
+                    .status(User.Status.ACTIVE)
+                    .build();
 
             userRepository.save(admin);
             log.info("✓ Đã tạo admin: {} / Admin@123", email);

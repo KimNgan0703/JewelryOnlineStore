@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -28,16 +29,28 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public Page<?> searchCustomers(String keyword, String status, int page, int size) {
+
+        // Ép kiểu từ String sang Enum User.Status trước khi tìm kiếm
+        User.Status statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                statusEnum = User.Status.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                // Bỏ qua nếu giá trị gửi lên không khớp với Enum (sẽ trả về null để lấy tất cả)
+            }
+        }
+
         Page<Customer> customers = customerRepository.searchCustomers(
-                blankToNull(keyword), blankToNull(status), PageRequest.of(page, size));
+                blankToNull(keyword), statusEnum, PageRequest.of(page, size));
 
         List<Map<String, Object>> content = customers.getContent().stream().map(c -> {
             Map<String, Object> row = new HashMap<>();
             row.put("id", c.getId());
+            row.put("userId", c.getUser().getId());
             row.put("fullName", c.getFullName());
             row.put("phone", c.getPhone());
-            row.put("email", c.getEmail());
-            row.put("status", c.getStatus());
+            row.put("email", c.getUser().getEmail());
+            row.put("status", c.getUser().getStatus().name());
             return row;
         }).toList();
 
@@ -53,8 +66,8 @@ public class CustomerServiceImpl implements CustomerService {
         detail.put("id", customer.getId());
         detail.put("fullName", customer.getFullName());
         detail.put("phone", customer.getPhone());
-        detail.put("email", customer.getEmail());
-        detail.put("status", customer.getStatus());
+        detail.put("email", customer.getUser().getEmail());
+        detail.put("status", customer.getUser().getStatus().name());
         detail.put("createdAt", customer.getCreatedAt());
         return detail;
     }
@@ -81,4 +94,3 @@ public class CustomerServiceImpl implements CustomerService {
         return value == null || value.isBlank() ? null : value;
     }
 }
-

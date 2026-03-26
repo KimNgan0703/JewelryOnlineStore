@@ -1,132 +1,162 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Promotions Management - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
-        }
-        .page-shell {
-            padding: 30px;
-            background-color: #f8f9fa;
-        }
-        .summary-card {
-            background: white;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            height: 100%;
-        }
-        .summary-value {
-            font-size: 1.7rem;
-            font-weight: 700;
-            color: var(--secondary-color);
-        }
-        .toolbar {
-            display: grid;
-            grid-template-columns: 1fr 180px 180px auto;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .table-wrap {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        .table thead {
-            background: var(--secondary-color);
-            color: white;
-        }
-        .code-badge {
-            background: #f1ede1;
-            color: #8a6d1d;
-            border-radius: 8px;
-            padding: 4px 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-    </style>
 </head>
 <body>
-<div class="page-shell">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-0" style="color: var(--secondary-color);">Promotions</h1>
-            <p class="text-muted mb-0">Create and control discount campaigns.</p>
+<div id="admin-content">
+
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .page-shell { padding: 10px 0; background-color: #f4f6f9; min-height: 100vh;}
+        .table-wrap { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .code-badge { background: #f1ede1; color: #8a6d1d; border-radius: 8px; padding: 4px 8px; font-weight: 600; font-size: 0.85rem; }
+    </style>
+
+    <div class="page-shell">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-0 h3" style="color: var(--secondary-color);">Mã Giảm Giá</h1>
+                <p class="text-muted mb-0">Quản lý và theo dõi các chương trình khuyến mãi.</p>
+            </div>
+            <a class="btn btn-dark" th:href="@{/admin/promotions/new}">
+                <i class="fas fa-plus me-1"></i> Tạo Mã Mới
+            </a>
         </div>
-        <a class="btn btn-dark" th:href="@{/admin/promotions/new}"><i class="fas fa-plus"></i> New Promotion</a>
+
+        <div th:if="${toast_success}" class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-1"></i> <span th:text="${toast_success}">Thành công</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <form class="row g-2 mb-4" method="get" th:action="@{/admin/promotions}">
+            <div class="col-md-5">
+                <input class="form-control" type="text" id="keyword" name="keyword" placeholder="Tìm theo mã code hoặc tên..." th:value="${param.keyword}">
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" name="isActive" onchange="document.getElementById('keyword').value=''">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="true" th:selected="${param.isActive != null and param.isActive[0] == 'true'}">Đang kích hoạt (Active)</option>
+                    <option value="false" th:selected="${param.isActive != null and param.isActive[0] == 'false'}">Đã tắt (Inactive)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-1">
+                <button class="btn btn-dark w-100" type="submit"><i class="fas fa-filter"></i> Lọc</button>
+                <a th:href="@{/admin/promotions}" class="btn btn-outline-secondary" title="Tải lại / Bỏ lọc"><i class="fas fa-redo"></i></a>
+            </div>
+        </form>
+
+        <div class="table-wrap mb-3 table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-dark">
+                <tr>
+                    <th>Mã Code</th>
+                    <th>Tên chương trình</th>
+                    <th>Loại</th>
+                    <th>Giá trị</th>
+                    <th>Đã dùng / GH</th>
+                    <th>Hạn áp dụng</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${promotions == null or promotions.isEmpty()}">
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="fas fa-ticket-alt fs-2 mb-2 text-light"></i><br>Không tìm thấy mã giảm giá nào.
+                    </td>
+                </tr>
+                <tr th:each="promo : ${promotions}">
+                    <td><span class="code-badge" th:text="${promo.code}">CODE</span></td>
+                    <td class="fw-semibold" th:text="${promo.name}">Name</td>
+                    <td>
+                        <span class="badge text-bg-light border" th:text="${promo.type}">PERCENTAGE</span>
+                    </td>
+                    <td>
+                        <strong class="text-danger" th:if="${promo.type.name() == 'PERCENTAGE'}" th:text="${#numbers.formatDecimal(promo.value, 0, 0)} + '%'">10%</strong>
+                        <strong class="text-danger" th:if="${promo.type.name() == 'FIXED'}" th:text="${#numbers.formatDecimal(promo.value, 0, 'COMMA', 0, 'POINT')} + ' đ'">100,000 đ</strong>
+                    </td>
+                    <td>
+                        <span th:text="${promo.usedCount}">0</span> /
+                        <span th:text="${promo.usageLimit != null ? promo.usageLimit : '∞'}">Vô hạn</span>
+                    </td>
+                    <td style="font-size: 0.85rem;">
+                        <div th:text="${#temporals.format(promo.startDate, 'dd/MM/yyyy HH:mm')}">01/01/2026</div>
+                        <div class="text-muted" th:text="'đến ' + ${#temporals.format(promo.endDate, 'dd/MM/yyyy HH:mm')}">đến 01/02/2026</div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm"
+                                th:classappend="${promo.isActive} ? 'btn-success' : 'btn-secondary'"
+                                th:onclick="'togglePromotion(' + ${promo.id} + ')'"
+                                th:text="${promo.isActive} ? 'Active' : 'Inactive'"
+                                style="width: 75px; font-weight: bold;"
+                                title="Click để Bật/Tắt">
+                            Active
+                        </button>
+                    </td>
+                    <td class="text-center" style="white-space: nowrap;">
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/promotions/{id}/edit(id=${promo.id})}" title="Sửa">
+                            <i class="fas fa-pen"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger ms-1" th:onclick="'deletePromotion(' + ${promo.id} + ')'" title="Xóa">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav th:if="${totalPages != null and totalPages > 1}">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/promotions(page=${currentPage - 1},keyword=${param.keyword},isActive=${param.isActive})}">Trang trước</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/admin/promotions(page=${i},keyword=${param.keyword},isActive=${param.isActive})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/promotions(page=${currentPage + 1},keyword=${param.keyword},isActive=${param.isActive})}">Trang sau</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 
-    <form class="row g-2 mb-3" method="get" th:action="@{/admin/promotions}">
-        <div class="col-md-6"><input class="form-control" type="text" name="keyword" placeholder="Search by code or name..." th:value="${param.keyword}"></div>
-        <div class="col-md-3">
-            <select class="form-select" name="isActive">
-                <option value="">All status</option>
-                <option value="true" th:selected="${param.isActive != null and param.isActive[0] == 'true'}">Active</option>
-                <option value="false" th:selected="${param.isActive != null and param.isActive[0] == 'false'}">Inactive</option>
-            </select>
-        </div>
-        <div class="col-md-3"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
-    </form>
+    <script>
+        const token = document.getElementById('csrfToken').value;
+        const header = document.getElementById('csrfHeader').value;
 
-    <div class="table-responsive bg-white rounded shadow-sm mb-3">
-        <table class="table table-hover mb-0 align-middle">
-            <thead class="table-dark">
-            <tr>
-                <th>Code</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Value</th>
-                <th>Usage</th>
-                <th>Period</th>
-                <th>Status</th>
-                <th class="text-center">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:if="${promotions == null or promotions.isEmpty()}"><td colspan="8" class="text-center text-muted py-4">No promotions found.</td></tr>
-            <tr th:each="promo : ${promotions}">
-                <td><span class="badge text-bg-light" th:text="${promo.code}">CODE</span></td>
-                <td th:text="${promo.name}">Name</td>
-                <td th:text="${promo.type}">PERCENTAGE</td>
-                <td>
-                    <span th:if="${promo.type.name() == 'PERCENTAGE'}" th:text="${promo.value} + '%'">10%</span>
-                    <span th:if="${promo.type.name() == 'FIXED'}" th:text="${promo.value}">10000</span>
-                </td>
-                <td th:text="${promo.usedCount} + ' / ' + ${promo.usageLimit != null ? promo.usageLimit : '-'}">0 / -</td>
-                <td>
-                    <span th:text="${#temporals.format(promo.startDate, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
-                    -
-                    <span th:text="${#temporals.format(promo.endDate, 'dd/MM/yyyy HH:mm')}">01/02/2026</span>
-                </td>
-                <td><span class="badge" th:classappend="${promo.isActive} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${promo.isActive} ? 'Active' : 'Inactive'">Active</span></td>
-                <td class="text-center"><a class="btn btn-sm btn-outline-primary" th:href="@{/admin/promotions/{id}/edit(id=${promo.id})}"><i class="fas fa-pen"></i></a></td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+        // Hàm Bật/Tắt
+        function togglePromotion(id) {
+            fetch('/admin/promotions/' + id + '/toggle', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', [header]: token }
+            })
+                .then(res => res.json())
+                .then(data => { location.reload(); })
+                .catch(error => alert("Đã xảy ra lỗi khi thay đổi trạng thái!"));
+        }
 
-    <nav th:if="${totalPages != null and totalPages > 1}">
-        <ul class="pagination justify-content-center">
-            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                <a class="page-link" th:href="@{/admin/promotions(page=${currentPage - 1},keyword=${param.keyword},isActive=${param.isActive})}">Previous</a>
-            </li>
-            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
-                <a class="page-link" th:href="@{/admin/promotions(page=${i},keyword=${param.keyword},isActive=${param.isActive})}" th:text="${i + 1}">1</a>
-            </li>
-            <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                <a class="page-link" th:href="@{/admin/promotions(page=${currentPage + 1},keyword=${param.keyword},isActive=${param.isActive})}">Next</a>
-            </li>
-        </ul>
-    </nav>
+        // Hàm Xóa có xác nhận
+        function deletePromotion(id) {
+            if(confirm("Bạn có chắc chắn muốn XÓA vĩnh viễn mã giảm giá này không? Mọi dữ liệu liên quan có thể bị ảnh hưởng.")) {
+                fetch('/admin/promotions/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', [header]: token }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message || "Xóa thành công!");
+                        location.reload();
+                    })
+                    .catch(error => alert("Lỗi hệ thống: Không thể xóa mã này!"));
+            }
+        }
+    </script>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

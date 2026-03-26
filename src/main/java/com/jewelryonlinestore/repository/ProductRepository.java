@@ -97,4 +97,20 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
         ORDER BY sold DESC
     """)
     List<Object[]> findTopSellingProducts(Pageable pageable);
+    // Admin: Lọc và tìm kiếm sản phẩm
+    @Query("""
+        SELECT p FROM Product p
+        WHERE (:keyword IS NULL OR :keyword = ''
+               OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:isActive IS NULL OR p.isActive = :isActive)
+        ORDER BY p.createdAt DESC
+    """)
+    Page<Product> adminSearchProducts(
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("isActive") Boolean isActive,
+            Pageable pageable
+    );
 }

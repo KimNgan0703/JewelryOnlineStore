@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="admin_layout(content)">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title} ?: 'Admin Dashboard'">Admin Dashboard</title>
+    <title th:text="${pageTitle} ?: 'Admin Dashboard'">Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -17,6 +17,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             min-height: 100vh;
+            margin: 0;
         }
         .sidebar {
             width: var(--sidebar-width);
@@ -63,197 +64,154 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
         }
         .topbar {
             background: white;
             padding: 15px 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            z-index: 10;
+        }
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .btn-back-dashboard {
+            color: #7f8c8d;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s ease;
+        }
+        .btn-back-dashboard:hover {
+            color: var(--primary-color);
         }
         .topbar-title {
-            font-size: 1.3rem;
-            font-weight: bold;
+            font-size: 1.2rem;
+            font-weight: 600;
             color: var(--secondary-color);
+            margin: 0;
+            padding-left: 15px;
+            border-left: 2px solid #eee;
         }
         .topbar-user {
             display: flex;
             align-items: center;
             gap: 15px;
         }
-        .topbar-user-dropdown {
-            position: relative;
-        }
-        .topbar-user-dropdown a {
+        .topbar-user-dropdown a, .topbar-user-dropdown button {
             color: var(--secondary-color);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-weight: 500;
         }
         .page-content {
-            padding: 30px;
+            padding: 25px;
             flex: 1;
-            overflow-y: auto;
-            background-color: #f8f9fa;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-        .card-header {
-            background-color: var(--primary-color);
-            color: var(--secondary-color);
-            font-weight: bold;
-            border: none;
-        }
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: var(--secondary-color);
-        }
-        .btn-primary:hover {
-            background-color: #c09b2d;
-            border-color: #c09b2d;
-        }
-        .btn-danger {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-        .btn-danger:hover {
-            background-color: #c0392b;
-            border-color: #c0392b;
-        }
-        .table {
-            background-color: white;
-        }
-        .table thead {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        .table th {
-            border: none;
-            font-weight: bold;
-        }
-        .table-hover tbody tr:hover {
-            background-color: #f1ede1;
-        }
-        .stat-card {
-            padding: 20px;
-            border-radius: 8px;
-            color: white;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .stat-card.primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #c09b2d 100%);
-            color: var(--secondary-color);
-        }
-        .stat-card.success {
-            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
-        }
-        .stat-card.info {
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-        }
-        .stat-card.warning {
-            background: linear-gradient(135deg, #f39c12 0%, #d68910 100%);
-        }
-        .stat-card h4 {
-            margin-bottom: 10px;
-        }
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: bold;
-        }
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-                z-index: 1000;
-            }
-            .sidebar.show {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            :root {
-                --sidebar-width: 0;
-            }
+            background-color: #f4f6f9;
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-brand">
-            <i class="fas fa-gem"></i> Admin
-        </div>
-        <ul class="sidebar-menu">
-            <li><a href="/admin/dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="/admin/products"><i class="fas fa-box"></i> Products</a></li>
-            <li><a href="/admin/categories"><i class="fas fa-list"></i> Categories</a></li>
-            <li><a href="/admin/orders"><i class="fas fa-shopping-bag"></i> Orders</a></li>
-            <li><a href="/admin/customers"><i class="fas fa-users"></i> Customers</a></li>
-            <li><a href="/admin/inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
-            <li><a href="/admin/promotions"><i class="fas fa-percentage"></i> Promotions</a></li>
-            <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
-            <li><a href="/admin/content"><i class="fas fa-file"></i> Content</a></li>
-            <li><a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a></li>
-            <li><hr style="margin: 10px 0; border-color: rgba(255, 255, 255, 0.1);"></li>
-            <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-        </ul>
-    </aside>
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <i class="fas fa-gem"></i> Admin
+    </div>
+    <ul class="sidebar-menu">
+        <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="/admin/products"><i class="fas fa-box"></i> Products</a></li>
+        <li><a href="/admin/products/categories"><i class="fas fa-list"></i> Categories</a></li>
+        <li><a href="/admin/orders"><i class="fas fa-shopping-bag"></i> Orders</a></li>
+        <li><a href="/admin/customers"><i class="fas fa-users"></i> Customers</a></li>
+        <li><a href="/admin/inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
+        <li><a href="/admin/promotions"><i class="fas fa-percentage"></i> Promotions</a></li>
+        <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
+        <li><a href="/admin/content/banners"><i class="fas fa-file"></i> Content</a></li>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Top Bar -->
-        <div class="topbar">
-            <div class="topbar-title">
-                <span th:text="${pageTitle} ?: 'Dashboard'">Dashboard</span>
-            </div>
-            <div class="topbar-user">
-                <input class="form-control form-control-sm" style="width: 200px;" type="text" placeholder="Search...">
-                <div class="topbar-user-dropdown">
-                    <a href="#" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle"></i>
-                        <span th:text="${#authentication.principal.username} ?: 'Admin'">Admin</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/admin/profile">My Profile</a></li>
-                        <li><a class="dropdown-item" href="/admin/settings">Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
-                    </ul>
-                </div>
-            </div>
+        <li><hr style="margin: 10px 0; border-color: rgba(255, 255, 255, 0.1);"></li>
+
+        <li>
+            <form th:action="@{/auth/logout}" method="post" class="m-0 p-0">
+                <a href="#" onclick="this.closest('form').submit(); return false;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </form>
+        </li>
+    </ul>
+</aside>
+
+<div class="main-content">
+    <div class="topbar">
+        <div class="topbar-left">
+            <a th:if="${pageTitle != null and pageTitle != 'Dashboard'}"
+               href="/admin/dashboard"
+               class="btn-back-dashboard">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+            <h1 class="topbar-title" th:text="${pageTitle} ?: 'Dashboard'">Dashboard</h1>
         </div>
 
-        <!-- Page Content -->
-        <div class="page-content" th:fragment="content">
-            <!-- Content will be inserted here -->
+        <div class="topbar-user">
+            <div class="dropdown topbar-user-dropdown">
+                <a href="#" data-bs-toggle="dropdown" class="dropdown-toggle">
+                    <i class="fas fa-user-circle fs-4"></i>
+                    <span th:text="${#authentication.principal.username} ?: 'Admin'">Admin</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+                    <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user-cog me-2"></i> My Profile</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form th:action="@{/auth/logout}" method="post" class="m-0 p-0">
+                            <button type="submit" class="dropdown-item text-danger" style="border: none; background: none; width: 100%; text-align: left;">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize tooltips
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
+    <div class="page-content">
+        <div th:replace="${content}"></div>
+    </div>
+</div>
 
-            // Set active menu item
-            const currentPath = window.location.pathname;
-            document.querySelectorAll('.sidebar-menu a').forEach(function(link) {
-                if (link.getAttribute('href') === currentPath) {
-                    link.classList.add('active');
-                }
-            });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+        const menuLinks = document.querySelectorAll('.sidebar-menu a');
+
+        menuLinks.forEach(function(link) {
+            link.classList.remove('active');
+            const href = link.getAttribute('href');
+
+            if (href === '#') return; // Bỏ qua link của nút dropdown và logout
+
+            // Logic bắt menu chính xác, không bị dính chùm
+            if (currentPath === href) {
+                link.classList.add('active');
+            } else if (href === '/admin/products' && currentPath.startsWith('/admin/products') && !currentPath.includes('categories')) {
+                link.classList.add('active');
+            } else if (href !== '/admin/dashboard' && href !== '/admin/products' && currentPath.startsWith(href)) {
+                link.classList.add('active');
+            }
         });
-    </script>
+
+        if(currentPath === '/admin/dashboard' || currentPath === '/admin' || currentPath === '/admin/') {
+            const dashboardLink = document.querySelector('.sidebar-menu a[href="/admin/dashboard"]');
+            if (dashboardLink) dashboardLink.classList.add('active');
+        }
+    });
+</script>
 </body>
 </html>

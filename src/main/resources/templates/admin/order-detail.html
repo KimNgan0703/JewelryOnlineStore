@@ -1,151 +1,178 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Detail - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
-        }
-        .page-shell {
-            padding: 30px;
-            background: #f8f9fa;
-        }
-        .card-soft {
-            background: #fff;
-            border: 0;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        .block-title {
-            color: var(--secondary-color);
-            font-size: 1.05rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-        .status-pill {
-            border-radius: 20px;
-            padding: 6px 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            background: #fff6e6;
-            color: #b7791f;
-        }
-        .timeline {
-            border-left: 2px solid #dee2e6;
-            padding-left: 14px;
-        }
-        .timeline-item {
-            position: relative;
-            margin-bottom: 16px;
-        }
-        .timeline-item::before {
-            content: "";
-            position: absolute;
-            left: -20px;
-            top: 4px;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--primary-color);
-        }
-    </style>
 </head>
 <body>
-<div class="page-shell">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-0" style="color: var(--secondary-color);">Order #ORD-20260319-01</h1>
-            <p class="text-muted mb-0">Created on 19/03/2026 at 10:12</p>
-        </div>
-        <div class="d-flex gap-2 align-items-center">
-            <span class="status-pill">Processing</span>
-            <button class="btn btn-outline-secondary"><i class="fas fa-print me-1"></i> Print</button>
-        </div>
-    </div>
+<div id="admin-content">
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .page-shell { padding: 10px 0; background: #f4f6f9; }
+        .card-soft { background: #fff; border: 0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+        .block-title { color: var(--secondary-color); font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;}
+        .status-pill { border-radius: 20px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600; background: #fff6e6; color: #b7791f; }
+    </style>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card-soft p-3 mb-4">
-                <div class="block-title">Order Items</div>
-                <div class="table-responsive">
-                    <table class="table align-middle mb-0">
-                        <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th class="text-center">Qty</th>
-                            <th class="text-end">Unit Price</th>
-                            <th class="text-end">Subtotal</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>18K Gold Ring - Aurora</td>
-                            <td class="text-center">1</td>
-                            <td class="text-end">$420.00</td>
-                            <td class="text-end">$420.00</td>
-                        </tr>
-                        <tr>
-                            <td>Pearl Earrings - Luna</td>
-                            <td class="text-center">2</td>
-                            <td class="text-end">$95.00</td>
-                            <td class="text-end">$190.00</td>
-                        </tr>
-                        </tbody>
-                    </table>
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
+    <div class="page-shell">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-0" style="color: var(--secondary-color);" th:text="'Đơn hàng #' + ${order.orderNumber}">Order #123</h1>
+                <p class="text-muted mb-0" th:text="'Tạo lúc: ' + ${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">Created on...</p>
+            </div>
+
+            <div class="d-flex gap-2 align-items-center">
+                <span class="status-pill me-2" th:text="${order.orderStatusLabel}">Processing</span>
+
+                <th:block th:if="${order.orderStatus != 'cancelled' and order.orderStatus != 'delivered'}">
+                    <select id="newStatus" class="form-select form-select-sm" style="width: auto;">
+                        <option value="PENDING" th:selected="${order.orderStatus == 'pending'}">Chờ xác nhận</option>
+                        <option value="PROCESSING" th:selected="${order.orderStatus == 'processing'}">Đang xử lý</option>
+                        <option value="PREPARING" th:selected="${order.orderStatus == 'preparing'}">Đang chuẩn bị</option>
+                        <option value="SHIPPING" th:selected="${order.orderStatus == 'shipping'}">Đang giao hàng</option>
+                        <option value="DELIVERED" th:selected="${order.orderStatus == 'delivered'}">Đã giao hàng</option>
+                        <option value="CANCELLED" th:selected="${order.orderStatus == 'cancelled'}">Hủy đơn</option>
+                    </select>
+                    <button onclick="updateOrderStatus()" class="btn btn-sm btn-dark">Cập nhật trạng thái</button>
+                </th:block>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card-soft p-3 mb-4">
+                    <div class="block-title">Chi tiết sản phẩm</div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Đơn giá</th>
+                                <th class="text-end">Thành tiền</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="item : ${order.items}">
+                                <td>
+                                    <div class="fw-bold" th:text="${item.productName}">Tên SP</div>
+                                    <small class="text-muted" th:text="'Phân loại: ' + ${item.variantSize}">Size</small>
+                                </td>
+                                <td class="text-center" th:text="${item.quantity}">1</td>
+                                <td class="text-end" th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">$0</td>
+                                <td class="text-end fw-bold text-danger" th:text="${#numbers.formatDecimal(item.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">$0</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div th:if="${order.note != null and !order.note.isEmpty()}" class="card-soft p-3 mb-4">
+                    <div class="block-title">Ghi chú của khách hàng</div>
+                    <p class="mb-0 text-danger" th:text="${order.note}"></p>
+                </div>
+
+                <div th:if="${order.cancelledReason != null}" class="card-soft p-3 mb-4 bg-light border border-danger">
+                    <div class="block-title text-danger">Lý do hủy đơn</div>
+                    <p class="mb-0 fw-bold" th:text="${order.cancelledReason}"></p>
                 </div>
             </div>
 
-            <div class="card-soft p-3">
-                <div class="block-title">Order Timeline</div>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="fw-semibold">Order placed</div>
-                        <small class="text-muted">19/03/2026 10:12</small>
+            <div class="col-lg-4">
+                <div class="card-soft p-3 mb-4">
+                    <div class="block-title">Thông tin giao hàng</div>
+                    <div class="mb-1"><i class="fas fa-user text-muted me-2"></i><strong th:text="${order.snapRecipientName}">Tên</strong></div>
+                    <div class="mb-1"><i class="fas fa-phone text-muted me-2"></i><span th:text="${order.snapPhone}">Phone</span></div>
+                    <div class="mb-1 d-flex align-items-start">
+                        <i class="fas fa-map-marker-alt text-muted me-2 mt-1"></i>
+                        <span th:text="${order.snapAddress}">Địa chỉ</span>
                     </div>
-                    <div class="timeline-item">
-                        <div class="fw-semibold">Payment confirmed</div>
-                        <small class="text-muted">19/03/2026 10:15</small>
+                </div>
+
+                <div class="card-soft p-3">
+                    <div class="block-title">Tóm tắt thanh toán</div>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Phương thức</span>
+                        <strong class="text-dark" th:text="${order.paymentMethodLabel}">COD</strong>
                     </div>
-                    <div class="timeline-item mb-0">
-                        <div class="fw-semibold">Packed and waiting for shipment</div>
-                        <small class="text-muted">19/03/2026 13:40</small>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Trạng thái TT</span>
+                        <span class="badge bg-success" th:if="${order.paymentStatus == 'paid'}">Đã thanh toán</span>
+                        <span class="badge bg-warning text-dark" th:if="${order.paymentStatus == 'pending'}">Chưa thanh toán</span>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tổng tiền hàng</span>
+                        <strong th:text="${#numbers.formatDecimal(order.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Phí vận chuyển</span>
+                        <strong th:text="${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</strong>
+                    </div>
+                    <div th:if="${order.discountAmount > 0}" class="d-flex justify-content-between mb-2">
+                        <span>Mã giảm giá <span th:if="${order.appliedCouponCode}" th:text="'(' + ${order.appliedCouponCode} + ')'"></span></span>
+                        <strong class="text-success" th:text="'- ' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">- 0</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5">
+                        <span class="fw-bold">Thanh Toán</span>
+                        <strong style="color: var(--primary-color);" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">0</strong>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-4">
-            <div class="card-soft p-3 mb-4">
-                <div class="block-title">Customer</div>
-                <div class="mb-2"><strong>Nguyen Van A</strong></div>
-                <div class="text-muted">nguyenvana@email.com</div>
-                <div class="text-muted">+84 901 234 567</div>
-            </div>
-
-            <div class="card-soft p-3 mb-4">
-                <div class="block-title">Shipping Address</div>
-                <div>12 Nguyen Trai Street</div>
-                <div>District 1, Ho Chi Minh City</div>
-                <div>Vietnam</div>
-            </div>
-
-            <div class="card-soft p-3">
-                <div class="block-title">Payment Summary</div>
-                <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><strong>$610.00</strong></div>
-                <div class="d-flex justify-content-between mb-2"><span>Shipping</span><strong>$10.00</strong></div>
-                <div class="d-flex justify-content-between mb-2"><span>Discount</span><strong class="text-success">-$20.00</strong></div>
-                <hr>
-                <div class="d-flex justify-content-between"><span class="fw-semibold">Total</span><strong style="color: var(--primary-color);">$600.00</strong></div>
-            </div>
-        </div>
     </div>
+
+    <script>
+        function updateOrderStatus() {
+            const statusSelect = document.getElementById('newStatus');
+            const statusValue = statusSelect.value;
+            const orderNum = "[[${order.orderNumber}]]";
+            const token = document.getElementById('csrfToken').value;
+            const header = document.getElementById('csrfHeader').value;
+
+            let cancelReason = "";
+            if(statusValue === 'CANCELLED') {
+                cancelReason = prompt("Vui lòng nhập lý do hủy đơn hàng này:");
+                if(cancelReason === null) return; // Người dùng bấm Cancel trên hộp thoại
+            }
+
+            // FIX: Đổi key 'status' thành 'newStatus' để khớp với UpdateOrderStatusRequest của Java
+            const payload = {
+                newStatus: statusValue,
+                note: "Admin cập nhật trạng thái",
+                cancelledReason: cancelReason
+            };
+
+            fetch(`/admin/orders/${orderNum}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [header]: token
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(res => {
+                    if(!res.ok) throw new Error("Cập nhật thất bại");
+                    return res.json();
+                })
+                .then(data => {
+                    alert(data.message || 'Cập nhật trạng thái thành công!');
+                    location.reload();
+                })
+                .catch(err => {
+                    alert("Đã xảy ra lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
+                    console.error(err);
+                });
+        }
+    </script>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

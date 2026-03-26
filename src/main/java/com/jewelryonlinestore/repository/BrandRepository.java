@@ -9,4 +9,6 @@ import java.util.List;
 public interface BrandRepository extends JpaRepository<Brand, Long> {
     List<Brand> findByIsActiveTrueOrderByNameAsc();
     List<Brand> findAllByOrderByNameAsc();
+    // Thêm dòng này
+    boolean existsByNameIgnoreCase(String name);
 }

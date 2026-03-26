@@ -30,7 +30,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductVariantRepository productVariantRepository;
     private final CategoryRepository       categoryRepository;
     private final FileStorageService       fileStorageService;
-    // ✅ Inject trực tiếp thay vì dùng findAll() + map
     private final BrandRepository          brandRepository;
     private final MaterialRepository       materialRepository;
 
@@ -39,13 +38,13 @@ public class ProductServiceImpl implements ProductService {
     public Page<ProductCardResponse> filterProducts(ProductFilterRequest filter) {
         Sort sort = buildSort(filter.getSortBy());
         Page<Product> page = productRepository.filterProducts(
-                filter.getKeyword(),        // ← thêm
+                filter.getKeyword(),
                 filter.getCategoryId(),
                 filter.getBrandId(),
-                filter.getMaterialId(),     // ← thêm
+                filter.getMaterialId(),
                 filter.getMinPrice(),
                 filter.getMaxPrice(),
-                filter.getInStockOnly(),    // ← thêm
+                filter.getInStockOnly(),
                 PageRequest.of(filter.getPage(), filter.getSize(), sort));
         return page.map(this::toCard);
     }
@@ -100,7 +99,6 @@ public class ProductServiceImpl implements ProductService {
                 .stream().map(this::toCard).toList();
     }
 
-    // ✅ Lấy trực tiếp từ BrandRepository
     @Override
     @Transactional(readOnly = true)
     public List<Brand> getAllBrands() {
@@ -117,7 +115,6 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
-    // ✅ Lấy trực tiếp từ MaterialRepository
     @Override
     @Transactional(readOnly = true)
     public List<Material> getAllMaterials() {
@@ -128,7 +125,13 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductResponse> adminSearchProducts(String keyword, Long categoryId,
                                                      Boolean isActive, int page, int size) {
-        return productRepository.findAll(PageRequest.of(page, size)).map(this::toResponse);
+        // Truyền các biến lọc vào đúng hàm adminSearchProducts của Repository
+        return productRepository.adminSearchProducts(
+                keyword == null || keyword.isBlank() ? null : keyword.trim(),
+                categoryId,
+                isActive,
+                PageRequest.of(page, size)
+        ).map(this::toResponse);
     }
 
     @Override
@@ -153,14 +156,13 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Ảnh đã được upload lên Cloudinary từ browser — chỉ cần lưu URL vào DB
         List<String> imageUrls = req.getImageUrlList();
         if (!imageUrls.isEmpty()) {
             for (int i = 0; i < imageUrls.size(); i++) {
                 ProductImage image = ProductImage.builder()
                         .product(saved)
                         .imageUrl(imageUrls.get(i))
-                        .isPrimary(i == 0)   // ảnh đầu tiên là primary
+                        .isPrimary(i == 0)
                         .sortOrder(i)
                         .build();
                 saved.getImages().add(image);
@@ -178,11 +180,9 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
         applyRequest(product, req);
 
-        // Cập nhật variant đầu tiên (biến thể mặc định)
         if (req.getVariants() != null && !req.getVariants().isEmpty()) {
             AdminProductRequest.VariantRequest vReq = req.getVariants().get(0);
             if (product.getVariants() != null && !product.getVariants().isEmpty()) {
-                // Sửa variant hiện có
                 ProductVariant existing = product.getVariants().get(0);
                 existing.setSize(vReq.getSize());
                 existing.setPrice(vReq.getPrice());
@@ -190,7 +190,6 @@ public class ProductServiceImpl implements ProductService {
                 existing.setLowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold());
                 productVariantRepository.save(existing);
             } else {
-                // Tạo mới nếu chưa có
                 ProductVariant variant = ProductVariant.builder()
                         .product(product)
                         .sku(product.getSku() + "-" + vReq.getSize())
@@ -204,16 +203,12 @@ public class ProductServiceImpl implements ProductService {
             }
         }
 
-        // Đồng bộ ảnh: xóa hết ảnh cũ, lưu lại toàn bộ danh sách URL từ form
-        // (form gửi lên cả ảnh cũ còn giữ + ảnh mới upload, đã được JS quản lý)
         List<String> imageUrls = req.getImageUrlList();
 
-        // Xóa toàn bộ ảnh cũ trong DB
         if (product.getImages() != null) {
             product.getImages().clear();
         }
 
-        // Lưu lại danh sách mới (thứ tự đúng như trên form)
         if (!imageUrls.isEmpty()) {
             if (product.getImages() == null) {
                 product.setImages(new java.util.ArrayList<>());
@@ -222,7 +217,7 @@ public class ProductServiceImpl implements ProductService {
                 ProductImage image = ProductImage.builder()
                         .product(product)
                         .imageUrl(imageUrls.get(i))
-                        .isPrimary(i == 0) // ảnh đầu tiên luôn là primary
+                        .isPrimary(i == 0)
                         .sortOrder(i)
                         .build();
                 product.getImages().add(image);
@@ -230,6 +225,38 @@ public class ProductServiceImpl implements ProductService {
         }
 
         productRepository.save(product);
+    }
+
+    @Override
+    @Transactional
+    public Brand createBrand(String name) {
+        String cleanName = name.trim();
+
+        // Kiểm tra trùng lặp
+        if (brandRepository.existsByNameIgnoreCase(cleanName)) {
+            throw new IllegalArgumentException("Thương hiệu '" + cleanName + "' đã tồn tại!");
+        }
+
+        Brand brand = new Brand();
+        brand.setName(cleanName);
+        brand.setSlug(toSlug(cleanName));
+        brand.setActive(true);
+        return brandRepository.save(brand);
+    }
+
+    @Override
+    @Transactional
+    public Material createMaterial(String name) {
+        String cleanName = name.trim();
+
+        // Kiểm tra trùng lặp
+        if (materialRepository.existsByNameIgnoreCase(cleanName)) {
+            throw new IllegalArgumentException("Chất liệu '" + cleanName + "' đã tồn tại!");
+        }
+
+        Material material = new Material();
+        material.setName(cleanName);
+        return materialRepository.save(material);
     }
 
     @Override
@@ -271,7 +298,6 @@ public class ProductServiceImpl implements ProductService {
         req.setMetaTitle(p.getMetaTitle());
         req.setMetaDescription(p.getMetaDescription());
 
-        // FIX: map variants từ DB vào DTO — nếu thiếu thì @NotEmpty/@NotNull sẽ fail khi submit
         if (p.getVariants() != null && !p.getVariants().isEmpty()) {
             java.util.List<AdminProductRequest.VariantRequest> variantRequests = p.getVariants().stream()
                     .filter(v -> v.isActive())
@@ -286,12 +312,10 @@ public class ProductServiceImpl implements ProductService {
                     .collect(java.util.stream.Collectors.toList());
             req.setVariants(variantRequests);
         } else {
-            // Đảm bảo luôn có ít nhất 1 variant rỗng để form render được
             AdminProductRequest.VariantRequest emptyVariant = new AdminProductRequest.VariantRequest();
             req.setVariants(java.util.List.of(emptyVariant));
         }
 
-        // Truyền URLs ảnh hiện tại vào hidden field để form edit hiển thị đúng
         if (p.getImages() != null && !p.getImages().isEmpty()) {
             String urls = p.getImages().stream()
                     .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
@@ -301,8 +325,6 @@ public class ProductServiceImpl implements ProductService {
         }
         return req;
     }
-
-    // ── Private helpers ──────────────────────────────────
 
     private void applyRequest(Product product, AdminProductRequest req) {
         product.setName(req.getName());
@@ -324,6 +346,16 @@ public class ProductServiceImpl implements ProductService {
             Category category = categoryRepository.findById(req.getCategoryId())
                     .orElseThrow(() -> new IllegalArgumentException("Category not found: " + req.getCategoryId()));
             product.setCategory(category);
+        }
+        if (req.getBrandId() != null) {
+            Brand brand = brandRepository.findById(req.getBrandId())
+                    .orElseThrow(() -> new IllegalArgumentException("Brand not found: " + req.getBrandId()));
+            product.setBrand(brand);
+        }
+        if (req.getMaterialId() != null) {
+            Material material = materialRepository.findById(req.getMaterialId())
+                    .orElseThrow(() -> new IllegalArgumentException("Material not found: " + req.getMaterialId()));
+            product.setMaterial(material);
         }
     }
 

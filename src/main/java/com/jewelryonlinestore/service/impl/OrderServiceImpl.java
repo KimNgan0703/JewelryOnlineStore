@@ -46,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository   addressRepository;
     private final CartRepository      cartRepository;
     private final CartItemRepository  cartItemRepository;
-    private final PromotionService    promotionService;   // ← thêm
+    private final PromotionService    promotionService;
 
     @Override
     @Transactional
@@ -65,7 +65,6 @@ public class OrderServiceImpl implements OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal shippingFee = BigDecimal.ZERO;
 
-        // ── Áp dụng coupon nếu có ────────────────────────
         BigDecimal discountAmount  = BigDecimal.ZERO;
         Promotion  appliedPromotion = null;
         if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
@@ -87,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
                 .snapRecipientName(address.getRecipientName())
                 .snapPhone(address.getPhone())
                 .snapAddress(address.getFullAddress())
-                .promotion(appliedPromotion)        // ← thêm
+                .promotion(appliedPromotion)
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
                 .shippingFee(shippingFee)
@@ -103,7 +102,6 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // Tăng usage count nếu có coupon
         if (appliedPromotion != null) {
             promotionService.incrementUsedCount(appliedPromotion.getId());
         }
@@ -140,7 +138,7 @@ public class OrderServiceImpl implements OrderService {
                 ? orderRepository.findByCustomerIdOrderByCreatedAtDesc(
                 customer.getId(), PageRequest.of(page, size))
                 : orderRepository.findByCustomerIdAndOrderStatusInOrderByCreatedAtDesc(
-                customer.getId(), List.of(status), PageRequest.of(page, size));
+                customer.getId(), List.of(status.toUpperCase()), PageRequest.of(page, size));
         return orders.map(this::toSummary);
     }
 
@@ -164,7 +162,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public int reorder(String orderNumber, Authentication auth, HttpSession session) {
-        return 0;
+        return 0; // Chưa implement chi tiết
     }
 
     @Override
@@ -172,8 +170,18 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderSummaryResponse> adminSearchOrders(String keyword, String status,
                                                         LocalDateTime from, LocalDateTime to,
                                                         int page, int size) {
+        // CHUYỂN ĐỔI STRING SANG ENUM TRƯỚC KHI TÌM KIẾM
+        Order.OrderStatus statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                statusEnum = Order.OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                // Bỏ qua nếu chuỗi status không hợp lệ
+            }
+        }
+
         return orderRepository
-                .searchOrders(blankToNull(keyword), blankToNull(status), from, to, PageRequest.of(page, size))
+                .searchOrders(blankToNull(keyword), statusEnum, from, to, PageRequest.of(page, size))
                 .map(this::toSummary);
     }
 
@@ -184,6 +192,11 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
         order.setOrderStatus(Order.OrderStatus.valueOf(req.getNewStatus().toUpperCase(Locale.ROOT)));
+
+        if ("CANCELLED".equalsIgnoreCase(req.getNewStatus())) {
+            order.setCancelledReason(req.getCancelledReason());
+        }
+
         order.setUpdatedAt(LocalDateTime.now());
         return toDetail(orderRepository.save(order));
     }
@@ -313,7 +326,7 @@ public class OrderServiceImpl implements OrderService {
                 .itemCount(order.getItems() == null ? 0 : order.getItems().size())
                 .firstProductName(order.getItems() == null || order.getItems().isEmpty()
                         ? null : order.getItems().get(0).getProductName())
-                .firstProductImage(null)
+                .firstProductImage(null) // Cần fetch ProductImage nếu muốn hiển thị ảnh
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
                 .build();

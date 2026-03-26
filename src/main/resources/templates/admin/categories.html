@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
+<head>
+    <title>Categories Management - Admin</title>
+</head>
+<body>
+<div id="admin-content">
+
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .page-shell { padding: 10px 0; background-color: #f4f6f9; min-height: 100vh;}
+        .table-wrap { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); overflow: hidden; }
+    </style>
+
+    <div class="page-shell">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-0 h3" style="color: var(--secondary-color);">Quản Lý Danh Mục</h1>
+                <p class="text-muted mb-0">Xem và xóa các danh mục sản phẩm.</p>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/admin/products}">
+                <i class="fas fa-arrow-left me-1"></i> Về ds Sản phẩm
+            </a>
+        </div>
+
+        <div class="table-wrap mb-3 table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-dark">
+                <tr>
+                    <th class="ps-3">ID</th>
+                    <th>Tên Danh Mục</th>
+                    <th>Đường dẫn (Slug)</th>
+                    <th>Trạng thái</th>
+                    <th class="text-center pe-3">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${categories == null or categories.isEmpty()}">
+                    <td colspan="5" class="text-center text-muted py-5">
+                        <i class="fas fa-folder-open fs-2 mb-2 text-light"></i><br>Chưa có danh mục nào.
+                    </td>
+                </tr>
+                <tr th:each="cat : ${categories}">
+                    <td class="ps-3" th:text="${cat.id}">1</td>
+                    <td class="fw-semibold text-primary" th:text="${cat.name}">Nhẫn cưới</td>
+                    <td><code class="text-muted" th:text="${cat.slug}">nhan-cuoi</code></td>
+                    <td>
+                        <span class="badge" th:classappend="${cat.isActive} ? 'text-bg-success' : 'text-bg-secondary'"
+                              th:text="${cat.isActive} ? 'Đang hoạt động' : 'Đang ẩn'"></span>
+                    </td>
+                    <td class="text-center pe-3">
+                        <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteCategory(' + ${cat.id} + ')'" title="Xóa danh mục">
+                            <i class="fas fa-trash"></i> Xóa
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function deleteCategory(id) {
+            if(confirm("Bạn có chắc chắn muốn XÓA danh mục này không?")) {
+                const token = document.getElementById('csrfToken').value;
+                const header = document.getElementById('csrfHeader').value;
+
+                fetch('/admin/products/categories/' + id, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', [header]: token }
+                })
+                    .then(async res => {
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.message || "Không thể xóa danh mục!");
+                        return data;
+                    })
+                    .then(data => {
+                        alert(data.message);
+                        location.reload(); // Tải lại trang để cập nhật bảng
+                    })
+                    .catch(error => {
+                        alert(error.message); // Sẽ hiện thông báo nếu danh mục đang dính tới sản phẩm
+                    });
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

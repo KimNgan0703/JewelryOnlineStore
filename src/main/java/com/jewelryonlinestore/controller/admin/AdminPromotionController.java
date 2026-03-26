@@ -13,9 +13,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/**
- * A07 — Quản lý khuyến mãi / mã giảm giá.
- */
 @Controller
 @RequestMapping("/admin/promotions")
 @RequiredArgsConstructor
@@ -25,17 +22,15 @@ public class AdminPromotionController {
     private final PromotionService promotionService;
 
     @GetMapping
-    public String promotionList(@RequestParam(defaultValue = "")  String keyword,
-                                @RequestParam(required = false)   Boolean isActive,
+    public String promotionList(@RequestParam(defaultValue = "") String keyword,
+                                @RequestParam(required = false) Boolean isActive,
                                 @RequestParam(defaultValue = "0") int page,
                                 Model model) {
         var promotions = promotionService.searchPromotions(keyword, isActive, page, 15);
-        model.addAttribute("promotions",  promotions.getContent());
+        model.addAttribute("promotions", promotions.getContent());
         model.addAttribute("currentPage", promotions.getNumber());
-        model.addAttribute("totalPages",  promotions.getTotalPages());
-        model.addAttribute("promotionRequest", new PromotionRequest());
-        model.addAttribute("isEdit", false);
-        model.addAttribute("pageTitle",   "Quản Lý Khuyến Mãi");
+        model.addAttribute("totalPages", promotions.getTotalPages());
+        model.addAttribute("pageTitle", "Quản Lý Khuyến Mãi");
         return "admin/promotions";
     }
 
@@ -43,18 +38,19 @@ public class AdminPromotionController {
     public String newForm(Model model) {
         model.addAttribute("promotionRequest", new PromotionRequest());
         model.addAttribute("isEdit", false);
-        model.addAttribute("pageTitle",        "Tạo Mã Khuyến Mãi");
-        return "admin/promotions";
+        model.addAttribute("pageTitle", "Tạo Mã Khuyến Mãi");
+        // FIX: Đổi đường dẫn trả về đúng tên file HTML của form
+        return "admin/promotion-form";
     }
 
     @PostMapping
-    public String create(@Valid @ModelAttribute PromotionRequest req,
-                         BindingResult result, Model model,
-                         RedirectAttributes redirectAttr) {
+    public String create(@Valid @ModelAttribute("promotionRequest") PromotionRequest req,
+                         BindingResult result, Model model, RedirectAttributes redirectAttr) {
         if (result.hasErrors()) {
-            model.addAttribute("promotions", promotionService.searchPromotions("", null, 0, 15).getContent());
             model.addAttribute("isEdit", false);
-            return "admin/promotions";
+            model.addAttribute("pageTitle", "Tạo Mã Khuyến Mãi");
+            // FIX: Khi lỗi validate, trả lại đúng trang form để hiển thị thông báo lỗi đỏ
+            return "admin/promotion-form";
         }
         promotionService.createPromotion(req);
         redirectAttr.addFlashAttribute("toast_success", "Tạo khuyến mãi thành công!");
@@ -63,21 +59,24 @@ public class AdminPromotionController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("promotions", promotionService.searchPromotions("", null, 0, 15).getContent());
         model.addAttribute("promotionRequest", promotionService.getPromotionForEdit(id));
         model.addAttribute("isEdit", true);
-        model.addAttribute("pageTitle",        "Sửa Khuyến Mãi");
-        return "admin/promotions";
+        // FIX: Thêm biến promoId để giao diện biết đang sửa mã nào
+        model.addAttribute("promoId", id);
+        model.addAttribute("pageTitle", "Sửa Khuyến Mãi");
+        return "admin/promotion-form";
     }
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id,
-                         @Valid @ModelAttribute PromotionRequest req,
+                         @Valid @ModelAttribute("promotionRequest") PromotionRequest req,
                          BindingResult result, Model model, RedirectAttributes redirectAttr) {
         if (result.hasErrors()) {
-            model.addAttribute("promotions", promotionService.searchPromotions("", null, 0, 15).getContent());
             model.addAttribute("isEdit", true);
-            return "admin/promotions";
+            // FIX: Cấp lại promoId nếu form bị lỗi nhập liệu để không bị mất đường dẫn
+            model.addAttribute("promoId", id);
+            model.addAttribute("pageTitle", "Sửa Khuyến Mãi");
+            return "admin/promotion-form";
         }
         promotionService.updatePromotion(id, req);
         redirectAttr.addFlashAttribute("toast_success", "Cập nhật thành công!");
@@ -90,5 +89,15 @@ public class AdminPromotionController {
         boolean active = promotionService.toggleActive(id);
         return ResponseEntity.ok(ApiResponse.ok(active ? "Đã bật" : "Đã tắt", active));
     }
-}
 
+    @DeleteMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Void>> deletePromotion(@PathVariable Long id) {
+        try {
+            promotionService.deletePromotion(id);
+            return ResponseEntity.ok(ApiResponse.ok("Đã xóa khuyến mãi thành công!", null));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Không thể xóa: " + e.getMessage()));
+        }
+    }
+}

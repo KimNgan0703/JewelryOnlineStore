@@ -15,4 +15,5 @@ public interface PromotionService {
     boolean              toggleActive(Long id);
     PromotionRequest     getPromotionForEdit(Long id);
     void                 incrementUsedCount(Long promotionId);
+    void deletePromotion(Long id);
 }

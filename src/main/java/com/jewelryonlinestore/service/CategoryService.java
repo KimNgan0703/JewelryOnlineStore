@@ -9,5 +9,8 @@ public interface CategoryService {
 	List<Category> getAllCategories();
 	List<Category> getAllCategoriesTree();
 	Category getCategoryBySlug(String slug);
-}
 
+	// API hỗ trợ thêm nhanh Category từ form Admin
+	Category createCategory(String name);
+	void deleteCategory(Long id);
+}

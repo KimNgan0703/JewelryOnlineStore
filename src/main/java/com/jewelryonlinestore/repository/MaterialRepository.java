@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface MaterialRepository extends JpaRepository<Material, Long> {
     List<Material> findAllByOrderByNameAsc();
+    // Thêm dòng này
+    boolean existsByNameIgnoreCase(String name);
 }

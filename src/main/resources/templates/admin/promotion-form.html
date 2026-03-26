@@ -96,39 +96,26 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Danh mục (Category) *</label>
+                                <label class="form-label">Danh mục</label>
                                 <div class="input-group">
                                     <select class="form-select" th:field="*{categoryId}" id="categoryId">
                                         <option value="">-- Chọn Danh mục --</option>
                                         <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
                                     </select>
-                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddCategory" title="Thêm nhanh">
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddCategory" title="Thêm Danh mục mới">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Thương hiệu (Brand)</label>
+                                <label class="form-label">Thương hiệu</label>
                                 <div class="input-group">
                                     <select class="form-select" th:field="*{brandId}" id="brandId">
                                         <option value="">-- Chọn Thương hiệu --</option>
                                         <option th:each="brand : ${brands}" th:value="${brand.id}" th:text="${brand.name}"></option>
                                     </select>
-                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddBrand" title="Thêm nhanh">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Chất liệu (Material)</label>
-                                <div class="input-group">
-                                    <select class="form-select" th:field="*{materialId}" id="materialId">
-                                        <option value="">-- Chọn Chất liệu --</option>
-                                        <option th:each="mat : ${materials}" th:value="${mat.id}" th:text="${mat.name}"></option>
-                                    </select>
-                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddMaterial" title="Thêm nhanh">
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddBrand" title="Thêm Thương hiệu mới">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
@@ -142,8 +129,7 @@
                                     <option value="female">Nữ</option>
                                 </select>
                             </div>
-
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <label class="form-label">Trọng lượng (Gram)</label>
                                 <input type="number" step="0.01" class="form-control" th:field="*{weightGram}" placeholder="4.5">
                             </div>
@@ -297,34 +283,12 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalQuickAddMaterial" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Thêm Chất Liệu Mới</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" id="newMaterialName" class="form-control" placeholder="Nhập tên chất liệu (VD: Vàng 18K)">
-                    <div id="errorMaterial" class="text-danger mt-2" style="display: none; font-size: 0.85rem;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary" onclick="quickAdd('material', 'materialId', 'newMaterialName', 'errorMaterial')">Lưu & Chọn</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         function quickAdd(type, selectId, inputId, errorId) {
             const nameVal = document.getElementById(inputId).value.trim();
             const errorDiv = document.getElementById(errorId);
-
-            const csrfTokenElement = document.getElementById('csrfToken');
-            const csrfHeaderElement = document.getElementById('csrfHeader');
-            const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
-            const csrfHeader = csrfHeaderElement ? csrfHeaderElement.value : '';
+            const csrfToken = document.getElementById('csrfToken').value;
+            const csrfHeader = document.getElementById('csrfHeader').value;
 
             if (!nameVal) {
                 errorDiv.innerText = "Vui lòng nhập tên!";
@@ -333,14 +297,13 @@
             }
             errorDiv.style.display = 'none';
 
-            let headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            if (csrfHeader && csrfToken) {
-                headers[csrfHeader] = csrfToken;
-            }
-
+            // Gửi dữ liệu về Backend
             fetch(`/admin/products/quick-add/${type}`, {
                 method: 'POST',
-                headers: headers,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
                 body: new URLSearchParams({ name: nameVal })
             })
                 .then(async res => {
@@ -349,17 +312,19 @@
                     return data;
                 })
                 .then(data => {
+                    // Nhận ID và Name trả về -> Tạo Option nhét vào thẻ Select
                     const select = document.getElementById(selectId);
                     const option = new Option(data.name, data.id, true, true);
                     select.add(option);
 
+                    // Dọn dẹp form và đóng modal
                     document.getElementById(inputId).value = '';
-                    const modalId = 'modalQuickAdd' + type.charAt(0).toUpperCase() + type.slice(1);
+                    const modalId = type === 'category' ? 'modalQuickAddCategory' : 'modalQuickAddBrand';
                     const modalEl = document.getElementById(modalId);
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     if(modal) modal.hide();
 
-                    alert("Đã thêm thành công: " + data.name);
+                    alert("Thêm thành công: " + data.name);
                 })
                 .catch(err => {
                     errorDiv.innerText = err.message;
@@ -407,7 +372,7 @@
                     grid.appendChild(item);
                 });
                 countLabel.innerHTML = uploadedUrls.length > 0
-                    ? '<span style="color:#57c4a7"><i class="fas fa-check-circle me-1"></i>' + uploadedUrls.length + ' ảnh da tai len</span>'
+                    ? '<span style="color:#57c4a7"><i class="fas fa-check-circle me-1"></i>' + uploadedUrls.length + ' anh da tai len</span>'
                     : '';
             }
 

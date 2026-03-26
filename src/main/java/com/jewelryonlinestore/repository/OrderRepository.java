@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,13 +35,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                LOWER(o.orderNumber)  LIKE LOWER(CONCAT('%',:keyword,'%')) OR
                LOWER(c.fullName)     LIKE LOWER(CONCAT('%',:keyword,'%')))
           AND (:status IS NULL OR o.orderStatus = :status)
-          AND (:from IS NULL OR o.createdAt >= :from)
-          AND (:to   IS NULL OR o.createdAt <= :to)
+          AND (CAST(:from AS timestamp) IS NULL OR o.createdAt >= :from)
+          AND (CAST(:to AS timestamp)   IS NULL OR o.createdAt <= :to)
         ORDER BY o.createdAt DESC
     """)
     Page<Order> searchOrders(
             @Param("keyword") String keyword,
-            @Param("status")  String status,
+            @Param("status")  Order.OrderStatus status, // Đã sửa thành Enum
             @Param("from")    LocalDateTime from,
             @Param("to")      LocalDateTime to,
             Pageable pageable
@@ -49,7 +50,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     // Dashboard: doanh thu theo khoảng thời gian (A02)
     @Query("""
         SELECT COALESCE(SUM(o.total), 0) FROM Order o
-        WHERE o.orderStatus = 'delivered'
+        WHERE o.orderStatus = 'DELIVERED'
           AND o.createdAt BETWEEN :from AND :to
     """)
     BigDecimal sumRevenueBetween(
@@ -61,7 +62,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query(value = """
         SELECT DATE(created_at) as day, SUM(total) as revenue
         FROM orders
-        WHERE order_status = 'delivered'
+        WHERE order_status = 'DELIVERED'
           AND MONTH(created_at) = :month
           AND YEAR(created_at)  = :year
         GROUP BY DATE(created_at)
@@ -76,7 +77,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("""
         SELECT COUNT(o) > 0 FROM Order o
         WHERE o.customer.id = :customerId
-          AND o.orderStatus  = 'delivered'
+          AND o.orderStatus  = 'DELIVERED'
     """)
     boolean hasDeliveredOrder(@Param("customerId") Long customerId);
+    // CHO DASHBOARD
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByOrderStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime start, LocalDateTime end);
 }

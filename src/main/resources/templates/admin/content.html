@@ -1,100 +1,97 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Content Management - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="p-4 bg-light" style="min-height: 100vh;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Content Management</h1>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" th:href="@{/admin/content/banners}">Banners</a>
-            <a class="btn btn-outline-secondary" th:href="@{/admin/content/blog}">Blog</a>
-        </div>
-    </div>
-
-    <div th:if="${activeSection == 'banners'}" class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-images"></i> Homepage Banners</span>
-            <form class="d-flex gap-2" method="post" th:action="@{/admin/content/banners}" enctype="multipart/form-data">
-                <input class="form-control form-control-sm" name="title" placeholder="Title" required>
-                <input class="form-control form-control-sm" name="linkUrl" placeholder="Link URL">
-                <input class="form-control form-control-sm" type="number" name="sortOrder" value="0" style="width: 90px;" required>
-                <input class="form-control form-control-sm" type="file" name="image" required>
-                <button class="btn btn-sm btn-dark" type="submit">Add</button>
-            </form>
-        </div>
-        <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                <tr>
-                    <th>Image</th>
-                    <th>Title</th>
-                    <th>Link</th>
-                    <th>Sort</th>
-                    <th>Status</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${banners == null or banners.isEmpty()}"><td colspan="5" class="text-center text-muted py-4">No banners available.</td></tr>
-                <tr th:each="banner : ${banners}">
-                    <td><img th:src="${banner.imageUrl}" src="https://via.placeholder.com/120x70" alt="Banner" style="width: 120px; height: 70px; object-fit: cover; border-radius: 6px;"></td>
-                    <td th:text="${banner.title}">Title</td>
-                    <td><a th:if="${banner.linkUrl != null}" th:href="${banner.linkUrl}" th:text="${banner.linkUrl}">Link</a></td>
-                    <td th:text="${banner.sortOrder}">0</td>
-                    <td><span class="badge" th:classappend="${banner.isActive} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${banner.isActive} ? 'Active' : 'Inactive'">Status</span></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div th:if="${activeSection == 'blog'}" class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="fas fa-blog"></i> Blog Posts</span>
-            <a class="btn btn-sm btn-dark" th:href="@{/admin/content/blog/new}">New Post</a>
-        </div>
-        <div class="card-body p-0">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                <tr>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${posts == null or posts.isEmpty()}"><td colspan="4" class="text-center text-muted py-4">No blog posts available.</td></tr>
-                <tr th:each="post : ${posts}">
-                    <td th:text="${post.title}">Title</td>
-                    <td th:text="${post.authorName}">Author</td>
-                    <td><span class="badge" th:classappend="${post.isPublished} ? 'text-bg-success' : 'text-bg-warning'" th:text="${post.isPublished} ? 'Published' : 'Draft'">Draft</span></td>
-                    <td th:text="${#temporals.format(post.updatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
-                </tr>
-                </tbody>
-            </table>
+<div id="admin-content">
+    <div class="p-4 bg-light" style="min-height: 100vh; border-radius: 8px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h3 mb-0">Content Management</h1>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-secondary" th:href="@{/admin/content/banners}">Banners</a>
+                <a class="btn btn-outline-secondary" th:href="@{/admin/content/blog}">Blog</a>
+            </div>
         </div>
 
-        <div class="card-footer" th:if="${totalPages != null and totalPages > 1}">
-            <ul class="pagination justify-content-center mb-0">
-                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/content/blog(page=${currentPage - 1})}">Previous</a>
-                </li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/admin/content/blog(page=${i})}" th:text="${i + 1}">1</a>
-                </li>
-                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/content/blog(page=${currentPage + 1})}">Next</a>
-                </li>
-            </ul>
+        <div th:if="${activeSection == 'banners'}" class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-images"></i> Homepage Banners</span>
+                <form class="d-flex gap-2" method="post" th:action="@{/admin/content/banners}" enctype="multipart/form-data">
+                    <input class="form-control form-control-sm" name="title" placeholder="Title" required>
+                    <input class="form-control form-control-sm" name="linkUrl" placeholder="Link URL">
+                    <input class="form-control form-control-sm" type="number" name="sortOrder" value="0" style="width: 90px;" required>
+                    <input class="form-control form-control-sm" type="file" name="image" required>
+                    <button class="btn btn-sm btn-dark" type="submit">Add</button>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Image</th>
+                        <th>Title</th>
+                        <th>Link</th>
+                        <th>Sort</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${banners == null or banners.isEmpty()}"><td colspan="5" class="text-center text-muted py-4">No banners available.</td></tr>
+                    <tr th:each="banner : ${banners}">
+                        <td><img th:src="${banner.imageUrl}" src="https://via.placeholder.com/120x70" alt="Banner" style="width: 120px; height: 70px; object-fit: cover; border-radius: 6px;"></td>
+                        <td th:text="${banner.title}">Title</td>
+                        <td><a th:if="${banner.linkUrl != null}" th:href="${banner.linkUrl}" th:text="${banner.linkUrl}">Link</a></td>
+                        <td th:text="${banner.sortOrder}">0</td>
+                        <td><span class="badge" th:classappend="${banner.isActive} ? 'text-bg-success' : 'text-bg-secondary'" th:text="${banner.isActive} ? 'Active' : 'Inactive'">Status</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div th:if="${activeSection == 'blog'}" class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-blog"></i> Blog Posts</span>
+                <a class="btn btn-sm btn-dark" th:href="@{/admin/content/blog/new}">New Post</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${posts == null or posts.isEmpty()}"><td colspan="4" class="text-center text-muted py-4">No blog posts available.</td></tr>
+                    <tr th:each="post : ${posts}">
+                        <td th:text="${post.title}">Title</td>
+                        <td th:text="${post.authorName}">Author</td>
+                        <td><span class="badge" th:classappend="${post.isPublished} ? 'text-bg-success' : 'text-bg-warning'" th:text="${post.isPublished} ? 'Published' : 'Draft'">Draft</span></td>
+                        <td th:text="${#temporals.format(post.updatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-footer" th:if="${totalPages != null and totalPages > 1}">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/content/blog(page=${currentPage - 1})}">Previous</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/content/blog(page=${i})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/content/blog(page=${currentPage + 1})}">Next</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

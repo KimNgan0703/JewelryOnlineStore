@@ -85,7 +85,6 @@
             <form th:action="@{/orders/place}" method="post" th:object="${placeOrderRequest}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
-                <!-- ── Shipping address ── -->
                 <div class="box">
                     <div class="box-title"><i class="fas fa-map-marker-alt me-2"></i>Shipping Address</div>
 
@@ -130,11 +129,9 @@
                     </div>
                 </div>
 
-                <!-- ── Voucher ── -->
                 <div class="box">
                     <div class="box-title"><i class="fas fa-tag me-2"></i>Discount Voucher</div>
 
-                    <!-- Hidden field gửi lên khi submit order -->
                     <input type="hidden" id="couponCodeField" th:field="*{couponCode}" th:value="${cart.appliedCouponCode}">
 
                     <div class="voucher-wrap">
@@ -148,10 +145,8 @@
                         </button>
                     </div>
 
-                    <!-- Thông báo lỗi / thành công -->
                     <div id="voucherMsg" class="voucher-msg"></div>
 
-                    <!-- Badge hiển thị voucher đã áp dụng -->
                     <div id="appliedBadge" class="applied-badge">
                         <i class="fas fa-check-circle text-warning"></i>
                         <span id="appliedLabel">Code applied</span>
@@ -161,7 +156,6 @@
                     </div>
                 </div>
 
-                <!-- ── Payment ── -->
                 <div class="box">
                     <div class="box-title"><i class="fas fa-wallet me-2"></i>Payment</div>
 
@@ -196,7 +190,6 @@
             </form>
         </div>
 
-        <!-- ── Order Summary ── -->
         <div class="col-lg-4">
             <div class="box">
                 <div class="box-title"><i class="fas fa-receipt me-2"></i>Order Summary</div>
@@ -216,10 +209,9 @@
                 </div>
                 <div class="summary-row">
                     <span>Shipping</span>
-                    <span th:text="${#numbers.formatInteger(cart.shippingFee, 0, 'COMMA')} + ' ₫'">0</span>
+                    <span th:text="${#numbers.formatInteger(cart.shippingFee != null ? cart.shippingFee : 0, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
 
-                <!-- Dòng discount — ẩn mặc định, hiện khi áp voucher -->
                 <div class="summary-row text-success" id="row-discount">
                     <span>Discount (<span id="discountCode"></span>)</span>
                     <span id="summaryDiscount">-0 ₫</span>
@@ -332,17 +324,17 @@
         clearMsg();
     }
 
-    // Apply voucher
+    // FIX: Đã đổi đường dẫn gọi API từ /cart/coupon/apply thành /orders/coupon/apply
     btnApply.addEventListener('click', async function () {
         const code = couponInput.value.trim().toUpperCase();
-        if (!code) { showMsg('Please enter a voucher code.', 'error'); return; }
+        if (!code) { showMsg('Vui lòng nhập mã giảm giá.', 'error'); return; }
 
         btnApply.classList.add('loading');
         btnApply.disabled = true;
         clearMsg();
 
         try {
-            const res = await fetch('/cart/coupon/apply', {
+            const res = await fetch('/orders/coupon/apply', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -354,24 +346,23 @@
             const data = await res.json();
 
             if (!res.ok) {
-                // Backend ném lỗi (400 / 422)
-                showMsg(data.message || 'Invalid or expired voucher.', 'error');
+                showMsg(data.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn.', 'error');
                 btnApply.disabled = false;
             } else {
                 setApplied(data);
             }
         } catch (e) {
-            showMsg('Connection error. Please try again.', 'error');
+            showMsg('Lỗi kết nối. Vui lòng thử lại.', 'error');
             btnApply.disabled = false;
         } finally {
             btnApply.classList.remove('loading');
         }
     });
 
-    // Remove voucher
+    // FIX: Đã đổi đường dẫn gọi API từ /cart/coupon/remove thành /orders/coupon/remove
     btnRemove.addEventListener('click', async function () {
         try {
-            await fetch('/cart/coupon/remove', {
+            await fetch('/orders/coupon/remove', {
                 method: 'POST',
                 headers: { [csrfHeader]: csrfToken }
             });
@@ -379,17 +370,16 @@
 
         clearApplied();
 
-        // Reset total về subtotal (lấy từ DOM)
-        const subtotalText = document.getElementById('summarySubtotal').textContent;
-        summaryTotal.textContent = subtotalText;
+        // Reset total về tổng của subtotal + shipping (dùng dữ liệu gốc của Thymeleaf)
+        const origSubtotal = /*[[${cart.subtotal != null ? cart.subtotal : 0}]]*/ 0;
+        const origShipping = /*[[${cart.shippingFee != null ? cart.shippingFee : 0}]]*/ 0;
+        summaryTotal.textContent = fmt(origSubtotal + origShipping);
     });
 
-    // Cho phép nhấn Enter để apply
     couponInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); btnApply.click(); }
     });
 
-    // Nếu server đã có coupon áp dụng sẵn (th:value), hiện badge ngay khi load
     (function initIfApplied() {
         const existing = couponField.value.trim();
         if (!existing) return;
@@ -400,7 +390,7 @@
             appliedCouponCode: existing,
             discountAmount: discount,
             total: total,
-            couponMessage: 'Voucher "' + existing + '" is being applied.'
+            couponMessage: 'Mã "' + existing + '" đang được áp dụng.'
         });
     })();
 </script>

@@ -2,7 +2,6 @@ package com.jewelryonlinestore.controller.admin;
 
 import com.jewelryonlinestore.dto.response.ApiResponse;
 import com.jewelryonlinestore.service.*;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,26 +12,21 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/**
- * A09 — Quản lý nội dung: Banner, Blog/Tin tức.
- */
 @Controller
 @RequestMapping("/admin/content")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminContentController {
 
-    private final BannerService      bannerService;
-    private final BlogService        blogService;
-    private final FileUploadService  fileUploadService;
+    private final BannerService bannerService;
+    private final BlogService blogService;
 
-    // ── Banner ────────────────────────────────────────────
     @GetMapping("/banners")
     public String bannerList(Model model) {
-        model.addAttribute("banners",   bannerService.getAllBanners());
+        model.addAttribute("banners", bannerService.getAllBanners());
         model.addAttribute("activeSection", "banners");
         model.addAttribute("pageTitle", "Quản Lý Banner");
-        return "admin/content";
+        return "admin/content"; // Ánh xạ tới content.html
     }
 
     @PostMapping("/banners")
@@ -60,16 +54,15 @@ public class AdminContentController {
         return ResponseEntity.ok(ApiResponse.ok("Đã xóa banner", null));
     }
 
-    // ── Blog / Tin tức ────────────────────────────────────
     @GetMapping("/blog")
     public String blogList(@RequestParam(defaultValue = "0") int page, Model model) {
         var posts = blogService.adminGetAllPosts(page, 15);
-        model.addAttribute("posts",      posts.getContent());
-        model.addAttribute("currentPage",posts.getNumber());
+        model.addAttribute("posts", posts.getContent());
+        model.addAttribute("currentPage", posts.getNumber());
         model.addAttribute("totalPages", posts.getTotalPages());
         model.addAttribute("activeSection", "blog");
-        model.addAttribute("pageTitle",  "Quản Lý Blog");
-        return "admin/content";
+        model.addAttribute("pageTitle", "Quản Lý Blog");
+        return "admin/content"; // Ánh xạ tới content.html
     }
 
     @GetMapping("/blog/new")
@@ -106,4 +99,3 @@ public class AdminContentController {
         return ResponseEntity.ok(ApiResponse.ok("Đã xóa bài viết", null));
     }
 }
-

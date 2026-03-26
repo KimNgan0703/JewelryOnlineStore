@@ -24,5 +24,10 @@ public interface ProductService {
     void                      updateProduct(Long id, AdminProductRequest req);
     boolean                   toggleActive(Long id);
     void                      deleteProduct(Long id);
+
     AdminProductRequest       getProductForEdit(Long id);
+
+    // API hỗ trợ thêm nhanh Brand & Material từ form Admin
+    Brand                     createBrand(String name);
+    Material                  createMaterial(String name);
 }
