@@ -17,245 +17,224 @@
             padding: 100px 0;
             text-align: center;
         }
-        .hero h1 {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 30px;
-        }
-        .featured-products {
-            padding: 50px 0;
-        }
+        .hero h1 { font-size: 3rem; font-weight: bold; margin-bottom: 20px; }
+        .hero p { font-size: 1.2rem; margin-bottom: 30px; }
+        .featured-products { padding: 50px 0; }
         .product-card {
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        .product-card:hover {
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
+        .product-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
         .product-image {
-            width: 100%;
-            height: 250px;
+            width: 100%; height: 250px;
             background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             overflow: hidden;
         }
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; }
         .product-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+            position: absolute; top: 10px; right: 10px;
             background-color: var(--primary-color);
             color: var(--secondary-color);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: bold;
+            padding: 5px 10px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: bold;
         }
-        .product-info {
-            padding: 15px;
-            background-color: white;
-        }
-        .product-name {
-            font-weight: bold;
-            color: var(--secondary-color);
-            margin-bottom: 10px;
-        }
-        .product-price {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .product-rating {
-            color: #f39c12;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
+        .product-info { padding: 15px; background-color: white; }
+        .product-name { font-weight: bold; color: var(--secondary-color); margin-bottom: 10px; }
+        .product-price { color: var(--primary-color); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; }
+        .product-rating { color: #f39c12; font-size: 0.9rem; margin-bottom: 10px; }
         .btn-add-cart {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
-            color: var(--secondary-color);
-            font-weight: bold;
+            color: var(--secondary-color); font-weight: bold;
         }
-        .btn-add-cart:hover {
-            background-color: #c09b2d;
-            border-color: #c09b2d;
-        }
-        .category-section {
-            padding: 40px 0;
-        }
+        .btn-add-cart:hover { background-color: #c09b2d; border-color: #c09b2d; }
+        .category-section { padding: 40px 0; }
         .category-card {
-            text-align: center;
-            padding: 20px;
+            text-align: center; padding: 20px;
+            border-radius: 12px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         .category-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            background: #fffbef;
         }
-        .category-icon {
-            font-size: 3rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
+        .category-icon { font-size: 3rem; color: var(--primary-color); margin-bottom: 15px; }
         .newsletter-section {
             background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
-            color: white;
-            padding: 50px 0;
-            margin-top: 50px;
+            color: white; padding: 50px 0; margin-top: 50px;
         }
         .section-title {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--secondary-color);
-            margin-bottom: 30px;
-            text-align: center;
+            font-size: 2rem; font-weight: bold;
+            color: var(--secondary-color); margin-bottom: 30px; text-align: center;
         }
     </style>
 </head>
 <body>
-    <div th:replace="~{layout/customer-header :: customerHeader}"></div>
+<div th:replace="~{layout/customer-header :: customerHeader}"></div>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h1>Elegant Jewelry for Every Occasion</h1>
-            <p>Discover our stunning collection of premium jewelry</p>
-            <a href="/products" class="btn btn-primary btn-lg">Shop Now</a>
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container">
+        <h1>Elegant Jewelry for Every Occasion</h1>
+        <p>Discover our stunning collection of premium jewelry</p>
+        <a href="/products" class="btn btn-primary btn-lg">Shop Now</a>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     Categories — DYNAMIC (lấy từ ${categories} do controller truyền)
+     ═══════════════════════════════════════════════════════════ -->
+<section class="category-section">
+    <div class="container">
+
+        <!-- Dynamic: lấy từ ${categories} do controller truyền -->
+        <div class="row justify-content-center flex-nowrap"
+             th:if="${categories != null and !categories.isEmpty()}">
+            <div class="col text-center" th:each="cat : ${categories}">
+                <a th:href="@{/products(categoryId=${cat.id})}"
+                   class="text-decoration-none text-dark">
+                    <div class="category-card">
+                        <div class="category-icon">
+                            <i th:class="${#strings.containsIgnoreCase(cat.name,'nhẫn')    or #strings.containsIgnoreCase(cat.name,'ring')}       ? 'fas fa-ring'
+                                           : (${#strings.containsIgnoreCase(cat.name,'dây')    or #strings.containsIgnoreCase(cat.name,'necklace')}    ? 'fas fa-crown'
+                                           : (${#strings.containsIgnoreCase(cat.name,'vòng')   or #strings.containsIgnoreCase(cat.name,'bracelet')}    ? 'fas fa-circle-dot'
+                                           : (${#strings.containsIgnoreCase(cat.name,'tai')    or #strings.containsIgnoreCase(cat.name,'earring')}     ? 'fas fa-gem'
+                                           : (${#strings.containsIgnoreCase(cat.name,'charm')}                                                          ? 'fas fa-star'
+                                           : 'fas fa-gem'))))"></i>
+                        </div>
+                        <h5 th:text="${cat.name}">Danh mục</h5>
+                    </div>
+                </a>
+            </div>
         </div>
-    </section>
 
-    <!-- Categories -->
-    <section class="category-section">
-        <div class="container">
-            <h2 class="section-title">Browse by Category</h2>
-            <div class="row">
-                <div class="col-md-3">
+        <!-- Fallback tĩnh khi chưa có ${categories} -->
+        <div class="row" th:unless="${categories != null and !categories.isEmpty()}">
+            <div class="col-md-3">
+                <a href="/products?categoryId=1" class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon"><i class="fas fa-ring"></i></div>
-                        <h5>Rings</h5>
-                        <p>Explore our beautiful ring collection</p>
-                        <a href="/products?category=rings" class="btn btn-sm btn-outline-primary">Shop Rings</a>
+                        <h5>Nhẫn</h5>
                     </div>
-                </div>
-                <div class="col-md-3">
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/products?categoryId=2" class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon"><i class="fas fa-crown"></i></div>
-                        <h5>Necklaces</h5>
-                        <p>Find the perfect necklace</p>
-                        <a href="/products?category=necklaces" class="btn btn-sm btn-outline-primary">Shop Necklaces</a>
+                        <h5>Dây chuyền</h5>
                     </div>
-                </div>
-                <div class="col-md-3">
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/products?categoryId=3" class="text-decoration-none text-dark">
                     <div class="category-card">
-                        <!-- ✅ fa-bracelet không tồn tại → dùng fa-circle-dot thay thế -->
                         <div class="category-icon"><i class="fas fa-circle-dot"></i></div>
-                        <h5>Bracelets</h5>
-                        <p>Elegant bracelets for any style</p>
-                        <a href="/products?category=bracelets" class="btn btn-sm btn-outline-primary">Shop Bracelets</a>
+                        <h5>Vòng tay</h5>
                     </div>
-                </div>
-                <div class="col-md-3">
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="/products?categoryId=4" class="text-decoration-none text-dark">
                     <div class="category-card">
-                        <!-- ✅ fa-earring không tồn tại → dùng fa-gem thay thế -->
                         <div class="category-icon"><i class="fas fa-gem"></i></div>
-                        <h5>Earrings</h5>
-                        <p>Stunning earring designs</p>
-                        <a href="/products?category=earrings" class="btn btn-sm btn-outline-primary">Shop Earrings</a>
+                        <h5>Hoa tai</h5>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="featured-products">
+    <div class="container">
+        <h2 class="section-title">Featured Products</h2>
+        <div class="row">
+            <div class="col-md-3 mb-4" th:each="product : ${bestSellers}">
+                <div class="card product-card">
+                    <div class="product-badge" th:if="${product.discountPercent != null}">
+                        <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
+                    </div>
+                    <div class="product-image">
+                        <img th:src="${product.primaryImageUrl}"
+                             alt="Product"
+                             src="https://via.placeholder.com/250">
+                    </div>
+                    <div class="product-info">
+                        <div class="product-name" th:text="${product.name}">Product Name</div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <span th:text="${product.averageRating != null ? #numbers.formatDecimal(product.averageRating, 1, 1) : '0.0'}">4.5</span>
+                        </div>
+                        <div class="product-price">
+                            <span th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                        </div>
+                        <a class="btn btn-sm btn-add-cart w-100"
+                           th:href="@{/products/{slug}(slug=${product.slug})}">
+                            <i class="fas fa-shopping-cart"></i> View Product
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Featured Products -->
-    <section class="featured-products">
-        <div class="container">
-            <h2 class="section-title">Featured Products</h2>
-            <div class="row">
-                <div class="col-md-3 mb-4" th:each="product : ${bestSellers}">
-                    <div class="card product-card">
-                        <div class="product-badge" th:if="${product.discountPercent != null}">
-                            <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
-                        </div>
-                        <div class="product-image">
-                            <img th:src="${product.primaryImageUrl != null ? '/uploads/' + product.primaryImageUrl : 'https://via.placeholder.com/250'}" alt="Product" src="https://via.placeholder.com/250">
-                        </div>
-                        <div class="product-info">
-                            <div class="product-name" th:text="${product.name}">Diamond Ring</div>
-                            <div class="product-rating">
-                                <i class="fas fa-star"></i>
-                                <span th:text="${product.averageRating != null ? #numbers.formatDecimal(product.averageRating, 1, 1) : '0.0'}">4.5</span>
-                            </div>
-                            <div class="product-price">
-                                <span th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' VND'">199.99</span>
-                            </div>
-                            <a class="btn btn-sm btn-add-cart w-100" th:href="@{/products/{slug}(slug=${product.slug})}">
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </a>
-                        </div>
-                    </div>
-                </div>
+        <div class="text-center mt-2">
+            <a href="/products" class="btn btn-outline-secondary px-4">View All Products</a>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <h3 style="text-align: center; margin-bottom: 20px;">Subscribe to Our Newsletter</h3>
+                <p style="text-align: center; margin-bottom: 20px;">Get exclusive offers and updates on new jewelry collections</p>
+                <form class="d-flex gap-2" method="post" action="/newsletter/subscribe">
+                    <input type="email" class="form-control" placeholder="Enter your email" required>
+                    <button type="submit" class="btn btn-primary">Subscribe</button>
+                </form>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Newsletter Section -->
-    <section class="newsletter-section">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-8 mx-auto">
-                    <h3 style="text-align: center; margin-bottom: 20px;">Subscribe to Our Newsletter</h3>
-                    <p style="text-align: center; margin-bottom: 20px;">Get exclusive offers and updates on new jewelry collections</p>
-                    <form class="d-flex gap-2" method="post" action="/newsletter/subscribe">
-                        <input type="email" class="form-control" placeholder="Enter your email" required>
-                        <button type="submit" class="btn btn-primary">Subscribe</button>
-                    </form>
-                </div>
+<!-- Footer -->
+<footer style="background-color: var(--secondary-color); color: #ecf0f1; margin-top: 50px; padding: 30px 0;">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h5><i class="fas fa-gem"></i> Jewelry Store</h5>
+                <p>Discover elegant and affordable jewelry for every occasion.</p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="/about"   style="color: var(--primary-color); text-decoration: none;">About Us</a></li>
+                    <li><a href="/contact" style="color: var(--primary-color); text-decoration: none;">Contact</a></li>
+                    <li><a href="/privacy" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h5>Follow Us</h5>
+                <a href="#" class="me-3" style="color: var(--primary-color);"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="me-3" style="color: var(--primary-color);"><i class="fab fa-twitter"></i></a>
+                <a href="#"              style="color: var(--primary-color);"><i class="fab fa-instagram"></i></a>
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer style="background-color: var(--secondary-color); color: #ecf0f1; margin-top: 50px; padding: 30px 0;">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <h5><i class="fas fa-gem"></i> Jewelry Store</h5>
-                    <p>Discover elegant and affordable jewelry for every occasion.</p>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="/about" style="color: var(--primary-color); text-decoration: none;">About Us</a></li>
-                        <li><a href="/contact" style="color: var(--primary-color); text-decoration: none;">Contact</a></li>
-                        <li><a href="/privacy" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <h5>Follow Us</h5>
-                    <a href="#" class="me-3" style="color: var(--primary-color);"><i class="fab fa-facebook"></i></a>
-                    <a href="#" class="me-3" style="color: var(--primary-color);"><i class="fab fa-twitter"></i></a>
-                    <a href="#" style="color: var(--primary-color);"><i class="fab fa-instagram"></i></a>
-                </div>
-            </div>
-            <hr style="border-color: rgba(255, 255, 255, 0.1);">
-            <div class="text-center">
-                <p>&copy; 2026 Jewelry Online Store. All rights reserved.</p>
-            </div>
+        <hr style="border-color: rgba(255,255,255,0.1);">
+        <div class="text-center">
+            <p>&copy; 2026 Jewelry Online Store. All rights reserved.</p>
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -18,7 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Pattern;
-
+import com.jewelryonlinestore.repository.spec.ProductSpecification;
+import org.springframework.data.jpa.domain.Specification;
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -37,15 +38,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductCardResponse> filterProducts(ProductFilterRequest filter) {
         Sort sort = buildSort(filter.getSortBy());
-        Page<Product> page = productRepository.filterProducts(
-                filter.getKeyword(),
-                filter.getCategoryId(),
-                filter.getBrandId(),
-                filter.getMaterialId(),
-                filter.getMinPrice(),
-                filter.getMaxPrice(),
-                filter.getInStockOnly(),
-                PageRequest.of(filter.getPage(), filter.getSize(), sort));
+        Specification<Product> spec = ProductSpecification.of(filter);
+        Page<Product> page = productRepository.findAll(
+                spec,
+                PageRequest.of(filter.getPage(), filter.getSize(), sort)
+        );
         return page.map(this::toCard);
     }
 
