@@ -1,6 +1,5 @@
 package com.jewelryonlinestore.dto.request;
 
-
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -15,7 +14,7 @@ public class InventoryAdjustRequest {
     private Long variantId;
 
     @NotNull(message = "Số lượng không được để trống")
-    @NotZero
+    // Đã xóa @NotZero gây lỗi hệ thống
     private Integer quantityChange;
 
     @NotBlank(message = "Lý do không được để trống")
@@ -23,7 +22,4 @@ public class InventoryAdjustRequest {
     private String reason; // Kiểm kê | Nhập hàng | Trả hàng | Bảo hành | Khác
 
     private String note;
-
-    // Custom annotation placeholder
-    @interface NotZero {}
 }

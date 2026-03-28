@@ -5,4 +5,8 @@ public interface EmailService {
     void sendPasswordResetEmail(String email, String token);
     void sendOrderConfirmation(String email, String orderNumber);
     void sendOrderStatusUpdate(String email, String orderNumber, String newStatus);
+
+    // Đã sửa tham số thành String orderNumber để tránh lỗi Hibernate Proxy
+    void sendOrderConfirmationEmail(String orderNumber);
+    void sendOrderStatusUpdateEmail(String orderNumber);
 }

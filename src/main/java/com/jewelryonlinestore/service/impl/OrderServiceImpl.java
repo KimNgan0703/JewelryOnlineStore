@@ -12,12 +12,15 @@ import com.jewelryonlinestore.entity.Order;
 import com.jewelryonlinestore.entity.OrderItem;
 import com.jewelryonlinestore.entity.Promotion;
 import com.jewelryonlinestore.entity.User;
+import com.jewelryonlinestore.entity.ProductVariant;
 import com.jewelryonlinestore.repository.AddressRepository;
 import com.jewelryonlinestore.repository.CartItemRepository;
 import com.jewelryonlinestore.repository.CartRepository;
 import com.jewelryonlinestore.repository.CustomerRepository;
 import com.jewelryonlinestore.repository.OrderRepository;
 import com.jewelryonlinestore.repository.UserRepository;
+import com.jewelryonlinestore.repository.ProductVariantRepository;
+import com.jewelryonlinestore.service.EmailService;
 import com.jewelryonlinestore.service.OrderService;
 import com.jewelryonlinestore.service.PromotionService;
 import jakarta.servlet.http.HttpSession;
@@ -35,6 +38,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +51,10 @@ public class OrderServiceImpl implements OrderService {
     private final CartRepository      cartRepository;
     private final CartItemRepository  cartItemRepository;
     private final PromotionService    promotionService;
+
+    // Inject EmailService và ProductVariantRepository
+    private final EmailService             emailService;
+    private final ProductVariantRepository productVariantRepository;
 
     @Override
     @Transactional
@@ -102,6 +110,16 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
+        if (emailService != null) {
+            emailService.sendOrderConfirmationEmail(saved.getOrderNumber());
+        }
+
+        List<ProductVariant> variantsToUpdate = cart.getItems().stream()
+                .map(CartItem::getVariant)
+                .filter(Objects::nonNull)
+                .toList();
+        productVariantRepository.saveAll(variantsToUpdate);
+
         if (appliedPromotion != null) {
             promotionService.incrementUsedCount(appliedPromotion.getId());
         }
@@ -154,15 +172,29 @@ public class OrderServiceImpl implements OrderService {
         if (!order.canCancel()) {
             throw new IllegalStateException("Order cannot be cancelled at current status");
         }
+
         order.setOrderStatus(Order.OrderStatus.CANCELLED);
         order.setCancelledReason(reason);
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        if (emailService != null) {
+            emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
+        }
+
+        List<ProductVariant> variantsToRestore = order.getItems().stream().map(item -> {
+            ProductVariant variant = item.getVariant();
+            if (variant != null) {
+                variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
+            }
+            return variant;
+        }).filter(Objects::nonNull).toList();
+        productVariantRepository.saveAll(variantsToRestore);
     }
 
     @Override
     @Transactional
     public int reorder(String orderNumber, Authentication auth, HttpSession session) {
-        return 0; // Chưa implement chi tiết
+        return 0;
     }
 
     @Override
@@ -170,13 +202,11 @@ public class OrderServiceImpl implements OrderService {
     public Page<OrderSummaryResponse> adminSearchOrders(String keyword, String status,
                                                         LocalDateTime from, LocalDateTime to,
                                                         int page, int size) {
-        // CHUYỂN ĐỔI STRING SANG ENUM TRƯỚC KHI TÌM KIẾM
         Order.OrderStatus statusEnum = null;
         if (status != null && !status.trim().isEmpty()) {
             try {
                 statusEnum = Order.OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
-                // Bỏ qua nếu chuỗi status không hợp lệ
             }
         }
 
@@ -187,17 +217,54 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req,
-                                                 Authentication auth) {
+    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req, Authentication auth) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
-        order.setOrderStatus(Order.OrderStatus.valueOf(req.getNewStatus().toUpperCase(Locale.ROOT)));
 
-        if ("CANCELLED".equalsIgnoreCase(req.getNewStatus())) {
+        Order.OrderStatus oldStatus = order.getOrderStatus();
+        Order.OrderStatus newStatus = Order.OrderStatus.valueOf(req.getNewStatus().toUpperCase(Locale.ROOT));
+
+        order.setOrderStatus(newStatus);
+
+        if (newStatus == Order.OrderStatus.CANCELLED) {
             order.setCancelledReason(req.getCancelledReason());
+
+            // Cộng lại số lượng Tồn kho khi ADMIN hủy đơn
+            if (oldStatus != Order.OrderStatus.CANCELLED) {
+                List<ProductVariant> variantsToRestore = order.getItems().stream().map(item -> {
+                    ProductVariant variant = item.getVariant();
+                    if (variant != null) {
+                        variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
+                    }
+                    return variant;
+                }).filter(Objects::nonNull).toList();
+                productVariantRepository.saveAll(variantsToRestore);
+            }
+        }
+        // BỔ SUNG LẠI: Tự động chuyển Đã thanh toán khi Đã giao hàng
+        else if (newStatus == Order.OrderStatus.DELIVERED) {
+            order.setPaymentStatus(Order.PaymentStatus.PAID);
         }
 
         order.setUpdatedAt(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        if (emailService != null) {
+            emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
+        }
+
+        return toDetail(savedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderDetailResponse markAsPaid(String orderNumber, Authentication auth) {
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
+
+        order.setPaymentStatus(Order.PaymentStatus.PAID);
+        order.setUpdatedAt(LocalDateTime.now());
+
         return toDetail(orderRepository.save(order));
     }
 
@@ -285,6 +352,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new IllegalArgumentException("Product is out of stock: "
                         + cartItem.getVariant().getProduct().getName());
             }
+
             cartItem.getVariant().setStockQuantity(
                     cartItem.getVariant().getStockQuantity() - cartItem.getQuantity());
 
@@ -326,7 +394,7 @@ public class OrderServiceImpl implements OrderService {
                 .itemCount(order.getItems() == null ? 0 : order.getItems().size())
                 .firstProductName(order.getItems() == null || order.getItems().isEmpty()
                         ? null : order.getItems().get(0).getProductName())
-                .firstProductImage(null) // Cần fetch ProductImage nếu muốn hiển thị ảnh
+                .firstProductImage(null)
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
                 .build();

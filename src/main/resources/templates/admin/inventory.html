@@ -1,92 +1,240 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <title>Inventory Management - Admin</title>
+    <title th:text="${pageTitle}">Inventory Management - Admin</title>
 </head>
 <body>
 <div id="admin-content">
+
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
     <style>
         :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
-        .page-shell { padding: 20px 0; background-color: #f4f6f9; }
-        .summary-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); height: 100%; }
+        .page-shell { padding: 20px 0; background-color: #f4f6f9; min-height: 100vh;}
+        .summary-card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); height: 100%; border-left: 4px solid var(--secondary-color);}
         .summary-value { font-size: 1.7rem; font-weight: 700; color: var(--secondary-color); }
-        .toolbar { display: grid; grid-template-columns: 1fr 180px 180px auto; gap: 10px; margin: 20px 0; }
+        .toolbar { display: flex; gap: 10px; margin: 20px 0; }
         .table-wrap { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); overflow: hidden; }
         .table thead { background: var(--secondary-color); color: white; }
-        .stock-badge { font-size: 0.8rem; font-weight: 600; border-radius: 12px; padding: 5px 9px; }
-        .stock-ok { background-color: #e8f8f1; color: #198754; }
-        .stock-low { background-color: #fff6e6; color: #b7791f; }
-        .stock-out { background-color: #fdeaea; color: #dc3545; }
+        .stock-badge { font-size: 0.8rem; font-weight: 600; border-radius: 12px; padding: 5px 9px; display: inline-block; min-width: 90px; text-align: center;}
+        .stock-ok { background-color: #e8f8f1; color: #198754; border: 1px solid #198754;}
+        .stock-low { background-color: #fff6e6; color: #b7791f; border: 1px solid #b7791f;}
+        .stock-out { background-color: #fdeaea; color: #dc3545; border: 1px solid #dc3545;}
     </style>
 
     <div class="page-shell">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="mb-0" style="color: var(--secondary-color);">Inventory</h1>
-                <p class="text-muted mb-0">Track stock levels and prevent out-of-stock issues.</p>
+                <h1 class="mb-0" style="color: var(--secondary-color);">Quản Lý Kho Hàng</h1>
+                <p class="text-muted mb-0">Theo dõi, nhập xuất và kiểm kê hàng hóa theo thời gian thực.</p>
             </div>
-            <button class="btn btn-dark"><i class="fas fa-boxes-stacked me-1"></i> Import Stock Update</button>
         </div>
 
         <div class="row g-3">
-            <div class="col-md-3"><div class="summary-card"><div class="text-muted small">SKU Tracked</div><div class="summary-value" th:text="${totalItems} ?: 640">640</div></div></div>
-            <div class="col-md-3"><div class="summary-card"><div class="text-muted small">Low Stock</div><div class="summary-value text-warning">28</div></div></div>
-            <div class="col-md-3"><div class="summary-card"><div class="text-muted small">Out Of Stock</div><div class="summary-value text-danger">7</div></div></div>
-            <div class="col-md-3"><div class="summary-card"><div class="text-muted small">Reserved Units</div><div class="summary-value">312</div></div></div>
+            <div class="col-md-4">
+                <div class="summary-card" style="border-color: #3498db;">
+                    <div class="text-muted small fw-bold text-uppercase">Sản phẩm cảnh báo (Low Stock)</div>
+                    <div class="summary-value text-primary" th:text="${lowStockCount} ?: 0">0</div>
+                </div>
+            </div>
         </div>
 
-        <div class="toolbar">
-            <input class="form-control" type="text" placeholder="Search by product name, SKU..." th:value="${keyword}">
-            <select class="form-select" th:value="${activeStatus}">
-                <option value="">All Status</option>
-                <option value="IN_STOCK">In Stock</option>
-                <option value="LOW_STOCK">Low Stock</option>
-                <option value="OUT_OF_STOCK">Out Of Stock</option>
+        <form method="get" th:action="@{/admin/inventory}" class="toolbar">
+            <input class="form-control" style="max-width: 350px;" type="text" name="keyword" placeholder="Tìm theo tên, SKU..." th:value="${keyword}">
+            <select class="form-select" style="max-width: 200px;" name="lowStockOnly" onchange="document.getElementById('btnSubmitFilter').click()">
+                <option value="false" th:selected="${!lowStockOnly}">Tất cả sản phẩm</option>
+                <option value="true" th:selected="${lowStockOnly}">Chỉ hiển thị Sắp hết hàng</option>
             </select>
-            <select class="form-select">
-                <option>All Warehouses</option>
-                <option>Main Warehouse</option>
-                <option>Secondary Warehouse</option>
-            </select>
-            <button class="btn btn-outline-secondary"><i class="fas fa-filter me-1"></i> Filter</button>
-        </div>
+            <button type="submit" id="btnSubmitFilter" class="btn btn-dark"><i class="fas fa-filter me-1"></i> Lọc</button>
+            <a th:href="@{/admin/inventory}" class="btn btn-outline-secondary" title="Tải lại / Bỏ lọc"><i class="fas fa-redo"></i></a>
+        </form>
 
-        <div class="table-wrap">
+        <div class="table-wrap table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
                 <tr>
-                    <th>SKU</th>
-                    <th>Product</th>
-                    <th class="text-end">In Hand</th>
-                    <th class="text-end">Reserved</th>
-                    <th class="text-end">Available</th>
-                    <th>Stock Status</th>
-                    <th>Last Updated</th>
-                    <th class="text-center">Actions</th>
+                    <th class="ps-3">SKU</th>
+                    <th>Sản phẩm / Biến thể</th>
+                    <th class="text-end">Tồn kho thực</th>
+                    <th class="text-end">Đang chờ giao</th>
+                    <th class="text-end">Có thể bán</th>
+                    <th class="text-center">Trạng thái</th>
+                    <th class="text-center pe-3">Thao tác</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="item : ${inventoryItems}">
-                    <td><span class="fw-semibold" th:text="${item.sku} ?: 'SKU-001'">SKU-001</span></td>
-                    <td th:text="${item.productName} ?: '18K Gold Ring'">18K Gold Ring</td>
-                    <td class="text-end" th:text="${item.stockQuantity} ?: 120">120</td>
-                    <td class="text-end" th:text="${item.reservedQuantity} ?: 14">14</td>
-                    <td class="text-end" th:text="${item.availableQuantity} ?: 106">106</td>
-                    <td>
-                        <span class="stock-badge"
-                              th:classappend="${item.availableQuantity != null and item.availableQuantity == 0 ? ' stock-out' : (item.availableQuantity != null and item.availableQuantity <= 10 ? ' stock-low' : ' stock-ok')}"
-                              th:text="${item.availableQuantity != null and item.availableQuantity == 0 ? 'Out of Stock' : (item.availableQuantity != null and item.availableQuantity <= 10 ? 'Low Stock' : 'In Stock')}">In Stock</span>
-                    </td>
-                    <td th:text="${item.updatedAt != null ? #temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm') : '19/03/2026 10:30'}">19/03/2026 10:30</td>
+                <tr th:if="${variants == null or variants.isEmpty()}">
+                    <td colspan="7" class="text-center py-4 text-muted">Không tìm thấy sản phẩm nào trong kho.</td>
+                </tr>
+                <tr th:each="item : ${variants}">
+                    <td class="ps-3"><span class="fw-semibold text-primary" th:text="${item.sku}">SKU-001</span></td>
+
+                    <td th:text="|${item.product.name} ${item.size != null ? '- Size: ' + item.size : ''}|">18K Gold Ring</td>
+
+                    <td class="text-end fw-bold" th:id="'stock-' + ${item.id}" th:text="${item.stockQuantity} ?: 0">120</td>
+                    <td class="text-end text-muted">0</td>
+                    <td class="text-end fw-bold text-success" th:id="'avail-' + ${item.id}" th:text="${item.stockQuantity} ?: 0">120</td>
+
                     <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary" title="Adjust"><i class="fas fa-sliders"></i></button>
-                        <button class="btn btn-sm btn-outline-success" title="Restock"><i class="fas fa-truck-ramp-box"></i></button>
+                        <span th:id="'badge-' + ${item.id}" class="stock-badge"
+                              th:classappend="${item.stockQuantity != null and item.stockQuantity <= 0 ? ' stock-out' : (item.stockQuantity != null and item.stockQuantity <= item.lowStockThreshold ? ' stock-low' : ' stock-ok')}"
+                              th:text="${item.stockQuantity != null and item.stockQuantity <= 0 ? 'Hết hàng' : (item.stockQuantity != null and item.stockQuantity <= item.lowStockThreshold ? 'Sắp hết' : 'Còn hàng')}">Còn hàng</span>
+                    </td>
+
+                    <td class="text-center pe-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                th:attr="data-bs-target='#adjustModal-' + ${item.id}">
+                            <i class="fas fa-sliders-h"></i> Điều chỉnh
+                        </button>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
+
+        <nav th:if="${variants != null and variants.totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${variants.number == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/inventory(page=${variants.number - 1},keyword=${keyword},lowStockOnly=${lowStockOnly})}">Trang trước</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, variants.totalPages - 1)}" th:classappend="${i == variants.number} ? 'active'">
+                    <a class="page-link" th:href="@{/admin/inventory(page=${i},keyword=${keyword},lowStockOnly=${lowStockOnly})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${variants.number + 1 >= variants.totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/inventory(page=${variants.number + 1},keyword=${keyword},lowStockOnly=${lowStockOnly})}">Trang sau</a>
+                </li>
+            </ul>
+        </nav>
     </div>
+
+    <th:block th:if="${variants != null}">
+        <th:block th:each="item : ${variants}">
+            <div class="modal fade" th:id="'adjustModal-' + ${item.id}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg">
+                        <form th:data-id="${item.id}" onsubmit="return submitAdjustForm(event, this)">
+                            <div class="modal-header bg-dark text-white">
+                                <h5 class="modal-title"><i class="fas fa-box-open me-2"></i>Cập nhật Tồn Kho</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small fw-bold">Sản phẩm / Biến thể</label>
+                                    <input type="text" class="form-control bg-light fw-bold" readonly
+                                           th:value="|${item.product.name} ${item.size != null ? '- Size: ' + item.size : ''}|">
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label text-muted small fw-bold">Kho hiện tại</label>
+                                        <input type="number" class="form-control bg-light" readonly
+                                               th:id="'adjCurrentStock-' + ${item.id}"
+                                               th:value="${item.stockQuantity} ?: 0">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label text-primary small fw-bold">Thay đổi (*)</label>
+                                        <input type="number" class="form-control border-primary" required
+                                               th:id="'adjQuantityChange-' + ${item.id}"
+                                               placeholder="+10 hoặc -5">
+                                        <small class="text-muted" style="font-size: 0.7rem;">Nhập số âm để xuất kho</small>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label text-muted small fw-bold">Lý do điều chỉnh</label>
+                                    <select class="form-select" required th:id="'adjReason-' + ${item.id}">
+                                        <option value="Nhập hàng mới từ NCC">Nhập hàng mới từ NCC</option>
+                                        <option value="Khách trả hàng (Restock)">Khách trả hàng (Restock)</option>
+                                        <option value="Xuất hủy / Hàng lỗi">Xuất hủy / Hàng lỗi</option>
+                                        <option value="Điều chỉnh sau kiểm kho">Điều chỉnh sau kiểm kho</option>
+                                        <option value="Khác">Khác...</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label text-muted small fw-bold">Ghi chú thêm</label>
+                                    <textarea class="form-control" rows="2" th:id="'adjNote-' + ${item.id}"
+                                              placeholder="Ghi chú chi tiết người kiểm..."></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                                <button type="submit" class="btn btn-primary px-4 btn-save-adjust">
+                                    <i class="fas fa-save me-1"></i> Lưu Thay Đổi
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+    </th:block>
+
 </div>
+
+<script>
+    function submitAdjustForm(e, formElement) {
+        e.preventDefault();
+
+        // Trích xuất ID và nút Save từ Form đang thao tác
+        const variantId = formElement.getAttribute('data-id');
+        const btnSave = formElement.querySelector('.btn-save-adjust');
+        const originalText = btnSave.innerHTML;
+
+        // Vô hiệu hóa nút để tránh click 2 lần
+        btnSave.disabled = true;
+        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...';
+
+        // Lấy dữ liệu từ các ô Input
+        const quantityChange = parseInt(document.getElementById('adjQuantityChange-' + variantId).value) || 0;
+        const reason = document.getElementById('adjReason-' + variantId).value;
+        const note = document.getElementById('adjNote-' + variantId).value;
+
+        // Lấy token CSRF
+        const csrfToken = document.getElementById('csrfToken') ? document.getElementById('csrfToken').value : '';
+        const csrfHeader = document.getElementById('csrfHeader') ? document.getElementById('csrfHeader').value : '';
+
+        let headers = { 'Content-Type': 'application/json' };
+        if(csrfHeader && csrfToken) headers[csrfHeader] = csrfToken;
+
+        fetch('/admin/inventory/adjust', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                variantId: variantId,
+                quantityChange: quantityChange,
+                reason: reason,
+                note: note
+            })
+        })
+            .then(async res => {
+                // Bắt JSON an toàn
+                const data = await res.json().catch(() => ({}));
+
+                // Dùng res.ok (Kiểm tra mã HTTP 200 từ Server) thay vì dò data.status
+                if (res.ok) {
+                    alert(data.message || "Cập nhật tồn kho thành công!");
+                    // F5 LẠI TRANG ĐỂ LẤY DỮ LIỆU MỚI NHẤT TỪ DATABASE
+                    window.location.reload();
+                } else {
+                    alert("Thất bại: " + (data.message || "Lỗi xử lý từ máy chủ (Mã: " + res.status + ")"));
+                    // Mở lại nút nếu bị lỗi
+                    btnSave.disabled = false;
+                    btnSave.innerHTML = originalText;
+                }
+            })
+            .catch(err => {
+                alert('Lỗi kết nối đến máy chủ!');
+                console.error(err);
+                btnSave.disabled = false;
+                btnSave.innerHTML = originalText;
+            });
+
+        return false;
+    }
+</script>
+
 </body>
 </html>

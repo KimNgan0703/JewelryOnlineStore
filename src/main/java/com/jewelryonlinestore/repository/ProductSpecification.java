@@ -1,6 +1,7 @@
-package com.jewelryonlinestore.repository.spec;
+package com.jewelryonlinestore.repository;
 
 import com.jewelryonlinestore.dto.request.ProductFilterRequest;
+import com.jewelryonlinestore.entity.Category;
 import com.jewelryonlinestore.entity.Product;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;

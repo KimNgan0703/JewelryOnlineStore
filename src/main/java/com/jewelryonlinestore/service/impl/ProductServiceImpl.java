@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.Normalizer;
 import java.util.*;
 import java.util.regex.Pattern;
-import com.jewelryonlinestore.repository.spec.ProductSpecification;
+import com.jewelryonlinestore.repository.ProductSpecification;
 import org.springframework.data.jpa.domain.Specification;
 @Service
 @RequiredArgsConstructor
