@@ -34,8 +34,8 @@ public class OrderController {
     private final OrderService     orderService;
     private final CartService      cartService;
     private final AddressService   addressService;
-    private final PromotionService promotionService; // FIX: Thêm Service để xử lý mã giảm giá
-
+    private final PromotionService promotionService;
+    private final MomoService      momoService;
     // ── Trang Checkout (C06) ─────────────────────────────
     @GetMapping("/checkout")
     public String checkoutPage(Authentication auth, HttpSession session, Model model) {
@@ -45,7 +45,8 @@ public class OrderController {
         }
         PlaceOrderRequest placeOrderRequest = new PlaceOrderRequest();
         placeOrderRequest.setNewAddress(new AddressRequest());
-        placeOrderRequest.setPaymentMethod("cod");
+        // Mặc định chọn COD
+        placeOrderRequest.setPaymentMethod("COD");
 
         model.addAttribute("cart",              cart);
         model.addAttribute("addresses",         addressService.getMyAddresses(auth));
@@ -72,11 +73,36 @@ public class OrderController {
             model.addAttribute("placeOrderRequest", req);
             return "customer/checkout";
         }
+
         try {
+            // 1. Lưu đơn hàng vào Database
             OrderDetailResponse order = orderService.placeOrder(req, auth, session);
+
+            // ==============================================================
+            // 2. KIỂM TRA PHƯƠNG THỨC THANH TOÁN (MOMO HAY COD)
+            // ==============================================================
+            if ("MOMO".equalsIgnoreCase(req.getPaymentMethod())) {
+                try {
+                    // Gọi sang MoMo lấy link thanh toán
+                    String amountStr = String.valueOf(order.getTotal().longValue());
+                    String payUrl = momoService.createMomoPaymentUrl(
+                            order.getOrderNumber(),
+                            amountStr,
+                            "Thanh toan don hang " + order.getOrderNumber()
+                    );
+                    // Chuyển hướng trình duyệt sang MoMo luôn!
+                    return "redirect:" + payUrl;
+                } catch (Exception e) {
+                    redirectAttr.addFlashAttribute("toast_error", "Không thể tạo liên kết MoMo lúc này.");
+                    return "redirect:/orders/checkout";
+                }
+            }
+
+            // 3. Nếu là COD thì hiển thị trang Đặt hàng thành công luôn
             redirectAttr.addFlashAttribute("order",         order);
             redirectAttr.addFlashAttribute("toast_success", "Đặt hàng thành công!");
             return "redirect:/orders/success/" + order.getOrderNumber();
+
         } catch (Exception e) {
             redirectAttr.addFlashAttribute("toast_error", e.getMessage());
             return "redirect:/orders/checkout";
@@ -134,6 +160,22 @@ public class OrderController {
         }
     }
 
+    // ── Khách xác nhận Đã nhận hàng (C07 - AJAX) ────────────────
+    @PostMapping("/{orderNumber}/receive")
+    @ResponseBody
+    public ResponseEntity<ApiResponse<Void>> receiveOrder(
+            @PathVariable String orderNumber,
+            Authentication auth) {
+        try {
+            orderService.markAsDelivered(orderNumber, auth);
+            return ResponseEntity.ok(ApiResponse.ok("Cảm ơn bạn đã mua sắm! Đơn hàng đã hoàn thành.", null));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Có lỗi xảy ra: " + e.getMessage()));
+        }
+    }
+
     // ── Mua lại (C07) ────────────────────────────────────
     @PostMapping("/{orderNumber}/reorder")
     public String reorder(@PathVariable String orderNumber,
@@ -150,9 +192,6 @@ public class OrderController {
     public ResponseEntity<?> applyCoupon(@RequestParam("code") String code, Authentication auth, HttpSession session) {
         try {
             CartResponse cart = cartService.getCart(auth, session);
-
-            // Tính subtotal hiện tại của giỏ
-            // Lấy trực tiếp subtotal đã được tính toán sẵn từ CartResponse
             BigDecimal subtotal = cart.getSubtotal();
 
             Optional<Promotion> promoOpt = promotionService.validateCoupon(code, subtotal);
@@ -162,7 +201,7 @@ public class OrderController {
 
             Promotion promo = promoOpt.get();
             BigDecimal discount = promotionService.calculateDiscount(promo, subtotal);
-            BigDecimal shippingFee = BigDecimal.ZERO; // Mặc định freeship hoặc có thể lấy từ cart.getShippingFee()
+            BigDecimal shippingFee = BigDecimal.ZERO;
             BigDecimal total = subtotal.add(shippingFee).subtract(discount);
             if (total.compareTo(BigDecimal.ZERO) < 0) total = BigDecimal.ZERO;
 

@@ -90,11 +90,12 @@
      ═══════════════════════════════════════════════════════════ -->
 <section class="category-section">
     <div class="container">
+        <h2 class="section-title">Browse by Category</h2>
 
         <!-- Dynamic: lấy từ ${categories} do controller truyền -->
-        <div class="row justify-content-center flex-nowrap"
+        <div class="row justify-content-center"
              th:if="${categories != null and !categories.isEmpty()}">
-            <div class="col text-center" th:each="cat : ${categories}">
+            <div class="col-6 col-md-3 mb-4" th:each="cat : ${categories}">
                 <a th:href="@{/products(categoryId=${cat.id})}"
                    class="text-decoration-none text-dark">
                     <div class="category-card">
@@ -160,23 +161,34 @@
                     <div class="product-badge" th:if="${product.discountPercent != null}">
                         <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
                     </div>
-                    <div class="product-image">
-                        <img th:src="${product.primaryImageUrl}"
-                             alt="Product"
-                             src="https://via.placeholder.com/250">
-                    </div>
-                    <div class="product-info">
-                        <div class="product-name" th:text="${product.name}">Product Name</div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <span th:text="${product.averageRating != null ? #numbers.formatDecimal(product.averageRating, 1, 1) : '0.0'}">4.5</span>
+                    <!-- Bọc ảnh + tên trong thẻ <a> để click vào là chuyển trang -->
+                    <a th:href="@{/products/{slug}(slug=${product.slug})}"
+                       class="text-decoration-none">
+                        <div class="product-image">
+                            <img th:if="${product.primaryImageUrl != null}"
+                                 th:src="@{${product.primaryImageUrl}}"
+                                 th:alt="${product.name}"
+                                 src="https://via.placeholder.com/250">
+                            <img th:unless="${product.primaryImageUrl != null}"
+                                 src="https://via.placeholder.com/250"
+                                 alt="Product">
                         </div>
-                        <div class="product-price">
-                            <span th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                        <div class="product-info">
+                            <div class="product-name" th:text="${product.name}">Product Name</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star text-warning"></i>
+                                <span th:text="${product.averageRating ?: '0.0'}">0.0</span>
+                                (<span th:text="${product.reviewCount ?: '0'}">0</span> đánh giá)
+                            </div>
+                            <div class="product-price">
+                                <span th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0 ₫</span>
+                            </div>
                         </div>
+                    </a>
+                    <div class="px-3 pb-3">
                         <a class="btn btn-sm btn-add-cart w-100"
                            th:href="@{/products/{slug}(slug=${product.slug})}">
-                            <i class="fas fa-shopping-cart"></i> View Product
+                            <i class="fas fa-eye"></i> Xem sản phẩm
                         </a>
                     </div>
                 </div>
@@ -216,9 +228,15 @@
             <div class="col-md-4 mb-4">
                 <h5>Quick Links</h5>
                 <ul class="list-unstyled">
-                    <li><a href="/about"   style="color: var(--primary-color); text-decoration: none;">About Us</a></li>
-                    <li><a href="/contact" style="color: var(--primary-color); text-decoration: none;">Contact</a></li>
-                    <li><a href="/privacy" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a></li>
+                    <li><a th:href="@{/about}"><i class="fas fa-info-circle me-1"></i> About Us</a></li>
+
+                    <li class="mt-2"><a th:href="@{/privacy}"><i class="fas fa-shield-alt me-1"></i> Privacy & Terms</a></li>
+
+                    <li class="mt-3">
+                        <a href="tel:19001234" class="text-decoration-none fw-bold" style="color: var(--primary-color); font-size: 1.1rem;">
+                            <i class="fas fa-headset me-1"></i> Hotline: 1900 1234
+                        </a>
+                    </li>
                 </ul>
             </div>
             <div class="col-md-4 mb-4">

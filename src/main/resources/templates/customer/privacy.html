@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chính Sách & Điều Khoản - Jewelry Online Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        body { background-color: #fcfcfc; }
+        .policy-header {
+            background: linear-gradient(135deg, var(--secondary-color), #1a252f);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .policy-nav {
+            position: sticky;
+            top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .policy-nav a {
+            display: block;
+            color: #555;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .policy-nav a:hover, .policy-nav a.active {
+            background-color: #fdf8e9;
+            color: var(--primary-color);
+        }
+        .policy-content {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .policy-section {
+            margin-bottom: 50px;
+        }
+        .policy-section:last-child { margin-bottom: 0; }
+        .policy-title {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .policy-section h5 { color: #333; font-weight: bold; margin-top: 20px; }
+        .policy-section p, .policy-section li { color: #555; line-height: 1.8; }
+        .policy-section ul { padding-left: 20px; }
+    </style>
+</head>
+<body data-bs-spy="scroll" data-bs-target="#policy-navbar" data-bs-offset="50" tabindex="0">
+
+<div th:replace="~{layout/customer-header :: customerHeader}"></div>
+
+<div class="policy-header">
+    <div class="container">
+        <h1 class="fw-bold text-uppercase mb-3" style="color: var(--primary-color);">Chính Sách & Điều Khoản</h1>
+        <p class="lead mb-0">Cam kết minh bạch - Bảo vệ quyền lợi khách hàng tuyệt đối</p>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-lg-3 d-none d-lg-block">
+            <nav id="policy-navbar" class="policy-nav flex-column align-items-stretch">
+                <a class="nav-link" href="#chinh-sach-doi-tra">1. Chính Sách Đổi / Trả</a>
+                <a class="nav-link" href="#chinh-sach-bao-hanh">2. Chính Sách Bảo Hành</a>
+                <a class="nav-link" href="#chinh-sach-bao-mat">3. Chính Sách Bảo Mật</a>
+                <a class="nav-link" href="#dieu-khoan-mua-hang">4. Điều Khoản Mua Hàng</a>
+            </nav>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="policy-content">
+
+                <div id="chinh-sach-doi-tra" class="policy-section pt-3">
+                    <h3 class="policy-title">1. Chính Sách Đổi / Trả Sản Phẩm</h3>
+                    <p>Jewelry Online Store mong muốn mang đến trải nghiệm mua sắm trang sức tốt nhất cho bạn. Chúng tôi hỗ trợ đổi/trả sản phẩm với các điều kiện sau:</p>
+                    <h5>Điều kiện đổi trả:</h5>
+                    <ul>
+                        <li>Sản phẩm được đổi/trả trong vòng <strong>07 ngày</strong> kể từ ngày nhận hàng (dựa trên hệ thống của đơn vị vận chuyển).</li>
+                        <li>Sản phẩm phải còn nguyên vẹn, chưa qua sử dụng, không bị trầy xước, móp méo, hóa chất tác động.</li>
+                        <li>Sản phẩm còn đầy đủ hộp, tem mác, hóa đơn mua hàng và các quà tặng kèm (nếu có).</li>
+                        <li>Không áp dụng đổi/trả đối với các sản phẩm được thiết kế, khắc tên theo yêu cầu riêng của khách hàng.</li>
+                    </ul>
+                    <h5>Quy trình thực hiện:</h5>
+                    <p>Khách hàng vui lòng liên hệ qua Hotline hoặc Fanpage để được nhân viên hướng dẫn gửi hàng về kho. Sau khi kiểm định trang sức đạt chuẩn, chúng tôi sẽ tiến hành đổi sản phẩm mới hoặc hoàn tiền trong 3-5 ngày làm việc.</p>
+                </div>
+
+                <div id="chinh-sach-bao-hanh" class="policy-section pt-3">
+                    <h3 class="policy-title">2. Chính Sách Bảo Hành Trang Sức</h3>
+                    <p>Chúng tôi tự hào cung cấp dịch vụ hậu mãi trọn đời cho các sản phẩm trang sức (Vàng, Bạc, Bạch Kim) mua tại cửa hàng.</p>
+                    <h5>Nội dung bảo hành:</h5>
+                    <ul>
+                        <li><strong>Miễn phí 100%:</strong> Đánh bóng, siêu âm làm sạch trang sức trọn đời.</li>
+                        <li><strong>Bảo hành 6 tháng:</strong> Miễn phí gắn lại đá CZ, đá tổng hợp (dưới 3mm) bị rớt do lỗi kỹ thuật gia công. Miễn phí hàn nối dây chuyền, lắc tay nếu đứt ở vị trí mắt xích hàn.</li>
+                    </ul>
+                    <h5>Trường hợp từ chối bảo hành miễn phí:</h5>
+                    <p>Sản phẩm bị đứt gãy, biến dạng, móp méo do va đập mạnh hoặc do lỗi sử dụng của khách hàng. Sản phẩm bị hỏng do tiếp xúc với hóa chất, mỹ phẩm mạnh. (Trong trường hợp này, shop vẫn hỗ trợ sửa chữa có tính phí ưu đãi).</p>
+                </div>
+
+                <div id="chinh-sach-bao-mat" class="policy-section pt-3">
+                    <h3 class="policy-title">3. Chính Sách Bảo Mật Thông Tin</h3>
+                    <p>Sự riêng tư của bạn là ưu tiên hàng đầu của chúng tôi. Mọi thông tin bạn cung cấp trên hệ thống đều được bảo vệ nghiêm ngặt.</p>
+                    <ul>
+                        <li><strong>Mục đích thu thập:</strong> Xử lý đơn hàng, giao hàng, hỗ trợ bảo hành và thông báo các chương trình khuyến mãi (nếu bạn đồng ý).</li>
+                        <li><strong>Cam kết bảo mật:</strong> Dữ liệu cá nhân (Họ tên, SĐT, Địa chỉ) được mã hóa an toàn. Tuyệt đối không mua bán, trao đổi thông tin khách hàng cho bất kỳ bên thứ 3 nào vì mục đích thương mại.</li>
+                        <li><strong>Thanh toán an toàn:</strong> Các giao dịch qua thẻ (VNPay, MoMo) đều được thực hiện qua cổng thanh toán đạt chuẩn bảo mật quốc tế PCI DSS. Cửa hàng không lưu trữ trực tiếp thông tin thẻ ngân hàng của bạn.</li>
+                    </ul>
+                </div>
+
+                <div id="dieu-khoan-mua-hang" class="policy-section pt-3">
+                    <h3 class="policy-title">4. Điều Khoản Mua Hàng</h3>
+                    <p>Bằng việc đặt hàng tại trang web, quý khách đồng ý với các quy định sau:</p>
+                    <ul>
+                        <li>Màu sắc và kích thước sản phẩm thực tế có thể chênh lệch nhỏ (không đáng kể) so với hình ảnh trên website do điều kiện ánh sáng lúc chụp.</li>
+                        <li>Cửa hàng có quyền từ chối hoặc hủy đơn hàng vì lý do khách quan (lỗi hệ thống, hết hàng) và sẽ thông báo/hoàn tiền lập tức cho khách hàng.</li>
+                        <li>Mọi thắc mắc và khiếu nại sẽ được giải quyết dựa trên tinh thần tôn trọng và bảo vệ quyền lợi chính đáng của người tiêu dùng.</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

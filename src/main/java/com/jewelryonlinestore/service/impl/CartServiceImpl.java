@@ -32,7 +32,7 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository        cartItemRepository;
     private final ProductVariantRepository  productVariantRepository;
     private final UserRepository            userRepository;
-    private final PromotionService          promotionService;   // ← thêm
+    private final PromotionService          promotionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -74,6 +74,8 @@ public class CartServiceImpl implements CartService {
             throw new IllegalArgumentException("Cart item does not belong to current cart");
         }
         if (quantity <= 0) {
+            // ĐÃ SỬA: Xóa khỏi bộ nhớ đệm trước khi xóa dưới DB
+            cart.getItems().remove(item);
             cartItemRepository.delete(item);
         } else {
             item.setQuantity(quantity);
@@ -91,7 +93,11 @@ public class CartServiceImpl implements CartService {
         if (!item.getCart().getId().equals(cart.getId())) {
             throw new IllegalArgumentException("Cart item does not belong to current cart");
         }
+
+        // ĐÃ SỬA: Xóa khỏi bộ nhớ đệm trước khi xóa dưới DB
+        cart.getItems().remove(item);
         cartItemRepository.delete(item);
+
         return getCart(auth, session);
     }
 

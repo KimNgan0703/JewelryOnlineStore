@@ -29,4 +29,7 @@ public interface OrderService {
     OrderDetailResponse  markAsPaid(String orderNumber, Authentication auth);
 
     long                 countByStatus(String status);
+
+    // Khách hàng xác nhận đã nhận hàng
+    OrderDetailResponse markAsDelivered(String orderNumber, Authentication auth);
 }

@@ -33,5 +33,10 @@ public class HomeController {
         model.addAttribute("authentication", auth);
         return "customer/home";
     }
+    @GetMapping("/privacy-terms")
+    public String privacyAndTermsPage(org.springframework.ui.Model model) {
+        model.addAttribute("pageTitle", "Chính sách & Điều khoản");
+        return "privacy"; // Trỏ tới file giao diện
+    }
 }
 

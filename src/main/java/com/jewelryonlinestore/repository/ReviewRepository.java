@@ -59,4 +59,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // ✅ Đếm review theo enum (dashboard widget - A02)
     long countByStatus(Review.ReviewStatus status);
+    // Đếm tổng số đánh giá đã duyệt của một sản phẩm
+    long countByProductIdAndStatus(Long productId, Review.ReviewStatus status);
 }

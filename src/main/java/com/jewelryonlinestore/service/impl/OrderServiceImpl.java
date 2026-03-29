@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -152,11 +153,27 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public Page<OrderSummaryResponse> getMyOrders(Authentication auth, String status, int page, int size) {
         Customer customer = requireCustomer(auth);
-        Page<Order> orders = (status == null || status.isBlank())
-                ? orderRepository.findByCustomerIdOrderByCreatedAtDesc(
-                customer.getId(), PageRequest.of(page, size))
-                : orderRepository.findByCustomerIdAndOrderStatusInOrderByCreatedAtDesc(
-                customer.getId(), List.of(status.toUpperCase()), PageRequest.of(page, size));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> orders;
+
+        // 1. Nếu không có status hoặc status là "all" -> Lấy tất cả
+        if (status == null || status.isBlank() || status.equalsIgnoreCase("all")) {
+            orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), pageable);
+        }
+        else {
+            try {
+                // 2. Chuyển String từ URL (pending) -> Enum (PENDING)
+                Order.OrderStatus statusEnum = Order.OrderStatus.valueOf(status.toUpperCase(Locale.ROOT));
+
+                // 3. Gọi hàm repository đã sửa ở Bước 1
+                orders = orderRepository.findByCustomerIdAndOrderStatusOrderByCreatedAtDesc(
+                        customer.getId(), statusEnum, pageable);
+            } catch (IllegalArgumentException e) {
+                // Nếu người dùng nhập status bậy bạ trên URL -> Mặc định lấy tất cả
+                orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), pageable);
+            }
+        }
+
         return orders.map(this::toSummary);
     }
 
@@ -263,6 +280,31 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
 
         order.setPaymentStatus(Order.PaymentStatus.PAID);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        return toDetail(orderRepository.save(order));
+    }
+
+    @Override
+    @Transactional
+    public OrderDetailResponse markAsDelivered(String orderNumber, Authentication auth) {
+        Customer customer = requireCustomer(auth);
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng: " + orderNumber));
+
+        // Kiểm tra quyền sở hữu
+        if (!order.getCustomer().getId().equals(customer.getId())) {
+            throw new IllegalArgumentException("Đơn hàng này không thuộc về bạn");
+        }
+
+        // Kiểm tra trạng thái phải là SHIPPING mới được nhận
+        if (order.getOrderStatus() != Order.OrderStatus.SHIPPING) {
+            throw new IllegalStateException("Đơn hàng chưa được giao, không thể xác nhận nhận hàng");
+        }
+
+        // Cập nhật trạng thái
+        order.setOrderStatus(Order.OrderStatus.DELIVERED);
+        order.setPaymentStatus(Order.PaymentStatus.PAID); // Nhận hàng xong coi như đã thanh toán (dành cho COD)
         order.setUpdatedAt(LocalDateTime.now());
 
         return toDetail(orderRepository.save(order));
@@ -408,6 +450,11 @@ public class OrderServiceImpl implements OrderService {
                         .variantId(item.getVariant() != null ? item.getVariant().getId() : null)
                         .productId(item.getVariant() != null && item.getVariant().getProduct() != null
                                 ? item.getVariant().getProduct().getId() : null)
+
+                        // THÊM ĐOẠN NÀY ĐỂ LẤY SLUG TỪ DATABASE LÊN
+                        .productSlug(item.getVariant() != null && item.getVariant().getProduct() != null
+                                ? item.getVariant().getProduct().getSlug() : null)
+
                         .productName(item.getProductName())
                         .variantSize(item.getVariantSize())
                         .imageUrl(item.getVariant() != null && item.getVariant().getProduct() != null

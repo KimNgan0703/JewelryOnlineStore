@@ -84,4 +84,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
     long countByOrderStatusAndCreatedAtBetween(Order.OrderStatus status, LocalDateTime start, LocalDateTime end);
+
+    Page<Order> findByCustomerIdAndOrderStatusOrderByCreatedAtDesc(Long id, Order.OrderStatus statusEnum, Pageable pageable);
 }

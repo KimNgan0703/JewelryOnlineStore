@@ -98,6 +98,7 @@ public class SecurityConfig {
 
                 // ── CSRF (giữ nguyên cho form, disable cho REST endpoints) ──
                 .csrf(csrf -> csrf
+                        .csrfTokenRequestHandler(new org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler())
                         .ignoringRequestMatchers("/api/**", "/payment/callback/**")
                 );
 

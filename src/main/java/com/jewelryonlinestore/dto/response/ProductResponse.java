@@ -22,6 +22,7 @@ public class ProductResponse {
     private String shortDescription;
     private String description;
 
+
     // Phân loại
     private String categoryName;
     private Long categoryId;
@@ -49,6 +50,7 @@ public class ProductResponse {
     // Đánh giá tổng hợp
     private Double averageRating;
     private Integer reviewCount;
+
 
     // Biến thể (chỉ load ở trang chi tiết)
     private List<VariantInfo> variants;

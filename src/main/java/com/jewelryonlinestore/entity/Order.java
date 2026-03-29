@@ -128,6 +128,9 @@ public class Order {
     public boolean isDelivered() { return orderStatus == OrderStatus.DELIVERED; }
     public boolean isCancelled() { return orderStatus == OrderStatus.CANCELLED; }
 
+    public void setPaidAt(LocalDateTime now) {
+    }
+
     // ── Enums ─────────────────────────────────────────────
     public enum PaymentMethod  { COD, BANK_TRANSFER, VNPAY, MOMO }
     public enum PaymentStatus  { PENDING, PAID, FAILED, REFUNDED }

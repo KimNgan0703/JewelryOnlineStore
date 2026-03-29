@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import com.jewelryonlinestore.repository.ProductSpecification;
 import org.springframework.data.jpa.domain.Specification;
+
 @Service
 @RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
@@ -53,7 +54,8 @@ public class ProductServiceImpl implements ProductService {
             case "price_desc"  -> Sort.by(Sort.Direction.DESC, "basePrice");
             case "best_seller" -> Sort.by(Sort.Direction.DESC, "isBestSeller")
                     .and(Sort.by(Sort.Direction.DESC, "createdAt"));
-            case "rating"      -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case "rating"      -> Sort.by(Sort.Direction.DESC, "averageRating") // Đã sửa để có thể sort theo Rating
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
             default            -> Sort.by(Sort.Direction.DESC, "createdAt");
         };
     }
@@ -122,7 +124,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public Page<ProductResponse> adminSearchProducts(String keyword, Long categoryId,
                                                      Boolean isActive, int page, int size) {
-        // Truyền các biến lọc vào đúng hàm adminSearchProducts của Repository
         return productRepository.adminSearchProducts(
                 keyword == null || keyword.isBlank() ? null : keyword.trim(),
                 categoryId,
@@ -228,8 +229,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public Brand createBrand(String name) {
         String cleanName = name.trim();
-
-        // Kiểm tra trùng lặp
         if (brandRepository.existsByNameIgnoreCase(cleanName)) {
             throw new IllegalArgumentException("Thương hiệu '" + cleanName + "' đã tồn tại!");
         }
@@ -245,8 +244,6 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public Material createMaterial(String name) {
         String cleanName = name.trim();
-
-        // Kiểm tra trùng lặp
         if (materialRepository.existsByNameIgnoreCase(cleanName)) {
             throw new IllegalArgumentException("Chất liệu '" + cleanName + "' đã tồn tại!");
         }
@@ -390,8 +387,9 @@ public class ProductServiceImpl implements ProductService {
                 .comparePrice(p.getComparePrice())
                 .hasDiscount(p.getDiscountPercent() != null)
                 .discountPercent(p.getDiscountPercent())
-                .averageRating(0.0)
-                .reviewCount(0)
+                // ✅ Đã sửa: Lấy dữ liệu thật thay vì 0.0
+                .averageRating(p.getAverageRating() != null ? p.getAverageRating() : 0.0)
+                .reviewCount(p.getReviewCount() != null ? p.getReviewCount() : 0)
                 .isNew(p.isNew())
                 .isBestSeller(p.isBestSeller())
                 .inStock(p.hasStock())
@@ -436,8 +434,9 @@ public class ProductServiceImpl implements ProductService {
                 .inStock(p.hasStock())
                 .primaryImageUrl(p.getPrimaryImageUrl())
                 .allImageUrls(allImages)
-                .averageRating(0.0)
-                .reviewCount(0)
+                // ✅ Đã sửa: Lấy dữ liệu thật thay vì 0.0
+                .averageRating(p.getAverageRating() != null ? p.getAverageRating() : 0.0)
+                .reviewCount(p.getReviewCount() != null ? p.getReviewCount() : 0)
                 .variants(variants)
                 .metaTitle(p.getMetaTitle())
                 .metaDescription(p.getMetaDescription())
