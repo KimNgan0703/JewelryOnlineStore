@@ -77,10 +77,12 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal discountAmount  = BigDecimal.ZERO;
         Promotion  appliedPromotion = null;
         if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
-            Optional<Promotion> promoOpt = promotionService.validateCoupon(req.getCouponCode(), subtotal);
+            // Validate bằng cart
+            Optional<Promotion> promoOpt = promotionService.validateCoupon(req.getCouponCode(), cart);
             if (promoOpt.isPresent()) {
                 appliedPromotion = promoOpt.get();
-                discountAmount   = promotionService.calculateDiscount(appliedPromotion, subtotal);
+                // ĐÃ SỬA LỖI Ở ĐÂY: Truyền cart vào thay vì subtotal
+                discountAmount   = promotionService.calculateDiscount(appliedPromotion, cart);
             }
         }
 
@@ -111,7 +113,8 @@ public class OrderServiceImpl implements OrderService {
 
         Order saved = orderRepository.save(order);
 
-        if (emailService != null) {
+        // CHỈ gửi mail ngay nếu là COD. Nếu là MOMO thì để PaymentService lo sau.
+        if (emailService != null && saved.getPaymentMethod() == Order.PaymentMethod.COD) {
             emailService.sendOrderConfirmationEmail(saved.getOrderNumber());
         }
 
@@ -450,11 +453,8 @@ public class OrderServiceImpl implements OrderService {
                         .variantId(item.getVariant() != null ? item.getVariant().getId() : null)
                         .productId(item.getVariant() != null && item.getVariant().getProduct() != null
                                 ? item.getVariant().getProduct().getId() : null)
-
-                        // THÊM ĐOẠN NÀY ĐỂ LẤY SLUG TỪ DATABASE LÊN
                         .productSlug(item.getVariant() != null && item.getVariant().getProduct() != null
                                 ? item.getVariant().getProduct().getSlug() : null)
-
                         .productName(item.getProductName())
                         .variantSize(item.getVariantSize())
                         .imageUrl(item.getVariant() != null && item.getVariant().getProduct() != null

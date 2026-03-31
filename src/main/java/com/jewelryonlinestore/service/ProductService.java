@@ -30,4 +30,8 @@ public interface ProductService {
     // API hỗ trợ thêm nhanh Brand & Material từ form Admin
     Brand                     createBrand(String name);
     Material                  createMaterial(String name);
+    // Thêm hàm này để lấy danh sách sản phẩm cho Dropdown Khuyến mãi
+    List<Product> getAllProducts();
+    // Hàm tự động sinh mã SKU theo thứ tự
+    String generateNextSku();
 }

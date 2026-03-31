@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import jakarta.annotation.PostConstruct; // Thêm import này
 
 import java.util.HashMap;
 import java.util.Map;

@@ -55,4 +55,13 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
         ORDER BY pv.stockQuantity ASC
     """)
     List<ProductVariant> findLowStockVariants();
+
+    // Kiểm tra SKU variant đã tồn tại chưa (dùng khi tự sinh SKU trong generateVariantSku)
+    boolean existsBySku(String sku);
+
+    // Kiểm tra SKU trùng khi update (loại trừ chính variant đó)
+    boolean existsBySkuAndIdNot(String sku, Long id);
+
+    // Lấy tất cả variant của một sản phẩm
+    List<ProductVariant> findByProductId(Long productId);
 }

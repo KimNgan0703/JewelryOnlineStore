@@ -77,11 +77,48 @@
 <div th:replace="~{layout/customer-header :: customerHeader}"></div>
 
 <!-- Hero Section -->
-<section class="hero">
-    <div class="container">
-        <h1>Elegant Jewelry for Every Occasion</h1>
-        <p>Discover our stunning collection of premium jewelry</p>
-        <a href="/products" class="btn btn-primary btn-lg">Shop Now</a>
+<section class="banner-section">
+    <div th:if="${banners != null and !banners.isEmpty()}" id="homeBannerCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+
+        <div class="carousel-indicators">
+            <button th:each="banner, iterStat : ${banners}"
+                    type="button"
+                    data-bs-target="#homeBannerCarousel"
+                    th:data-bs-slide-to="${iterStat.index}"
+                    th:classappend="${iterStat.index == 0} ? 'active' : ''"
+                    aria-current="true"></button>
+        </div>
+
+        <div class="carousel-inner">
+            <div class="carousel-item"
+                 th:each="banner, iterStat : ${banners}"
+                 th:classappend="${iterStat.index == 0} ? 'active' : ''"
+                 data-bs-interval="4000"> <a th:href="${banner.linkUrl != null and !banner.linkUrl.isEmpty() ? banner.linkUrl : '#'}">
+                <img th:src="${banner.imageUrl}" class="d-block w-100" th:alt="${banner.title}" style="height: 500px; object-fit: cover; object-position: center;">
+            </a>
+
+                <div class="carousel-caption d-none d-md-block" style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 15px;">
+                    <h3 th:text="${banner.title}" style="margin: 0; font-weight: bold; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">Tên Banner</h3>
+                </div>
+            </div>
+        </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#homeBannerCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true" style="background-color: rgba(0,0,0,0.3); border-radius: 50%; padding: 25px;"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#homeBannerCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true" style="background-color: rgba(0,0,0,0.3); border-radius: 50%; padding: 25px;"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+
+    <div th:unless="${banners != null and !banners.isEmpty()}" class="hero">
+        <div class="container">
+            <h1>Elegant Jewelry for Every Occasion</h1>
+            <p>Discover our stunning collection of premium jewelry</p>
+            <a href="/products" class="btn btn-primary btn-lg">Shop Now</a>
+        </div>
     </div>
 </section>
 
@@ -151,22 +188,37 @@
     </div>
 </section>
 
-<!-- Featured Products -->
-<section class="featured-products">
+<!-- ═══════════════════════════════════════════════════════
+     Sản phẩm Bán Chạy
+     ═══════════════════════════════════════════════════════ -->
+<section class="featured-products" style="background: #fff;">
     <div class="container">
-        <h2 class="section-title">Featured Products</h2>
-        <div class="row">
-            <div class="col-md-3 mb-4" th:each="product : ${bestSellers}">
-                <div class="card product-card">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="section-title mb-0">
+                <i class="fas fa-fire" style="color:#e74c3c; margin-right:8px;"></i>
+                Sản Phẩm Bán Chạy
+            </h2>
+            <a href="/products?sort=bestSeller" class="btn btn-outline-secondary btn-sm px-3">
+                Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row" th:if="${bestSellers != null and !bestSellers.isEmpty()}">
+            <div class="col-6 col-md-3 mb-4" th:each="product : ${bestSellers}">
+                <div class="card product-card h-100">
+                    <!-- Badge giảm giá -->
                     <div class="product-badge" th:if="${product.discountPercent != null}">
                         <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
                     </div>
-                    <!-- Bọc ảnh + tên trong thẻ <a> để click vào là chuyển trang -->
-                    <a th:href="@{/products/{slug}(slug=${product.slug})}"
-                       class="text-decoration-none">
+                    <!-- Badge bán chạy -->
+                    <div style="position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;z-index:1;">
+                        <i class="fas fa-fire me-1"></i>Hot
+                    </div>
+
+                    <a th:href="@{/products/{slug}(slug=${product.slug})}" class="text-decoration-none">
                         <div class="product-image">
                             <img th:if="${product.primaryImageUrl != null}"
-                                 th:src="@{${product.primaryImageUrl}}"
+                                 th:src="${product.primaryImageUrl}"
                                  th:alt="${product.name}"
                                  src="https://via.placeholder.com/250">
                             <img th:unless="${product.primaryImageUrl != null}"
@@ -174,29 +226,100 @@
                                  alt="Product">
                         </div>
                         <div class="product-info">
-                            <div class="product-name" th:text="${product.name}">Product Name</div>
+                            <div class="product-name" th:text="${product.name}">Tên sản phẩm</div>
                             <div class="product-rating">
                                 <i class="fas fa-star text-warning"></i>
                                 <span th:text="${product.averageRating ?: '0.0'}">0.0</span>
-                                (<span th:text="${product.reviewCount ?: '0'}">0</span> đánh giá)
+                                <span class="text-muted" style="font-size:0.78rem;">
+                                    (<span th:text="${product.reviewCount ?: '0'}">0</span>)
+                                </span>
                             </div>
-                            <div class="product-price">
-                                <span th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0 ₫</span>
-                            </div>
+                            <div class="product-price" th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0 ₫</div>
                         </div>
                     </a>
-                    <div class="px-3 pb-3">
+                    <div class="px-3 pb-3 mt-auto">
                         <a class="btn btn-sm btn-add-cart w-100"
                            th:href="@{/products/{slug}(slug=${product.slug})}">
-                            <i class="fas fa-eye"></i> Xem sản phẩm
+                            <i class="fas fa-eye me-1"></i> Xem sản phẩm
                         </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="text-center mt-2">
-            <a href="/products" class="btn btn-outline-secondary px-4">View All Products</a>
+        <!-- Fallback khi không có dữ liệu -->
+        <div th:unless="${bestSellers != null and !bestSellers.isEmpty()}"
+             class="text-center py-5 text-muted">
+            <i class="fas fa-box-open fa-3x mb-3 d-block"></i>
+            Chưa có sản phẩm bán chạy.
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     Sản phẩm Mới
+     ═══════════════════════════════════════════════════════ -->
+<section class="featured-products" style="background: #fafafa; padding-top: 40px;">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <h2 class="section-title mb-0">
+                <i class="fas fa-sparkles" style="color: var(--primary-color); margin-right:8px;"></i>
+                Hàng Mới Về
+            </h2>
+            <a href="/products?sort=newest" class="btn btn-outline-secondary btn-sm px-3">
+                Xem tất cả <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row" th:if="${newProducts != null and !newProducts.isEmpty()}">
+            <div class="col-6 col-md-3 mb-4" th:each="product : ${newProducts}">
+                <div class="card product-card h-100">
+                    <!-- Badge giảm giá -->
+                    <div class="product-badge" th:if="${product.discountPercent != null}">
+                        <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
+                    </div>
+                    <!-- Badge NEW -->
+                    <div style="position:absolute;top:10px;left:10px;background:var(--primary-color);color:var(--secondary-color);padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;z-index:1;">
+                        NEW
+                    </div>
+
+                    <a th:href="@{/products/{slug}(slug=${product.slug})}" class="text-decoration-none">
+                        <div class="product-image">
+                            <img th:if="${product.primaryImageUrl != null}"
+                                 th:src="${product.primaryImageUrl}"
+                                 th:alt="${product.name}"
+                                 src="https://via.placeholder.com/250">
+                            <img th:unless="${product.primaryImageUrl != null}"
+                                 src="https://via.placeholder.com/250"
+                                 alt="Product">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name" th:text="${product.name}">Tên sản phẩm</div>
+                            <div class="product-rating">
+                                <i class="fas fa-star text-warning"></i>
+                                <span th:text="${product.averageRating ?: '0.0'}">0.0</span>
+                                <span class="text-muted" style="font-size:0.78rem;">
+                                    (<span th:text="${product.reviewCount ?: '0'}">0</span>)
+                                </span>
+                            </div>
+                            <div class="product-price" th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0 ₫</div>
+                        </div>
+                    </a>
+                    <div class="px-3 pb-3 mt-auto">
+                        <a class="btn btn-sm btn-add-cart w-100"
+                           th:href="@{/products/{slug}(slug=${product.slug})}">
+                            <i class="fas fa-eye me-1"></i> Xem sản phẩm
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fallback -->
+        <div th:unless="${newProducts != null and !newProducts.isEmpty()}"
+             class="text-center py-5 text-muted">
+            <i class="fas fa-box-open fa-3x mb-3 d-block"></i>
+            Chưa có sản phẩm mới.
         </div>
     </div>
 </section>

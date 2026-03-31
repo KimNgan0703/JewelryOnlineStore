@@ -50,15 +50,34 @@
         .preview-item:hover .remove-btn { opacity: 1; }
         .preview-item .img-num { position: absolute; bottom: 0; left: 0; right: 0; font-size: 9px; text-align: center; padding: 2px 0; color: #fff; background: rgba(45,74,107,0.55); }
         .preview-item:first-child .img-num { background: rgba(91,164,207,0.8); font-weight: 600; }
+
+        /* ===== VARIANTS ===== */
+        .variant-table-wrap { overflow-x: auto; }
+        .variant-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; }
+        .variant-table thead th { background: #f0f4f8; color: #4a5568; font-weight: 600; padding: 8px 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .variant-table thead th:first-child { border-radius: 8px 0 0 0; }
+        .variant-table thead th:last-child  { border-radius: 0 8px 0 0; }
+        .variant-row td { padding: 7px 8px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+        .variant-row:last-child td { border-bottom: none; }
+        .variant-row:hover td { background: #fafcff; }
+        .variant-row td input.form-control { font-size: 0.8rem; padding: 5px 9px; height: 34px; }
+        .variant-row td input.form-control:focus { border-color: #5ba4cf; box-shadow: 0 0 0 0.15rem rgba(91,164,207,0.2); }
+        .variant-idx { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#5ba4cf,#a8d8ea); color: #fff; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: auto; flex-shrink: 0; }
+        .btn-del-variant { width: 28px; height: 28px; border-radius: 6px; background: #fff0f0; color: #e53e3e; border: 1px solid #fed7d7; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 0.78rem; }
+        .btn-del-variant:hover { background: #e53e3e; color: #fff; border-color: #e53e3e; }
+        .btn-add-variant { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; background: linear-gradient(135deg,#5ba4cf,#4a93be); color: #fff; border: none; border-radius: 20px; font-size: 0.8rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(91,164,207,0.3); transition: all 0.2s; }
+        .btn-add-variant:hover { background: linear-gradient(135deg,#4a93be,#3a82ad); box-shadow: 0 4px 12px rgba(91,164,207,0.4); transform: translateY(-1px); }
+        .variant-empty { text-align: center; padding: 20px; color: #a0aec0; font-size: 0.82rem; }
+        .variant-count-badge { display: inline-flex; align-items: center; gap: 4px; background: #e8f4fd; color: #2d6a9f; border-radius: 12px; padding: 2px 10px; font-size: 0.75rem; font-weight: 600; }
     </style>
 
     <div id="cld-cfg"
-         th:data-cloud-name="${cloudinaryCloudName} ?: 'YOUR_CLOUD_NAME'"
-         th:data-upload-preset="${cloudinaryUploadPreset} ?: 'YOUR_UPLOAD_PRESET'"
+         th:data-cloud-name="${cloudinaryCloudName ?: 'dfnugby5d'}"
+         th:data-upload-preset="${cloudinaryUploadPreset ?: 'JewelryOnlineStore'}"
          style="display:none"></div>
 
     <div class="page-shell">
-        <form th:action="${isEdit} ? @{|/admin/products/${product.id}|} : @{/admin/products}"
+        <form th:action="${isEdit} ? @{'/admin/products/' + ${product.id}} : @{/admin/products}"
               th:object="${productRequest}"
               method="POST"
               id="productForm">
@@ -159,39 +178,77 @@
                     </div>
 
                     <div class="form-card">
-                        <div class="form-title">Giá & Tồn kho (Biến thể mặc định)</div>
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="form-title mb-0">Giá & Biến thể</div>
+                                <span class="variant-count-badge" id="variantCountBadge">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span id="variantCountText">0 biến thể</span>
+                                </span>
+                            </div>
+                            <button type="button" class="btn-add-variant" id="btnAddVariant">
+                                <i class="fas fa-plus"></i> Thêm biến thể
+                            </button>
+                        </div>
+
                         <div class="error-message mb-2" th:if="${#fields.hasErrors('variants')}" th:errors="*{variants}"></div>
-                        <div class="row g-3">
+
+                        <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Giá cơ sở (Base Price) *</label>
-                                <input type="number" class="form-control" th:field="*{basePrice}" th:classappend="${#fields.hasErrors('basePrice')} ? 'is-invalid'">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:#f0f4f8;border-color:#d1dde8;font-size:0.8rem;">₫</span>
+                                    <input type="number" class="form-control" th:field="*{basePrice}" th:classappend="${#fields.hasErrors('basePrice')} ? 'is-invalid'" placeholder="0">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Giá so sánh (Compare Price)</label>
-                                <input type="number" class="form-control" th:field="*{comparePrice}">
-                            </div>
-                            <div class="col-12 mt-4"><hr><h6>Biến thể (Kích thước / Size)</h6></div>
-                            <div class="col-md-3">
-                                <label class="form-label">Kích thước (Size) *</label>
-                                <input type="text" class="form-control" th:field="*{variants[0].size}" th:classappend="${#fields.hasErrors('variants[0].size')} ? 'is-invalid'" placeholder="VD: Freesize">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('variants[0].size')}" th:errors="*{variants[0].size}"></div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Giá Biến thể *</label>
-                                <input type="number" class="form-control" th:field="*{variants[0].price}" th:classappend="${#fields.hasErrors('variants[0].price')} ? 'is-invalid'" placeholder="Giá bán thực tế">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('variants[0].price')}" th:errors="*{variants[0].price}"></div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Số lượng kho *</label>
-                                <input type="number" class="form-control" th:field="*{variants[0].stockQuantity}" th:classappend="${#fields.hasErrors('variants[0].stockQuantity')} ? 'is-invalid'" placeholder="VD: 10">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('variants[0].stockQuantity')}" th:errors="*{variants[0].stockQuantity}"></div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Cảnh báo sắp hết</label>
-                                <input type="number" class="form-control" th:field="*{variants[0].lowStockThreshold}" placeholder="VD: 5">
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:#f0f4f8;border-color:#d1dde8;font-size:0.8rem;">₫</span>
+                                    <input type="number" class="form-control" th:field="*{comparePrice}" placeholder="0">
+                                </div>
                             </div>
                         </div>
+
+                        <hr style="border-color:#e8eef4; margin: 0 0 14px;">
+
+                        <div class="variant-table-wrap">
+                            <table class="variant-table" id="variantTable">
+                                <thead>
+                                <tr>
+                                    <th style="width:36px;">#</th>
+                                    <th style="min-width:110px;">Kích thước <span class="text-danger">*</span></th>
+                                    <th style="min-width:130px;">Giá biến thể <span class="text-danger">*</span></th>
+                                    <th style="min-width:110px;">Tồn kho <span class="text-danger">*</span></th>
+                                    <th style="min-width:110px;">Cảnh báo sắp hết</th>
+                                    <th style="min-width:100px;">SKU biến thể</th>
+                                    <th style="width:40px;"></th>
+                                </tr>
+                                </thead>
+                                <tbody id="variantTbody">
+                                <!-- JS rendered -->
+                                </tbody>
+                            </table>
+                            <div class="variant-empty" id="variantEmpty" style="display:none;">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block" style="color:#cbd5e0;"></i>
+                                Chưa có biến thể nào. Nhấn <strong>Thêm biến thể</strong> để bắt đầu.
+                            </div>
+                        </div>
+
+                        <!-- Hidden inputs for Thymeleaf existing variants -->
+                        <div id="existingVariants" th:if="${isEdit}">
+                            <th:block th:each="v,iStat : ${productRequest.variants}">
+                                <input type="hidden" class="ev-id"   th:value="${v.id}">
+                                <input type="hidden" class="ev-size"  th:value="${v.size}">
+                                <input type="hidden" class="ev-price" th:value="${v.price}">
+                                <input type="hidden" class="ev-stock" th:value="${v.stockQuantity}">
+                                <input type="hidden" class="ev-low"   th:value="${v.lowStockThreshold}">
+                                <input type="hidden" class="ev-sku"   th:value="${v.sku}">
+                            </th:block>
+                        </div>
+                        <!-- Validation data for new product (variants[0]) kept for server fallback -->
+                        <input type="hidden" id="variantsFallback" style="display:none">
                     </div>
                 </div>
 
@@ -366,6 +423,113 @@
                     errorDiv.style.display = 'block';
                 });
         }
+    </script>
+
+    <script>
+        (function() {
+            'use strict';
+            // ===== VARIANT MANAGER =====
+            var variants = [];
+            var variantIdCounter = 0;
+
+            var tbody        = document.getElementById('variantTbody');
+            var emptyMsg     = document.getElementById('variantEmpty');
+            var countText    = document.getElementById('variantCountText');
+            var btnAdd       = document.getElementById('btnAddVariant');
+
+            // Load existing variants from hidden Thymeleaf inputs (edit mode)
+            var existingContainer = document.getElementById('existingVariants');
+            if (existingContainer) {
+                var ids    = existingContainer.querySelectorAll('.ev-id');
+                var sizes  = existingContainer.querySelectorAll('.ev-size');
+                var prices = existingContainer.querySelectorAll('.ev-price');
+                var stocks = existingContainer.querySelectorAll('.ev-stock');
+                var lows   = existingContainer.querySelectorAll('.ev-low');
+                var skus   = existingContainer.querySelectorAll('.ev-sku');
+                for (var i = 0; i < sizes.length; i++) {
+                    variants.push({
+                        _id: ++variantIdCounter,
+                        id: ids[i] ? ids[i].value : '',
+                        size: sizes[i] ? sizes[i].value : '',
+                        price: prices[i] ? prices[i].value : '',
+                        stockQuantity: stocks[i] ? stocks[i].value : '',
+                        lowStockThreshold: lows[i] ? lows[i].value : '',
+                        sku: skus[i] ? skus[i].value : ''
+                    });
+                }
+            } else {
+                // New product: 1 default variant
+                variants.push({ _id: ++variantIdCounter, id: '', size: 'Freesize', price: '', stockQuantity: '', lowStockThreshold: '5', sku: '' });
+            }
+
+            function renderVariants() {
+                tbody.innerHTML = '';
+                var count = variants.length;
+                countText.textContent = count + ' biến thể';
+                emptyMsg.style.display = count === 0 ? 'block' : 'none';
+
+                variants.forEach(function(v, idx) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'variant-row';
+                    tr.dataset.vid = v._id;
+                    tr.innerHTML =
+                        '<td><div class="variant-idx">' + (idx + 1) + '</div></td>' +
+                        '<td><input type="text"   class="form-control" name="variants[' + idx + '].size"              value="' + esc(v.size)              + '" placeholder="VD: 16, 17, FS" required></td>' +
+                        '<td><input type="number" class="form-control" name="variants[' + idx + '].price"             value="' + esc(v.price)             + '" placeholder="0" min="0" required></td>' +
+                        '<td><input type="number" class="form-control" name="variants[' + idx + '].stockQuantity"     value="' + esc(v.stockQuantity)     + '" placeholder="0" min="0" required></td>' +
+                        '<td><input type="number" class="form-control" name="variants[' + idx + '].lowStockThreshold" value="' + esc(v.lowStockThreshold) + '" placeholder="5"  min="0"></td>' +
+                        '<td><input type="text"   class="form-control" name="variants[' + idx + '].sku"              value="' + esc(v.sku)               + '" placeholder="(tuỳ chọn)"></td>' +
+                        (v.id ? '<input type="hidden" name="variants[' + idx + '].id" value="' + esc(v.id) + '">' : '') +
+                        '<td><button type="button" class="btn-del-variant" title="Xóa biến thể này"><i class="fas fa-trash-alt"></i></button></td>';
+
+                    tr.querySelectorAll('input[name]').forEach(function(inp) {
+                        inp.addEventListener('input', function() {
+                            var m = inp.name.match(/variants\[\d+\]\.(.+)/);
+                            if (m) v[m[1]] = inp.value;
+                        });
+                    });
+
+                    tr.querySelector('.btn-del-variant').addEventListener('click', function() {
+                        if (variants.length <= 1) {
+                            alert('Sản phẩm phải có ít nhất 1 biến thể!');
+                            return;
+                        }
+                        variants.splice(idx, 1);
+                        renderVariants();
+                    });
+
+                    tbody.appendChild(tr);
+                });
+            }
+
+            btnAdd.addEventListener('click', function() {
+                variants.push({ _id: ++variantIdCounter, id: '', size: '', price: '', stockQuantity: '', lowStockThreshold: '5', sku: '' });
+                renderVariants();
+                var rows = tbody.querySelectorAll('.variant-row');
+                if (rows.length) {
+                    var lastRow = rows[rows.length - 1];
+                    var first = lastRow.querySelector('input');
+                    if (first) { first.focus(); lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                }
+            });
+
+            function esc(val) { return (val || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+            document.getElementById('productForm').addEventListener('submit', function(e) {
+                if (variants.length === 0) {
+                    e.preventDefault();
+                    alert('Vui lòng thêm ít nhất 1 biến thể cho sản phẩm!');
+                    return;
+                }
+                var hasError = variants.some(function(v) { return !v.size || !v.price || v.stockQuantity === ''; });
+                if (hasError) {
+                    e.preventDefault();
+                    alert('Vui lòng điền đầy đủ Kích thước, Giá và Tồn kho cho tất cả biến thể!');
+                }
+            }, true);
+
+            renderVariants();
+        })();
     </script>
 
     <script>

@@ -49,13 +49,21 @@ public class AdminProductController {
     }
 
     @GetMapping("/new")
-    public String newProductForm(Model model) {
-        if (!model.containsAttribute("productRequest")) {
-            model.addAttribute("productRequest", new AdminProductRequest());
-        }
-        populateFormModel(model);
-        model.addAttribute("pageTitle", "Thêm Sản Phẩm Mới");
+    public String showCreateForm(Model model) {
+        // 1. Tạo mới một request
+        AdminProductRequest req = new AdminProductRequest();
+
+        // 2. Gán sẵn mã SKU tự động
+        req.setSku(productService.generateNextSku());
+
+        // 3. Đưa xuống giao diện
+        model.addAttribute("productRequest", req);
         model.addAttribute("isEdit", false);
+        model.addAttribute("pageTitle", "Thêm Sản Phẩm Mới");
+
+        // 4. Lấy danh sách để hiện vào dropdown (Select Box)
+        populateFormModel(model);
+
         return "admin/product-form";
     }
 
@@ -125,11 +133,15 @@ public class AdminProductController {
         return ResponseEntity.ok(com.jewelryonlinestore.dto.response.ApiResponse.ok(active ? "Đã hiện sản phẩm" : "Đã ẩn sản phẩm", active));
     }
 
-    @DeleteMapping("/{id}")
-    @ResponseBody
-    public ResponseEntity<com.jewelryonlinestore.dto.response.ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.ok(com.jewelryonlinestore.dto.response.ApiResponse.ok("Đã xóa sản phẩm", null));
+    @PostMapping("/{id}/delete")
+    public String deleteProduct(@PathVariable Long id, RedirectAttributes redirectAttr) {
+        try {
+            productService.deleteProduct(id);
+            redirectAttr.addFlashAttribute("toast_success", "Đã xóa sản phẩm thành công!");
+        } catch (Exception e) {
+            redirectAttr.addFlashAttribute("toast_error", "Không thể xóa! Sản phẩm này đã phát sinh giao dịch. Hãy tắt trạng thái hiển thị (Inactive) thay vì xóa!");
+        }
+        return "redirect:/admin/products";
     }
 
     // ── Trang Quản lý Danh mục ──────────────────────────────

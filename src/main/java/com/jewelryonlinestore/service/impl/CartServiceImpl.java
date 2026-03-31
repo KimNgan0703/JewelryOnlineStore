@@ -74,7 +74,6 @@ public class CartServiceImpl implements CartService {
             throw new IllegalArgumentException("Cart item does not belong to current cart");
         }
         if (quantity <= 0) {
-            // ĐÃ SỬA: Xóa khỏi bộ nhớ đệm trước khi xóa dưới DB
             cart.getItems().remove(item);
             cartItemRepository.delete(item);
         } else {
@@ -94,37 +93,42 @@ public class CartServiceImpl implements CartService {
             throw new IllegalArgumentException("Cart item does not belong to current cart");
         }
 
-        // ĐÃ SỬA: Xóa khỏi bộ nhớ đệm trước khi xóa dưới DB
         cart.getItems().remove(item);
         cartItemRepository.delete(item);
 
         return getCart(auth, session);
     }
 
+    // ĐÃ SỬA: Lấy Cart thật từ Database để truyền vào hàm kiểm tra khuyến mãi
     @Override
     public CartResponse applyCoupon(String code, Authentication auth, HttpSession session) {
-        CartResponse cart = getCart(auth, session);
+        Cart cartEntity = findCart(auth, session, false);
+        if (cartEntity == null || cartEntity.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Giỏ hàng trống");
+        }
 
-        // Validate coupon thực sự
-        Optional<Promotion> promotionOpt = promotionService.validateCoupon(code, cart.getSubtotal());
+        CartResponse cartResponse = getCart(auth, session);
+
+        // Validate coupon bằng Cart Entity thật để quét từng sản phẩm
+        Optional<Promotion> promotionOpt = promotionService.validateCoupon(code, cartEntity);
         if (promotionOpt.isEmpty()) {
-            throw new IllegalArgumentException("Mã giảm giá không hợp lệ hoặc đã hết hạn");
+            throw new IllegalArgumentException("Mã giảm giá không hợp lệ, đã hết hạn hoặc đơn hàng không đủ điều kiện áp dụng");
         }
 
         Promotion promotion   = promotionOpt.get();
-        BigDecimal discount   = promotionService.calculateDiscount(promotion, cart.getSubtotal());
-        BigDecimal total      = cart.getSubtotal().add(cart.getShippingFee()).subtract(discount);
+        BigDecimal discount   = promotionService.calculateDiscount(promotion, cartEntity);
+        BigDecimal total      = cartResponse.getSubtotal().add(cartResponse.getShippingFee()).subtract(discount);
 
         return CartResponse.builder()
-                .cartId(cart.getCartId())
-                .items(cart.getItems())
-                .subtotal(cart.getSubtotal())
+                .cartId(cartResponse.getCartId())
+                .items(cartResponse.getItems())
+                .subtotal(cartResponse.getSubtotal())
                 .discountAmount(discount)
-                .shippingFee(cart.getShippingFee())
+                .shippingFee(cartResponse.getShippingFee())
                 .total(total.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : total)
                 .appliedCouponCode(code)
                 .couponMessage(buildCouponMessage(promotion, discount))
-                .totalItems(cart.getTotalItems())
+                .totalItems(cartResponse.getTotalItems())
                 .build();
     }
 

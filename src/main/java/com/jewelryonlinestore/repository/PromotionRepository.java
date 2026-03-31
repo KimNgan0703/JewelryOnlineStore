@@ -17,7 +17,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     // Tìm theo mã giảm giá (validate coupon - C05)
     Optional<Promotion> findByCode(String code);
-
+    Optional<Promotion> findByCodeAndIsActiveTrue(String code);
     // Kiểm tra mã hợp lệ: đang active, còn hạn, còn lượt dùng
     @Query("""
         SELECT p FROM Promotion p
@@ -60,5 +60,6 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
             "AND (p.usageLimit IS NULL OR p.usedCount < p.usageLimit) " +
             "ORDER BY p.createdAt DESC")
     List<Promotion> findAvailablePromotions();
+
 }
 

@@ -36,6 +36,7 @@ public class OrderController {
     private final AddressService   addressService;
     private final PromotionService promotionService;
     private final MomoService      momoService;
+
     // ── Trang Checkout (C06) ─────────────────────────────
     @GetMapping("/checkout")
     public String checkoutPage(Authentication auth, HttpSession session, Model model) {
@@ -191,27 +192,11 @@ public class OrderController {
     @ResponseBody
     public ResponseEntity<?> applyCoupon(@RequestParam("code") String code, Authentication auth, HttpSession session) {
         try {
-            CartResponse cart = cartService.getCart(auth, session);
-            BigDecimal subtotal = cart.getSubtotal();
-
-            Optional<Promotion> promoOpt = promotionService.validateCoupon(code, subtotal);
-            if (promoOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Mã giảm giá không hợp lệ, hết hạn hoặc đơn hàng chưa đủ điều kiện."));
-            }
-
-            Promotion promo = promoOpt.get();
-            BigDecimal discount = promotionService.calculateDiscount(promo, subtotal);
-            BigDecimal shippingFee = BigDecimal.ZERO;
-            BigDecimal total = subtotal.add(shippingFee).subtract(discount);
-            if (total.compareTo(BigDecimal.ZERO) < 0) total = BigDecimal.ZERO;
-
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("appliedCouponCode", promo.getCode());
-            responseData.put("discountAmount", discount);
-            responseData.put("total", total);
-            responseData.put("couponMessage", "Áp dụng mã giảm giá thành công!");
-
-            return ResponseEntity.ok(responseData);
+            // Giao phó toàn bộ logic áp mã, kiểm tra món hàng và tính tiền cho CartService
+            CartResponse updatedCart = cartService.applyCoupon(code, auth, session);
+            return ResponseEntity.ok(updatedCart);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Lỗi xử lý: " + e.getMessage()));
         }
@@ -220,7 +205,8 @@ public class OrderController {
     // ── API: Gỡ mã giảm giá (AJAX) ───────────────────────
     @PostMapping("/coupon/remove")
     @ResponseBody
-    public ResponseEntity<?> removeCoupon() {
+    public ResponseEntity<?> removeCoupon(Authentication auth, HttpSession session) {
+        cartService.removeCoupon(auth, session);
         return ResponseEntity.ok(Map.of("message", "Đã gỡ mã giảm giá"));
     }
 }

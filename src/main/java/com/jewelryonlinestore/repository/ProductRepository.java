@@ -25,12 +25,28 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     // Kiểm tra slug trùng
     boolean existsBySlugAndIdNot(String slug, Long id);
 
-    // Sản phẩm bán chạy cho trang chủ (C02)
-    List<Product> findTop8ByIsActiveTrueAndIsBestSellerTrueOrderByCreatedAtDesc();
+    // Sản phẩm bán chạy cho trang chủ (C02) — xếp theo doanh số thực tế (số lượng đã bán từ đơn DELIVERED)
+    @Query("""
+        SELECT p FROM Product p
+        WHERE p.isActive = true
+          AND EXISTS (
+              SELECT v FROM ProductVariant v
+              WHERE v.product = p AND v.isActive = true AND v.stockQuantity > 0
+          )
+        ORDER BY (
+            SELECT COALESCE(SUM(oi.quantity), 0)
+            FROM OrderItem oi
+            JOIN oi.order o
+            JOIN oi.variant v2
+            WHERE v2.product = p AND o.orderStatus = 'DELIVERED'
+        ) DESC, p.createdAt DESC
+    """)
+    List<Product> findBestSellersByRevenue(Pageable pageable);
 
     // Sản phẩm mới cho trang chủ (C02)
     List<Product> findTop8ByIsActiveTrueAndIsNewTrueOrderByCreatedAtDesc();
 
+    List<Product> findByIsActiveTrue();
     // Sản phẩm cùng danh mục (gợi ý liên quan - C04)
     @Query("""
         SELECT p FROM Product p

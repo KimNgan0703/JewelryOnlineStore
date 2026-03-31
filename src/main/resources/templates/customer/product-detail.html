@@ -9,8 +9,69 @@
     <style>
         :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
         .box { background: white; border-radius: 8px; padding: 20px; }
-        .main-image { width: 100%; height: 460px; object-fit: cover; border-radius: 8px; }
-        .thumbnail { width: 78px; height: 78px; border: 2px solid #eee; border-radius: 6px; object-fit: cover; }
+        /* ── Gallery ── */
+        .gallery-wrap { position: relative; }
+        .main-image-wrap {
+            position: relative; border-radius: 10px; overflow: hidden;
+            background: #f5f2ed; cursor: zoom-in;
+        }
+        .main-image {
+            width: 100%; height: 480px; object-fit: cover;
+            display: block; border-radius: 10px;
+            transition: transform 0.4s ease;
+        }
+        .main-image-wrap:hover .main-image { transform: scale(1.03); }
+        .gallery-zoom-hint {
+            position: absolute; bottom: 12px; right: 12px;
+            background: rgba(26,26,46,0.55); color: #fff;
+            font-size: 0.7rem; padding: 4px 10px; border-radius: 20px;
+            display: flex; align-items: center; gap: 5px; pointer-events: none;
+        }
+        /* Thumbnails */
+        .thumb-list {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+        }
+        .thumb-item {
+            width: 72px; height: 72px; border-radius: 6px; overflow: hidden;
+            border: 2px solid #e8e3da; cursor: pointer;
+            transition: border-color 0.2s, transform 0.2s;
+            flex-shrink: 0;
+        }
+        .thumb-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .thumb-item:hover { border-color: #c9a84c; transform: scale(1.05); }
+        .thumb-item.active { border-color: #c9a84c; box-shadow: 0 0 0 2px rgba(201,168,76,0.3); }
+        /* Lightbox */
+        .lightbox-overlay {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(10,10,20,0.92); align-items: center; justify-content: center;
+            cursor: zoom-out;
+        }
+        .lightbox-overlay.open { display: flex; }
+        .lightbox-img {
+            max-width: 90vw; max-height: 88vh; object-fit: contain;
+            border-radius: 4px; user-select: none;
+        }
+        .lightbox-close {
+            position: absolute; top: 18px; right: 22px;
+            background: none; border: none; color: rgba(255,255,255,0.7);
+            font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 4px 8px;
+            transition: color 0.2s;
+        }
+        .lightbox-close:hover { color: #fff; }
+        .lightbox-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.12); border: none; color: #fff;
+            width: 46px; height: 46px; border-radius: 50%; font-size: 1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .lightbox-nav:hover { background: rgba(201,168,76,0.35); }
+        .lightbox-prev { left: 18px; }
+        .lightbox-next { right: 18px; }
+        .lightbox-counter {
+            position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.55); font-size: 0.78rem; pointer-events: none;
+        }
         .price { color: var(--primary-color); font-size: 1.9rem; font-weight: bold; }
         .price-old { color: #7f8c8d; text-decoration: line-through; margin-left: 8px; font-size: 1.1rem; }
         .stock.in { color: #198754; }
@@ -131,14 +192,24 @@
 
     <div class="row g-4">
         <div class="col-lg-5">
-            <div class="box">
-                <img class="main-image mb-3"
-                     th:src="${(product.allImageUrls != null and !product.allImageUrls.isEmpty()) ? product.allImageUrls[0] : product.primaryImageUrl}"
-                     src="https://via.placeholder.com/560"
-                     th:alt="${product.name}">
-                <div class="d-flex gap-2 flex-wrap" th:if="${product.allImageUrls != null}">
-                    <img class="thumbnail" th:each="img : ${product.allImageUrls}"
-                         th:src="${img}" src="https://via.placeholder.com/80" alt="thumb">
+            <div class="box gallery-wrap">
+                <!-- Ảnh chính — click để mở lightbox -->
+                <div class="main-image-wrap mb-2" id="mainImageWrap" onclick="openLightbox(currentIdx)">
+                    <img class="main-image" id="mainImage"
+                         th:src="${(product.allImageUrls != null and !product.allImageUrls.isEmpty()) ? product.allImageUrls[0] : product.primaryImageUrl}"
+                         src="https://placehold.co/560x480/f5f2ed/c9a84c?text=No+Image"
+                         th:alt="${product.name}">
+                    <div class="gallery-zoom-hint"><i class="fas fa-expand-alt"></i> Phóng to</div>
+                </div>
+                <!-- Thumbnails -->
+                <div class="thumb-list" id="thumbList" th:if="${product.allImageUrls != null and !product.allImageUrls.isEmpty()}">
+                    <div class="thumb-item active"
+                         th:each="img, s : ${product.allImageUrls}"
+                         th:classappend="${s.index == 0} ? 'active' : ''"
+                         th:attr="data-idx=${s.index}, data-src=${img}"
+                         onclick="switchImage(this)">
+                        <img th:src="${img}" th:alt="'Ảnh ' + ${s.index + 1}">
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,9 +223,10 @@
                     (<span th:text="${reviewSummary.totalReviews ?: 0}">0</span> reviews)
                 </div>
                 <div class="mb-3">
-                    <span class="price"
+                    <span class="price" id="displayPrice"
+                          th:attr="data-base=${product.basePrice}"
                           th:text="${#numbers.formatInteger(product.basePrice, 0, 'COMMA')} + ' ₫'">0</span>
-                    <span class="price-old"
+                    <span class="price-old" id="displayPriceOld"
                           th:if="${product.comparePrice != null and product.comparePrice > product.basePrice}"
                           th:text="${#numbers.formatInteger(product.comparePrice, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
@@ -181,7 +253,7 @@
                         <option th:each="v : ${product.variants}"
                                 th:value="${v.id}"
                                 th:text="${v.size}"
-                                th:attr="data-stock=${v.stockQuantity}, data-active=${v.isActive}"
+                                th:attr="data-stock=${v.stockQuantity}, data-active=${v.isActive}, data-price=${v.price}"
                                 th:disabled="${!v.isActive or v.stockQuantity <= 0}">
                             Size
                         </option>
@@ -306,7 +378,86 @@
     </button>
 </div>
 
+<!-- ── Lightbox ── -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightboxOnBg(event)">
+    <button class="lightbox-close" onclick="closeLightbox()" title="Đóng">&times;</button>
+    <button class="lightbox-nav lightbox-prev" onclick="event.stopPropagation(); lightboxNav(-1)"><i class="fas fa-chevron-left"></i></button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="Preview">
+    <button class="lightbox-nav lightbox-next" onclick="event.stopPropagation(); lightboxNav(1)"><i class="fas fa-chevron-right"></i></button>
+    <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    // ── Gallery state ──
+    const allImages = /*[[${product.allImageUrls}]]*/ [];
+    let currentIdx = 0;
+
+    function switchImage(thumbEl) {
+        const idx = parseInt(thumbEl.dataset.idx);
+        const src = thumbEl.dataset.src;
+        currentIdx = idx;
+        // Update main image
+        document.getElementById('mainImage').src = src;
+        // Update active thumb
+        document.querySelectorAll('#thumbList .thumb-item').forEach(t => t.classList.remove('active'));
+        thumbEl.classList.add('active');
+    }
+
+    function openLightbox(idx) {
+        if (!allImages || allImages.length === 0) return;
+        currentIdx = idx;
+        const lb = document.getElementById('lightbox');
+        document.getElementById('lightboxImg').src = allImages[currentIdx];
+        updateLightboxCounter();
+        lb.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function closeLightboxOnBg(e) {
+        if (e.target === document.getElementById('lightbox')) closeLightbox();
+    }
+
+    function lightboxNav(dir) {
+        if (!allImages || allImages.length === 0) return;
+        currentIdx = (currentIdx + dir + allImages.length) % allImages.length;
+        document.getElementById('lightboxImg').src = allImages[currentIdx];
+        updateLightboxCounter();
+        // Sync thumbnail highlight
+        document.querySelectorAll('#thumbList .thumb-item').forEach(t => {
+            t.classList.toggle('active', parseInt(t.dataset.idx) === currentIdx);
+        });
+        document.getElementById('mainImage').src = allImages[currentIdx];
+    }
+
+    function updateLightboxCounter() {
+        const el = document.getElementById('lightboxCounter');
+        if (allImages && allImages.length > 1) {
+            el.textContent = (currentIdx + 1) + ' / ' + allImages.length;
+        } else {
+            el.textContent = '';
+        }
+    }
+
+    // Keyboard nav
+    document.addEventListener('keydown', function(e) {
+        if (!document.getElementById('lightbox').classList.contains('open')) return;
+        if (e.key === 'ArrowLeft')  lightboxNav(-1);
+        if (e.key === 'ArrowRight') lightboxNav(1);
+        if (e.key === 'Escape')     closeLightbox();
+    });
+
+    // Init: nếu chỉ 1 ảnh, ẩn hint phóng to (tuỳ chọn)
+    if (!allImages || allImages.length <= 1) {
+        const hint = document.querySelector('.gallery-zoom-hint');
+        if (hint) hint.style.display = 'none';
+    }
+</script>
 <script th:inline="javascript">
     // ĐÃ SỬA: Dùng toán tử ba ngôi, chỉ lấy mã CSRF khi user ĐÃ ĐĂNG NHẬP
     const csrfToken  = /*[[${(isLoggedIn and _csrf != null) ? _csrf.token : ''}]]*/ '';
@@ -350,11 +501,32 @@
     const stockDot   = document.getElementById('stockDot');
     const stockValue = document.getElementById('stockValue');
 
+    function formatVND(n) {
+        return Number(n).toLocaleString('vi-VN') + ' ₫';
+    }
+
+    function updatePriceDisplay(selected) {
+        const priceEl    = document.getElementById('displayPrice');
+        const priceOldEl = document.getElementById('displayPriceOld');
+        if (!priceEl) return;
+        const variantPrice = selected.getAttribute('data-price');
+        if (variantPrice && variantPrice !== '' && variantPrice !== '0') {
+            priceEl.textContent = formatVND(variantPrice);
+        } else {
+            // fallback về basePrice
+            const base = priceEl.getAttribute('data-base');
+            if (base) priceEl.textContent = formatVND(base);
+        }
+    }
+
     function updateStockDisplay() {
         if (!variantSelect) return;
         const selected = variantSelect.options[variantSelect.selectedIndex];
         const stock    = parseInt(selected.getAttribute('data-stock') || '0', 10);
         const hasValue = variantSelect.value !== '';
+
+        // Cập nhật giá theo biến thể
+        if (hasValue) updatePriceDisplay(selected);
 
         if (!hasValue) {
             stockInfo.classList.remove('visible');

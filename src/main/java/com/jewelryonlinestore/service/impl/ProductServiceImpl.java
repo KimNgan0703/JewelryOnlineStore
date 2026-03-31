@@ -79,8 +79,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductCardResponse> getBestSellers(int limit) {
-        return productRepository.findTop8ByIsActiveTrueAndIsBestSellerTrueOrderByCreatedAtDesc()
-                .stream().limit(limit).map(this::toCard).toList();
+        // Xếp theo doanh số thực tế (tổng số lượng từ đơn hàng DELIVERED)
+        return productRepository.findBestSellersByRevenue(PageRequest.of(0, limit))
+                .stream().map(this::toCard).toList();
     }
 
     @Override
@@ -140,16 +141,19 @@ public class ProductServiceImpl implements ProductService {
         Product saved = productRepository.save(product);
 
         if (req.getVariants() != null) {
-            for (AdminProductRequest.VariantRequest v : req.getVariants()) {
-                ProductVariant variant = ProductVariant.builder()
-                        .product(saved)
-                        .sku(saved.getSku() + "-" + v.getSize())
-                        .size(v.getSize())
-                        .price(v.getPrice())
-                        .stockQuantity(v.getStockQuantity() == null ? 0 : v.getStockQuantity())
-                        .lowStockThreshold(v.getLowStockThreshold() == null ? 5 : v.getLowStockThreshold())
-                        .isActive(true)
-                        .build();
+            for (AdminProductRequest.VariantRequest vReq : req.getVariants()) {
+                if (vReq.getSize() == null || vReq.getSize().isBlank()) continue; // bỏ qua dòng rỗng
+
+                ProductVariant variant = new ProductVariant();
+                variant.setProduct(saved);
+                variant.setSize(vReq.getSize().trim());
+                variant.setPrice(vReq.getPrice() != null ? vReq.getPrice() : req.getBasePrice());
+                variant.setStockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity());
+                variant.setLowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold());
+                // Tự sinh SKU variant nếu bỏ trống để tránh Duplicate entry ''
+                variant.setSku(generateVariantSku(vReq.getSku(), saved.getSku(), vReq.getSize()));
+                variant.setActive(true);
+
                 productVariantRepository.save(variant);
             }
         }
@@ -179,25 +183,54 @@ public class ProductServiceImpl implements ProductService {
         applyRequest(product, req);
 
         if (req.getVariants() != null && !req.getVariants().isEmpty()) {
-            AdminProductRequest.VariantRequest vReq = req.getVariants().get(0);
-            if (product.getVariants() != null && !product.getVariants().isEmpty()) {
-                ProductVariant existing = product.getVariants().get(0);
-                existing.setSize(vReq.getSize());
-                existing.setPrice(vReq.getPrice());
-                existing.setStockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity());
-                existing.setLowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold());
-                productVariantRepository.save(existing);
-            } else {
-                ProductVariant variant = ProductVariant.builder()
-                        .product(product)
-                        .sku(product.getSku() + "-" + vReq.getSize())
-                        .size(vReq.getSize())
-                        .price(vReq.getPrice())
-                        .stockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity())
-                        .lowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold())
-                        .isActive(true)
-                        .build();
-                productVariantRepository.save(variant);
+            // Xây map size→variant hiện có để tái sử dụng (update thay vì xóa/tạo mới)
+            Map<String, ProductVariant> existingBySize = new java.util.LinkedHashMap<>();
+            if (product.getVariants() != null) {
+                for (ProductVariant pv : product.getVariants()) {
+                    existingBySize.put(pv.getSize().trim().toLowerCase(), pv);
+                }
+            }
+
+            Set<String> processedSizes = new java.util.HashSet<>();
+            for (AdminProductRequest.VariantRequest vReq : req.getVariants()) {
+                if (vReq.getSize() == null || vReq.getSize().isBlank()) continue;
+                String sizeKey = vReq.getSize().trim().toLowerCase();
+                processedSizes.add(sizeKey);
+
+                ProductVariant pv = existingBySize.get(sizeKey);
+                if (pv != null) {
+                    // Cập nhật variant đã có
+                    pv.setSize(vReq.getSize().trim());
+                    pv.setPrice(vReq.getPrice() != null ? vReq.getPrice() : product.getBasePrice());
+                    pv.setStockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity());
+                    pv.setLowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold());
+                    // Cập nhật SKU nếu người dùng nhập mới, giữ cũ nếu bỏ trống
+                    if (vReq.getSku() != null && !vReq.getSku().isBlank()) {
+                        pv.setSku(vReq.getSku().trim());
+                    }
+                    pv.setActive(true);
+                    productVariantRepository.save(pv);
+                } else {
+                    // Tạo variant mới
+                    ProductVariant newPv = ProductVariant.builder()
+                            .product(product)
+                            .size(vReq.getSize().trim())
+                            .price(vReq.getPrice() != null ? vReq.getPrice() : product.getBasePrice())
+                            .stockQuantity(vReq.getStockQuantity() == null ? 0 : vReq.getStockQuantity())
+                            .lowStockThreshold(vReq.getLowStockThreshold() == null ? 5 : vReq.getLowStockThreshold())
+                            .sku(generateVariantSku(vReq.getSku(), product.getSku(), vReq.getSize()))
+                            .isActive(true)
+                            .build();
+                    productVariantRepository.save(newPv);
+                }
+            }
+
+            // Vô hiệu hoá các variant bị xóa khỏi form (không xóa hẳn vì có thể có lịch sử đơn hàng)
+            for (Map.Entry<String, ProductVariant> entry : existingBySize.entrySet()) {
+                if (!processedSizes.contains(entry.getKey())) {
+                    entry.getValue().setActive(false);
+                    productVariantRepository.save(entry.getValue());
+                }
             }
         }
 
@@ -252,7 +285,34 @@ public class ProductServiceImpl implements ProductService {
         material.setName(cleanName);
         return materialRepository.save(material);
     }
+    /**
+     * Sinh SKU cho variant: dùng SKU do người dùng nhập nếu có,
+     * ngược lại sinh tự động từ productSku + size để đảm bảo unique.
+     */
+    private String generateVariantSku(String inputSku, String productSku, String size) {
+        if (inputSku != null && !inputSku.isBlank()) {
+            return inputSku.trim();
+        }
+        // VD: SP-A1B2C3-16, SP-A1B2C3-FS
+        String base = (productSku + "-" + size.trim()).toUpperCase()
+                .replaceAll("[^A-Z0-9-]", "");
+        String candidate = base;
+        int i = 1;
+        while (productVariantRepository.existsBySku(candidate)) {
+            candidate = base + "-" + i++;
+        }
+        return candidate;
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String generateNextSku() {
+        // Lấy 6 ký tự ngẫu nhiên từ UUID (gồm cả số và chữ cái)
+        String randomSuffix = java.util.UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+        // Kết quả sinh ra sẽ có dạng: SP-A1B2C3
+        return "SP-" + randomSuffix;
+    }
     @Override
     @Transactional
     public boolean toggleActive(Long id) {
@@ -443,4 +503,11 @@ public class ProductServiceImpl implements ProductService {
                 .createdAt(p.getCreatedAt())
                 .build();
     }
+    @Override
+    @Transactional(readOnly = true)
+    public List<Product> getAllProducts() {
+        return productRepository.findByIsActiveTrue();
+    }
+
+
 }

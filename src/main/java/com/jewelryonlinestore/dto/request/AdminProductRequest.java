@@ -69,6 +69,7 @@ public class AdminProductRequest {
 
     @Data
     public static class VariantRequest {
+        private Long id;
         @NotBlank(message = "Size không được để trống")
         private String size;
 
@@ -82,5 +83,7 @@ public class AdminProductRequest {
 
         @Min(1)
         private Integer lowStockThreshold = 5;
+
+        private String sku;
     }
 }

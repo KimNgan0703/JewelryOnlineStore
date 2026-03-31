@@ -1,19 +1,16 @@
 package com.jewelryonlinestore.controller.customer;
 
 import com.jewelryonlinestore.service.PaymentService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.jewelryonlinestore.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
 
-/**
- * C06 — Xử lý callback từ các cổng thanh toán (VNPay, Momo API thật).
- */
 @Slf4j
 @Controller
 @RequestMapping("/payment")
@@ -21,60 +18,41 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final OrderRepository orderRepository;
 
-    // ── VNPay IPN (Instant Payment Notification) ──────────
+    // ── XỬ LÝ VNPAY CALLBACK ────────────────────────────
     @GetMapping("/vnpay/callback")
-    public String vnpayCallback(@RequestParam Map<String, String> params,
-                                Authentication auth,
-                                RedirectAttributes redirectAttr) {
+    public String vnpayCallback(@RequestParam Map<String, String> params, RedirectAttributes redirectAttr) {
         try {
             String orderNumber = paymentService.handleVnpayCallback(params);
-            redirectAttr.addFlashAttribute("toast_success", "Thanh toán thành công!");
-            return "redirect:/orders/" + orderNumber;
+            redirectAttr.addFlashAttribute("toast_success", "Thanh toán VNPay thành công!");
+
+            // ĐÃ SỬA: Chuyển từ ?orderNumber= sang đường dẫn /
+            return "redirect:/orders/success/" + orderNumber;
         } catch (Exception e) {
-            log.error("VNPay callback error: {}", e.getMessage());
-            redirectAttr.addFlashAttribute("toast_error",
-                    "Thanh toán thất bại. Vui lòng thử lại hoặc chọn phương thức khác.");
-            return "redirect:/orders";
+            return "redirect:/orders?error=vnpay_failed";
         }
     }
 
-    // ── Tạo URL thanh toán VNPay (AJAX) ──────────────────
-    @PostMapping("/vnpay/create")
-    @ResponseBody
-    public com.jewelryonlinestore.dto.response.ApiResponse<String> createVnpayUrl(
-            @RequestParam String orderNumber,
-            HttpServletRequest request,
-            Authentication auth) {
-        String url = paymentService.createVnpayUrl(orderNumber, request, auth);
-        return com.jewelryonlinestore.dto.response.ApiResponse.ok(url);
-    }
-
-    // =========================================================================
-    // ── ĐẦU NHẬN KẾT QUẢ TỪ MOMO SANDBOX (REAL API) ──────────────────────────
-    // =========================================================================
-
+    // ── XỬ LÝ MOMO RETURN ──────────────────────────────
     @GetMapping("/momo/return")
     public String momoReturnCallback(@RequestParam Map<String, String> params,
                                      RedirectAttributes redirectAttr) {
-        // Lấy mã đơn hàng từ URL trả về của MoMo để dự phòng trường hợp lỗi
         String orderId = params.getOrDefault("orderId", "");
+        String resultCode = params.get("resultCode");
 
         try {
-            // Chuyển toàn bộ dữ liệu MoMo trả về cho PaymentService xử lý
-            // Service này sẽ kiểm tra chữ ký (Signature) và cập nhật Database
-            String orderNumber = paymentService.handleMomoCallback(params);
+            paymentService.handleMomoCallback(params);
 
-            redirectAttr.addFlashAttribute("toast_success", "Thanh toán MoMo thành công!");
-            return "redirect:/orders/" + orderNumber;
+            if ("0".equals(resultCode)) {
+                // ĐÃ SỬA: Chuyển từ ?orderNumber= sang đường dẫn /
+                return "redirect:/orders/success/" + orderId;
+            } else {
+                redirectAttr.addFlashAttribute("toast_error", "Thanh toán MoMo thất bại.");
+                return "redirect:/orders/" + orderId;
+            }
         } catch (Exception e) {
-            log.error("Momo callback error: {}", e.getMessage());
-
-            // Nếu khách hàng bấm HỦY trên app MoMo, hoặc thanh toán lỗi
-            redirectAttr.addFlashAttribute("toast_error", "Thanh toán MoMo thất bại hoặc đã bị hủy.");
-
-            // Trả khách về lại trang chi tiết đơn hàng kèm thông báo lỗi
-            return "redirect:/orders/" + orderId;
+            return "redirect:/orders?error=system_error";
         }
     }
 }
