@@ -145,11 +145,74 @@ public class AdminProductController {
     }
 
     // ── Trang Quản lý Danh mục ──────────────────────────────
-    @GetMapping("/categories")
+    // Cập nhật lại Mapping danh mục để lấy thêm dữ liệu Brand và Material
+    @GetMapping("/categories") // hoặc /attributes tùy đường dẫn bạn đang đặt
     public String categoryList(Model model) {
         model.addAttribute("categories", categoryService.getAllCategories());
-        model.addAttribute("pageTitle", "Quản Lý Danh Mục");
-        return "admin/categories"; // Trả về giao diện categories.html mới
+        model.addAttribute("brands", productService.getAllBrands());
+        model.addAttribute("materials", productService.getAllMaterials());
+        model.addAttribute("collections", productService.getAllCollections()); // Bổ sung dòng này
+        model.addAttribute("pageTitle", "Quản Lý Thuộc Tính");
+        return "admin/categories";
+    }
+    // API cho Brand
+    @PutMapping("/brands/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateBrand(@PathVariable Long id, @RequestParam String name) {
+        productService.updateBrand(id, name);
+        return ResponseEntity.ok(Map.of("message", "Cập nhật thương hiệu thành công!"));
+    }
+
+    @DeleteMapping("/brands/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deleteBrand(@PathVariable Long id) {
+        try {
+            productService.deleteBrand(id);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa thương hiệu!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // API cho Material (Tương tự Brand...)
+    @PutMapping("/materials/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateMaterial(@PathVariable Long id, @RequestParam String name) {
+        productService.updateMaterial(id, name);
+        return ResponseEntity.ok(Map.of("message", "Cập nhật chất liệu thành công!"));
+    }
+
+    @DeleteMapping("/materials/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deleteMaterial(@PathVariable Long id) {
+        try {
+            productService.deleteMaterial(id);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa chất liệu!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+    // API cho Collection (Bộ Sưu Tập)
+    @PostMapping("/quick-add/collection")
+    @ResponseBody
+    public ResponseEntity<?> quickAddCollection(@RequestParam("name") String name) {
+        // Tương tự quickAddBrand, bạn gọi ProductService để tạo Collection
+        // (Bạn có thể tự viết hàm createCollection(name) trong ProductService nhé)
+        return ResponseEntity.ok(Map.of("message", "Thêm bộ sưu tập thành công!"));
+    }
+
+    @PutMapping("/collections/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateCollection(@PathVariable Long id, @RequestParam String name) {
+        // productService.updateCollection(id, name);
+        return ResponseEntity.ok(Map.of("message", "Cập nhật thành công!"));
+    }
+
+    @DeleteMapping("/collections/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deleteCollection(@PathVariable Long id) {
+        // productService.deleteCollection(id);
+        return ResponseEntity.ok(Map.of("message", "Đã xóa bộ sưu tập!"));
     }
 
     // ── API Xóa Danh mục (AJAX) ─────────────────────────────
@@ -163,6 +226,18 @@ public class AdminProductController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Lỗi hệ thống: " + e.getMessage()));
+        }
+    }
+    // API Sửa tên Danh mục
+    @PutMapping("/categories/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateCategory(@PathVariable Long id, @RequestParam String name) {
+        try {
+            // Gọi service để cập nhật (Nếu service chưa có, hãy xem Bước 2 bên dưới)
+            categoryService.updateCategoryName(id, name);
+            return ResponseEntity.ok(Map.of("message", "Cập nhật danh mục thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 

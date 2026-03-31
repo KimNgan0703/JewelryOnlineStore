@@ -174,6 +174,40 @@ public class ProductServiceImpl implements ProductService {
 
         return saved.getId();
     }
+    @Override
+    @Transactional
+    public void updateBrand(Long id, String name) {
+        Brand brand = brandRepository.findById(id).orElseThrow();
+        brand.setName(name);
+        brandRepository.save(brand);
+    }
+
+    @Override
+    @Transactional
+    public void deleteBrand(Long id) {
+        // Kiểm tra xem thương hiệu có đang chứa sản phẩm nào không
+        if (productRepository.existsByBrandId(id)) {
+            throw new IllegalStateException("Không thể xóa! Thương hiệu này đang có sản phẩm.");
+        }
+        brandRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public void updateMaterial(Long id, String name) {
+        Material material = materialRepository.findById(id).orElseThrow();
+        material.setName(name);
+        materialRepository.save(material);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMaterial(Long id) {
+        if (productRepository.existsByMaterialId(id)) {
+            throw new IllegalStateException("Không thể xóa! Chất liệu này đang có sản phẩm.");
+        }
+        materialRepository.deleteById(id);
+    }
 
     @Override
     @Transactional

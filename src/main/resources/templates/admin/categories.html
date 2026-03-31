@@ -1,90 +1,297 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <title>Categories Management - Admin</title>
+    <title>Quản Lý Thuộc Tính Sản Phẩm - Admin</title>
 </head>
 <body>
 <div id="admin-content">
-
     <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
     <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
 
     <style>
         :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
-        .page-shell { padding: 10px 0; background-color: #f4f6f9; min-height: 100vh;}
-        .table-wrap { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .attr-card { background: white; border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border-radius: 12px; }
+        .nav-pills .nav-link { color: #495057; font-weight: 500; padding: 10px 24px; border-radius: 8px; margin-right: 8px;}
+        .nav-pills .nav-link.active { background-color: var(--secondary-color); color: white; }
+        .table thead th { background-color: #f8f9fa; border-top: none; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; color: #6c757d;}
+        .table td { vertical-align: middle; }
+        .btn-action { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; }
     </style>
 
-    <div class="page-shell">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="mb-0 h3" style="color: var(--secondary-color);">Quản Lý Danh Mục</h1>
-                <p class="text-muted mb-0">Xem và xóa các danh mục sản phẩm.</p>
-            </div>
-            <a class="btn btn-outline-secondary" th:href="@{/admin/products}">
-                <i class="fas fa-arrow-left me-1"></i> Về ds Sản phẩm
-            </a>
-        </div>
+    <div class="container-fluid p-4">
+        <h1 class="h3 fw-bold mb-4" style="color: var(--secondary-color);">Cấu Hình Thuộc Tính Sản Phẩm</h1>
 
-        <div class="table-wrap mb-3 table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-dark">
-                <tr>
-                    <th class="ps-3">ID</th>
-                    <th>Tên Danh Mục</th>
-                    <th>Đường dẫn (Slug)</th>
-                    <th>Trạng thái</th>
-                    <th class="text-center pe-3">Thao tác</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${categories == null or categories.isEmpty()}">
-                    <td colspan="5" class="text-center text-muted py-5">
-                        <i class="fas fa-folder-open fs-2 mb-2 text-light"></i><br>Chưa có danh mục nào.
-                    </td>
-                </tr>
-                <tr th:each="cat : ${categories}">
-                    <td class="ps-3" th:text="${cat.id}">1</td>
-                    <td class="fw-semibold text-primary" th:text="${cat.name}">Nhẫn cưới</td>
-                    <td><code class="text-muted" th:text="${cat.slug}">nhan-cuoi</code></td>
-                    <td>
-                        <span class="badge" th:classappend="${cat.isActive} ? 'text-bg-success' : 'text-bg-secondary'"
-                              th:text="${cat.isActive} ? 'Đang hoạt động' : 'Đang ẩn'"></span>
-                    </td>
-                    <td class="text-center pe-3">
-                        <button class="btn btn-sm btn-outline-danger" th:onclick="'deleteCategory(' + ${cat.id} + ')'" title="Xóa danh mục">
-                            <i class="fas fa-trash"></i> Xóa
+        <div class="card attr-card">
+            <div class="card-body p-4">
+                <ul class="nav nav-pills mb-4" id="attrTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-categories">
+                            <i class="fas fa-folder-open me-2"></i>Danh Mục
                         </button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-brands">
+                            <i class="fas fa-tags me-2"></i>Thương Hiệu
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-materials">
+                            <i class="fas fa-gem me-2"></i>Chất Liệu
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-collections">
+                            <i class="fas fa-layer-group me-2"></i>Bộ Sưu Tập
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="tab-categories">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Danh mục</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Danh Mục', 'categories', '')">
+                                <i class="fas fa-plus me-1"></i> Thêm Danh Mục
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Tên Danh Mục</th><th>Slug</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="cat : ${categories}">
+                                    <td th:text="${cat.id}"></td>
+                                    <td th:id="'name-categories-' + ${cat.id}" th:text="${cat.name}" class="fw-bold text-dark"></td>
+                                    <td class="text-muted" th:text="${cat.slug}"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1" th:onclick="'openModal(\'Sửa Danh Mục\', \'categories\', \'' + ${cat.id} + '\')'" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${cat.id} + '\', \'categories\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-brands">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Thương hiệu</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Thương Hiệu', 'brands', '')">
+                                <i class="fas fa-plus me-1"></i> Thêm Thương Hiệu
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Tên Thương Hiệu</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="b : ${brands}">
+                                    <td th:text="${b.id}"></td>
+                                    <td th:id="'name-brands-' + ${b.id}" th:text="${b.name}" class="fw-medium"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1" th:onclick="'openModal(\'Sửa Thương Hiệu\', \'brands\', \'' + ${b.id} + '\')'" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${b.id} + '\', \'brands\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-materials">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Chất liệu</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Chất Liệu', 'materials', '')">
+                                <i class="fas fa-plus me-1"></i> Thêm Chất Liệu
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Tên Chất Liệu</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="m : ${materials}">
+                                    <td th:text="${m.id}"></td>
+                                    <td th:id="'name-materials-' + ${m.id}" th:text="${m.name}" class="fw-medium"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1" th:onclick="'openModal(\'Sửa Chất Liệu\', \'materials\', \'' + ${m.id} + '\')'" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${m.id} + '\', \'materials\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-collections">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Bộ sưu tập</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Bộ Sưu Tập', 'collections', '')">
+                                <i class="fas fa-plus me-1"></i> Thêm Bộ Sưu Tập
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Tên Bộ Sưu Tập</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="c : ${collections}">
+                                    <td th:text="${c.id}"></td>
+                                    <td th:id="'name-collections-' + ${c.id}" th:text="${c.name}" class="fw-medium"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1" th:onclick="'openModal(\'Sửa Bộ Sưu Tập\', \'collections\', \'' + ${c.id} + '\')'" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${c.id} + '\', \'collections\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script>
-        function deleteCategory(id) {
-            if(confirm("Bạn có chắc chắn muốn XÓA danh mục này không?")) {
-                const token = document.getElementById('csrfToken').value;
-                const header = document.getElementById('csrfHeader').value;
+    <div class="modal fade" id="attrModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="attrModalTitle">Tiêu đề</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="modalType">
+                    <input type="hidden" id="modalId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Tên hiển thị <span class="text-danger">*</span></label>
+                        <input type="text" id="modalNameInput" class="form-control form-control-lg" placeholder="Nhập tên tại đây...">
+                        <div class="invalid-feedback">Vui lòng nhập tên!</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="saveBtn" class="btn btn-primary px-4" onclick="saveAttribute()">Lưu Lại</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                fetch('/admin/products/categories/' + id, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json', [header]: token }
-                })
-                    .then(async res => {
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.message || "Không thể xóa danh mục!");
-                        return data;
-                    })
-                    .then(data => {
-                        alert(data.message);
-                        location.reload(); // Tải lại trang để cập nhật bảng
-                    })
-                    .catch(error => {
-                        alert(error.message); // Sẽ hiện thông báo nếu danh mục đang dính tới sản phẩm
-                    });
+    <script th:inline="javascript">
+        // Khởi tạo các biến toàn cục một cách an toàn
+        const tokenEl = document.getElementById('csrfToken');
+        const headerEl = document.getElementById('csrfHeader');
+        const token = tokenEl ? tokenEl.value : '';
+        const header = headerEl ? headerEl.value : 'X-CSRF-TOKEN';
+        let attrModal;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            attrModal = new bootstrap.Modal(document.getElementById('attrModal'));
+        });
+
+        // 1. Hàm Xóa
+        function handleDelete(id, type) {
+            if(!confirm("Bạn có chắc chắn muốn xóa dữ liệu này không?")) return;
+
+            fetch(`/admin/products/${type}/${id}`, {
+                method: 'DELETE',
+                headers: { [header]: token }
+            }).then(async res => {
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || "Không thể xóa! Dữ liệu đang được liên kết với sản phẩm.");
+                }
+            }).catch(err => alert("Lỗi kết nối đến máy chủ!"));
+        }
+
+        // 2. Hàm mở Modal
+        function openModal(title, type, id) {
+            document.getElementById('attrModalTitle').innerText = title;
+            document.getElementById('modalType').value = type;
+            document.getElementById('modalId').value = id || '';
+            const inputEl = document.getElementById('modalNameInput');
+            inputEl.classList.remove('is-invalid');
+
+            if (id && id !== '') {
+                // Sửa: Lấy tên cũ từ ID tương ứng trên HTML
+                const nameTd = document.getElementById(`name-${type}-${id}`);
+                inputEl.value = nameTd ? nameTd.innerText : '';
+            } else {
+                // Thêm mới: Xóa trắng ô input
+                inputEl.value = '';
             }
+            attrModal.show();
+        }
+
+        // 3. Hàm Lưu
+        function saveAttribute() {
+            const type = document.getElementById('modalType').value;
+            const id = document.getElementById('modalId').value;
+            const nameInput = document.getElementById('modalNameInput');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                nameInput.classList.add('is-invalid');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = 'Đang lưu...';
+            btn.disabled = true;
+
+            const isEdit = (id !== '');
+            const method = isEdit ? 'PUT' : 'POST';
+            let url = '';
+
+            // Map đường dẫn
+            if (isEdit) {
+                url = `/admin/products/${type}/${id}`;
+            } else {
+                let endpointType = type;
+                if (type === 'categories') endpointType = 'category';
+                if (type === 'brands') endpointType = 'brand';
+                if (type === 'materials') endpointType = 'material';
+                if (type === 'collections') endpointType = 'collection';
+                url = `/admin/products/quick-add/${endpointType}`;
+            }
+
+            const params = new URLSearchParams();
+            params.append('name', name);
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    [header]: token,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: params
+            }).then(async res => {
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || "Có lỗi xảy ra khi lưu!");
+                    btn.innerHTML = 'Lưu Lại';
+                    btn.disabled = false;
+                }
+            }).catch(err => {
+                alert("Lỗi hệ thống: " + err.message);
+                btn.innerHTML = 'Lưu Lại';
+                btn.disabled = false;
+            });
         }
     </script>
 </div>

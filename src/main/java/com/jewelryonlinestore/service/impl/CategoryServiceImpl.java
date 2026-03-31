@@ -47,7 +47,15 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + slug));
     }
-
+    @Override
+    @Transactional
+    public Category updateCategoryName(Long id, String name) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục"));
+        category.setName(name);
+        // Nếu bạn muốn tự động tạo lại URL thân thiện (slug), có thể set lại slug ở đây
+        return categoryRepository.save(category);
+    }
     // ── Hàm Thêm Nhanh (Đã sửa lỗi thiếu Slug) ─────────────────
     @Override
     @Transactional

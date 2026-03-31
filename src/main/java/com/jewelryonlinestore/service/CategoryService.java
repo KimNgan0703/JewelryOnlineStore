@@ -13,4 +13,5 @@ public interface CategoryService {
 	// API hỗ trợ thêm nhanh Category từ form Admin
 	Category createCategory(String name);
 	void deleteCategory(Long id);
+	Category updateCategoryName(Long id, String name);
 }

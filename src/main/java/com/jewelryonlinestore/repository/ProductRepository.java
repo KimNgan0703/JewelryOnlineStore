@@ -47,6 +47,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     List<Product> findTop8ByIsActiveTrueAndIsNewTrueOrderByCreatedAtDesc();
 
     List<Product> findByIsActiveTrue();
+    boolean existsByBrandId(Long brandId);
+
+    boolean existsByMaterialId(Long materialId);
+
+    boolean existsByCategoryId(Long categoryId);
     // Sản phẩm cùng danh mục (gợi ý liên quan - C04)
     @Query("""
         SELECT p FROM Product p
