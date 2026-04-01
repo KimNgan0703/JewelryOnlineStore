@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,8 @@ public class BannerServiceImpl implements BannerService {
     @Override
     @Transactional(readOnly = true)
     public List<Banner> getActiveBanners() {
-        return bannerRepository.findByIsActiveTrueOrderBySortOrderAsc();
+        // Dùng câu truy vấn mới kiểm tra cả trạng thái và thời gian
+        return bannerRepository.findActiveAndValidBanners();
     }
 
     @Override
@@ -37,10 +39,9 @@ public class BannerServiceImpl implements BannerService {
 
     @Override
     @Transactional
-    public Banner createBanner(String title, String linkUrl, int sortOrder, MultipartFile image, String imageUrlText) {
+    public Banner createBanner(String title, String linkUrl, int sortOrder, MultipartFile image, String imageUrlText, LocalDateTime startDate, LocalDateTime endDate) {
         String finalImageUrl = "";
 
-        // Ưu tiên 1: Tải file lên Cloudinary
         if (image != null && !image.isEmpty()) {
             try {
                 Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.asMap("folder", "banners"));
@@ -49,13 +50,9 @@ public class BannerServiceImpl implements BannerService {
                 log.error("Lỗi khi upload ảnh banner lên Cloudinary: ", e);
                 throw new RuntimeException("Không thể upload ảnh, vui lòng thử lại!");
             }
-        }
-        // Ưu tiên 2: Sử dụng link dán trực tiếp
-        else if (imageUrlText != null && !imageUrlText.isBlank()) {
+        } else if (imageUrlText != null && !imageUrlText.isBlank()) {
             finalImageUrl = imageUrlText.trim();
-        }
-        // Nếu không có cả 2 -> Báo lỗi
-        else {
+        } else {
             throw new IllegalArgumentException("Vui lòng tải ảnh lên hoặc nhập link ảnh trực tiếp!");
         }
 
@@ -64,21 +61,24 @@ public class BannerServiceImpl implements BannerService {
                 .linkUrl(linkUrl)
                 .sortOrder(sortOrder)
                 .imageUrl(finalImageUrl)
+                .startDate(startDate) // Set ngày bắt đầu
+                .endDate(endDate)     // Set ngày kết thúc
                 .isActive(true)
                 .build());
     }
 
     @Override
     @Transactional
-    public Banner updateBanner(Long id, String title, String linkUrl, int sortOrder, MultipartFile image, String imageUrlText) {
+    public Banner updateBanner(Long id, String title, String linkUrl, int sortOrder, MultipartFile image, String imageUrlText, LocalDateTime startDate, LocalDateTime endDate) {
         Banner banner = bannerRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Banner not found: " + id));
 
         banner.setTitle(title);
         banner.setLinkUrl(linkUrl);
         banner.setSortOrder(sortOrder);
+        banner.setStartDate(startDate); // Cập nhật ngày bắt đầu
+        banner.setEndDate(endDate);     // Cập nhật ngày kết thúc
 
-        // Đổi ảnh bằng cách tải file mới
         if (image != null && !image.isEmpty()) {
             try {
                 Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.asMap("folder", "banners"));
@@ -88,9 +88,7 @@ public class BannerServiceImpl implements BannerService {
             } catch (IOException e) {
                 throw new RuntimeException("Không thể cập nhật ảnh mới!");
             }
-        }
-        // Đổi ảnh bằng cách dán link mới (Nếu khác với link cũ)
-        else if (imageUrlText != null && !imageUrlText.isBlank() && !imageUrlText.equals(banner.getImageUrl())) {
+        } else if (imageUrlText != null && !imageUrlText.isBlank() && !imageUrlText.equals(banner.getImageUrl())) {
             deleteImageFromCloudinary(banner.getImageUrl());
             banner.setImageUrl(imageUrlText.trim());
         }
@@ -116,7 +114,6 @@ public class BannerServiceImpl implements BannerService {
         bannerRepository.delete(banner);
     }
 
-    // Xóa ảnh cũ trên Cloudinary
     private void deleteImageFromCloudinary(String imageUrl) {
         if (imageUrl != null && imageUrl.contains("cloudinary.com")) {
             try {

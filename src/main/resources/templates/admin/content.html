@@ -27,29 +27,48 @@
                     <h5 class="mb-0 text-primary"><i class="fas fa-plus-circle me-2"></i>Thêm Banner Mới</h5>
                 </div>
                 <div class="card-body bg-light">
-                    <form class="row g-3 align-items-end" method="post" th:action="@{/admin/content/banners}" enctype="multipart/form-data">
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold text-muted">Tiêu đề *</label>
-                            <input class="form-control" name="title" placeholder="Tên banner..." required>
+                    <form method="post" th:action="@{/admin/content/banners}" enctype="multipart/form-data">
+                        <div class="row g-3 align-items-end mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted">Tiêu đề *</label>
+                                <input class="form-control" name="title" placeholder="Tên banner..." required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold text-muted" title="Nhập link sự kiện để khách bấm vào banner sẽ chuyển sang trang đó">Link sự kiện (Bấm vào)</label>
+                                <input class="form-control" name="linkUrl" placeholder="VD: /products">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small fw-bold text-muted">Thứ tự *</label>
+                                <input class="form-control" type="number" name="sortOrder" value="0" required>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Ảnh (Từ máy)</label>
+                                        <input class="form-control form-control-sm" type="file" name="image" accept="image/*">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Link ảnh (URL)</label>
+                                        <input class="form-control form-control-sm" type="text" name="imageUrlText" placeholder="https://...">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold text-muted" title="Nhập link sự kiện để khách bấm vào banner sẽ chuyển sang trang đó">Link sự kiện (Bấm vào)</label>
-                            <input class="form-control" name="linkUrl" placeholder="VD: /products">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold text-muted">Thứ tự *</label>
-                            <input class="form-control" type="number" name="sortOrder" value="0" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label small fw-bold text-muted">Tải ảnh lên (Từ máy)</label>
-                            <input class="form-control" type="file" name="image" accept="image/*">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label small fw-bold text-muted">HOẶC Dán Link ảnh</label>
-                            <input class="form-control" type="text" name="imageUrlText" placeholder="https://...">
-                        </div>
-                        <div class="col-md-1">
-                            <button class="btn btn-primary w-100 fw-bold" type="submit">Thêm</button>
+
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted">Ngày bắt đầu hiển thị</label>
+                                <input type="datetime-local" class="form-control" name="startDate">
+                                <small class="text-muted" style="font-size: 0.75rem;">Bỏ trống để hiện ngay lập tức</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold text-muted">Ngày kết thúc hiển thị</label>
+                                <input type="datetime-local" class="form-control" name="endDate">
+                                <small class="text-muted" style="font-size: 0.75rem;">Bỏ trống nếu không muốn tự động gỡ</small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button class="btn btn-primary fw-bold w-100" type="submit" style="height: 38px;">Thêm Mới Banner</button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -65,8 +84,8 @@
                             <thead class="table-light text-muted">
                             <tr>
                                 <th class="ps-4">Hình ảnh</th>
-                                <th>Tiêu đề</th>
-                                <th>Link Sự kiện</th>
+                                <th>Tiêu đề & Link</th>
+                                <th>Thời gian hiệu lực</th>
                                 <th class="text-center">Thứ tự</th>
                                 <th class="text-center">Trạng thái</th>
                                 <th class="text-end pe-4">Thao tác</th>
@@ -82,22 +101,48 @@
                                         <img th:src="${banner.imageUrl}" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;">
                                     </div>
                                 </td>
-                                <td class="fw-bold text-dark" th:text="${banner.title}">Title</td>
                                 <td>
-                                    <a th:if="${banner.linkUrl != null and !banner.linkUrl.isBlank()}" th:href="${banner.linkUrl}" target="_blank" class="text-decoration-none text-primary small">
-                                        <i class="fas fa-external-link-alt me-1"></i> <span th:text="${banner.linkUrl}">Link</span>
-                                    </a>
-                                    <span th:unless="${banner.linkUrl != null and !banner.linkUrl.isBlank()}" class="text-muted small">Không có link</span>
+                                    <div class="fw-bold text-dark" th:text="${banner.title}">Title</div>
+                                    <div>
+                                        <a th:if="${banner.linkUrl != null and !banner.linkUrl.isBlank()}" th:href="${banner.linkUrl}" target="_blank" class="text-decoration-none text-primary small">
+                                            <i class="fas fa-external-link-alt me-1"></i> <span th:text="${banner.linkUrl}">Link</span>
+                                        </a>
+                                        <span th:unless="${banner.linkUrl != null and !banner.linkUrl.isBlank()}" class="text-muted small">Không có link</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <span class="fw-bold text-success">Bắt đầu:</span>
+                                        <span th:text="${banner.startDate != null ? #temporals.format(banner.startDate, 'dd/MM/yyyy HH:mm') : 'Ngay lập tức'}"></span>
+                                    </div>
+                                    <div class="small">
+                                        <span class="fw-bold text-danger">Kết thúc:</span>
+                                        <span th:text="${banner.endDate != null ? #temporals.format(banner.endDate, 'dd/MM/yyyy HH:mm') : 'Vĩnh viễn'}"></span>
+                                    </div>
                                 </td>
                                 <td class="text-center fw-bold text-secondary" th:text="${banner.sortOrder}">0</td>
                                 <td class="text-center">
-                                    <button th:onclick="'toggleBanner(' + ${banner.id} + ')'"
-                                            class="btn btn-sm"
-                                            th:classappend="${banner.isActive} ? 'btn-success' : 'btn-outline-secondary'"
-                                            style="width: 80px; border-radius: 20px;">
-                                        <i th:class="${banner.isActive} ? 'fas fa-check-circle' : 'fas fa-eye-slash'"></i>
-                                        <span th:text="${banner.isActive} ? 'Đang bật' : 'Đã ẩn'"></span>
-                                    </button>
+                                    <th:block th:with="isExpired=${banner.endDate != null and banner.endDate.isBefore(T(java.time.LocalDateTime).now())},
+                       isScheduled=${banner.startDate != null and banner.startDate.isAfter(T(java.time.LocalDateTime).now())}">
+
+        <span th:if="${isExpired}" class="badge bg-danger rounded-pill px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
+            <i class="fas fa-times-circle me-1"></i> Đã hết hạn
+        </span>
+
+                                        <div th:unless="${isExpired}" class="d-flex flex-column align-items-center gap-1">
+                                            <button th:onclick="'toggleBanner(' + ${banner.id} + ')'"
+                                                    class="btn btn-sm"
+                                                    th:classappend="${banner.isActive} ? 'btn-success' : 'btn-outline-secondary'"
+                                                    style="width: 100px; border-radius: 20px;">
+                                                <i th:class="${banner.isActive} ? 'fas fa-check-circle' : 'fas fa-eye-slash'"></i>
+                                                <span th:text="${banner.isActive} ? 'Đang bật' : 'Đã ẩn'"></span>
+                                            </button>
+
+                                            <span th:if="${isScheduled and banner.isActive}" class="badge bg-info text-dark shadow-sm" style="font-size: 0.7rem;">
+                <i class="fas fa-hourglass-start me-1"></i> Chờ tới ngày
+            </span>
+                                        </div>
+                                    </th:block>
                                 </td>
                                 <td class="text-end pe-4">
                                     <div class="btn-group">
@@ -111,7 +156,7 @@
                                     </div>
 
                                     <div class="modal fade text-start" th:id="'editBannerModal' + ${banner.id}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-dialog modal-lg modal-dialog-centered">
                                             <div class="modal-content border-0 shadow">
                                                 <div class="modal-header bg-light">
                                                     <h5 class="modal-title fw-bold text-primary"><i class="fas fa-edit me-2"></i>Cập nhật Banner</h5>
@@ -123,28 +168,44 @@
                                                             <img th:src="${banner.imageUrl}" class="img-thumbnail" style="height: 100px; object-fit: cover;">
                                                             <div class="small text-muted mt-1">Ảnh hiện tại</div>
                                                         </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Tiêu đề</label>
-                                                            <input type="text" class="form-control" name="title" th:value="${banner.title}" required>
+
+                                                        <div class="row">
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label fw-semibold">Tiêu đề</label>
+                                                                <input type="text" class="form-control" name="title" th:value="${banner.title}" required>
+                                                            </div>
+                                                            <div class="col-md-6 mb-3">
+                                                                <label class="form-label fw-semibold">Link Sự kiện (Khi click vào)</label>
+                                                                <input type="text" class="form-control" name="linkUrl" th:value="${banner.linkUrl}" placeholder="VD: /products?categoryId=1">
+                                                            </div>
                                                         </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold" title="Bấm vào Banner trên trang chủ sẽ mở ra link này">Link Sự kiện (Khi click vào)</label>
-                                                            <input type="text" class="form-control" name="linkUrl" th:value="${banner.linkUrl}" placeholder="VD: /products?categoryId=1">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label fw-semibold">Thứ tự hiển thị</label>
-                                                            <input type="number" class="form-control" name="sortOrder" th:value="${banner.sortOrder}" required>
+
+                                                        <div class="row">
+                                                            <div class="col-md-4 mb-3">
+                                                                <label class="form-label fw-semibold">Thứ tự hiển thị</label>
+                                                                <input type="number" class="form-control" name="sortOrder" th:value="${banner.sortOrder}" required>
+                                                            </div>
+                                                            <div class="col-md-4 mb-3">
+                                                                <label class="form-label fw-semibold">Ngày bắt đầu</label>
+                                                                <input type="datetime-local" class="form-control" name="startDate" th:value="${banner.startDate}">
+                                                            </div>
+                                                            <div class="col-md-4 mb-3">
+                                                                <label class="form-label fw-semibold">Ngày kết thúc</label>
+                                                                <input type="datetime-local" class="form-control" name="endDate" th:value="${banner.endDate}">
+                                                            </div>
                                                         </div>
 
                                                         <hr class="text-muted">
                                                         <p class="small text-danger fw-bold mb-2">ĐỔI ẢNH BẰNG 1 TRONG 2 CÁCH (Bỏ trống nếu giữ nguyên ảnh cũ):</p>
-                                                        <div class="mb-2">
-                                                            <label class="form-label text-muted small fw-bold">Cách 1: Tải file từ máy lên</label>
-                                                            <input type="file" class="form-control form-control-sm" name="image" accept="image/*">
-                                                        </div>
-                                                        <div class="mb-2">
-                                                            <label class="form-label text-muted small fw-bold">Cách 2: Dán Link ảnh mới (URL)</label>
-                                                            <input type="text" class="form-control form-control-sm" name="imageUrlText" placeholder="https://...">
+                                                        <div class="row">
+                                                            <div class="col-md-6 mb-2">
+                                                                <label class="form-label text-muted small fw-bold">Cách 1: Tải file từ máy lên</label>
+                                                                <input type="file" class="form-control form-control-sm" name="image" accept="image/*">
+                                                            </div>
+                                                            <div class="col-md-6 mb-2">
+                                                                <label class="form-label text-muted small fw-bold">Cách 2: Dán Link ảnh mới (URL)</label>
+                                                                <input type="text" class="form-control form-control-sm" name="imageUrlText" placeholder="https://...">
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="modal-footer bg-light">
@@ -155,7 +216,6 @@
                                             </div>
                                         </div>
                                     </div>
-
                                 </td>
                             </tr>
                             </tbody>

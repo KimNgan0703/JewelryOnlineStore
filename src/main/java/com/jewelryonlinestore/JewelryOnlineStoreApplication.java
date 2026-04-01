@@ -5,6 +5,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.jewelryonlinestore.entity.User;
@@ -14,7 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SpringBootApplication
-@EnableAsync // BẮT BUỘC: Cho phép chạy ngầm các tác vụ như gửi Email
+@EnableAsync
+@EnableScheduling // BẮT BUỘC: Cho phép chạy các tác vụ định kỳ Cron Job
 public class JewelryOnlineStoreApplication {
 
     public static void main(String[] args) {
@@ -43,5 +45,4 @@ public class JewelryOnlineStoreApplication {
             log.info("✓ Đã tạo admin: {} / Admin@123", email);
         };
     }
-
 }

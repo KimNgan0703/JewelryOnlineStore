@@ -1,4 +1,5 @@
 package com.jewelryonlinestore.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,6 +34,14 @@ public class Banner {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
+
+    // --- THÊM 2 TRƯỜNG THỜI GIAN ---
+    @Column(name = "start_date")
+    private LocalDateTime startDate;
+
+    @Column(name = "end_date")
+    private LocalDateTime endDate;
+    // -------------------------------
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
