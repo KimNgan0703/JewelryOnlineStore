@@ -36,7 +36,6 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion promo = opt.get();
         LocalDateTime now = LocalDateTime.now();
 
-        // Kiểm tra hạn sử dụng & lượt dùng
         if (promo.getStartDate().isAfter(now) || (promo.getEndDate() != null && promo.getEndDate().isBefore(now))) {
             return Optional.empty();
         }
@@ -44,7 +43,6 @@ public class PromotionServiceImpl implements PromotionService {
             return Optional.empty();
         }
 
-        // Kiểm tra giá trị đơn hàng tối thiểu
         BigDecimal cartTotal = cart.getItems().stream()
                 .map(item -> item.getVariant().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -53,10 +51,9 @@ public class PromotionServiceImpl implements PromotionService {
             return Optional.empty();
         }
 
-        // Tự chạy thử tính toán để xem khách có mua trúng món quy định không
         BigDecimal discount = calculateDiscount(promo, cart);
         if (discount.compareTo(BigDecimal.ZERO) <= 0) {
-            return Optional.empty(); // Mã có thật nhưng khách không mua món thỏa điều kiện
+            return Optional.empty();
         }
 
         return Optional.of(promo);
@@ -71,7 +68,6 @@ public class PromotionServiceImpl implements PromotionService {
         BigDecimal applicableAmount = BigDecimal.ZERO;
         int applicableQuantity = 0;
 
-        // Quét từng món trong giỏ hàng xem có khớp điều kiện không
         for (CartItem item : cart.getItems()) {
             boolean isApplicable = false;
 
@@ -88,17 +84,15 @@ public class PromotionServiceImpl implements PromotionService {
             }
 
             if (isApplicable) {
-                applicableAmount = applicableAmount.add(item.getVariant().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                applicableAmount = applicableAmount.add(
+                        item.getVariant().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
                 applicableQuantity += item.getQuantity();
             }
         }
 
-        // Nếu có quy định số lượng tối thiểu (VD: Mua 2 Nhẫn)
         if (promo.getMinQuantity() != null && applicableQuantity < promo.getMinQuantity()) {
             return BigDecimal.ZERO;
         }
-
-        // Nếu trong giỏ không có món nào được áp mã
         if (applicableAmount.compareTo(BigDecimal.ZERO) <= 0) return BigDecimal.ZERO;
 
         if (promo.getType().name().equals("PERCENTAGE")) {
@@ -108,10 +102,20 @@ public class PromotionServiceImpl implements PromotionService {
         }
     }
 
+    /**
+     * Tìm kiếm có lọc theo status:
+     *   ACTIVE, INACTIVE, EXPIRED, UPCOMING hoặc null (tất cả)
+     */
     @Override
     @Transactional(readOnly = true)
-    public Page<Promotion> searchPromotions(String keyword, Boolean isActive, int page, int size) {
-        return promotionRepository.searchPromotions(blankToNull(keyword), isActive, PageRequest.of(page, size));
+    public Page<Promotion> searchPromotions(String keyword, String status, int page, int size) {
+        String normalizedStatus = blankToNull(status);
+        return promotionRepository.searchPromotions(
+                blankToNull(keyword),
+                normalizedStatus,
+                LocalDateTime.now(),
+                PageRequest.of(page, size)
+        );
     }
 
     @Override
@@ -127,9 +131,8 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion existing = promotionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Promotion not found: " + id));
         Promotion saved = promotionRepository.save(toEntity(req, existing));
-
-        conditionRepository.deleteByPromotionId(saved.getId()); // Xóa luật cũ
-        saveCondition(saved, req); // Lưu luật mới
+        conditionRepository.deleteByPromotionId(saved.getId());
+        saveCondition(saved, req);
     }
 
     private void saveCondition(Promotion promo, PromotionRequest req) {
@@ -201,7 +204,6 @@ public class PromotionServiceImpl implements PromotionService {
         conditionRepository.deleteByPromotionId(id);
         promotionRepository.delete(promotion);
     }
-
 
     private Promotion toEntity(PromotionRequest req, Promotion existing) {
         Promotion target = existing == null ? new Promotion() : existing;

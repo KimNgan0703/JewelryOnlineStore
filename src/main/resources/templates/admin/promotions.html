@@ -35,13 +35,18 @@
 
         <form class="row g-2 mb-4" method="get" th:action="@{/admin/promotions}">
             <div class="col-md-5">
-                <input class="form-control" type="text" id="keyword" name="keyword" placeholder="Tìm theo mã code hoặc tên..." th:value="${param.keyword}">
+                <input class="form-control" type="text" name="keyword"
+                       placeholder="Tìm theo mã code hoặc tên..."
+                       th:value="${keyword}">
             </div>
             <div class="col-md-4">
-                <select class="form-select" name="isActive" onchange="document.getElementById('keyword').value=''">
+                <!-- Dropdown lọc theo status: hỗ trợ ACTIVE, INACTIVE, EXPIRED, UPCOMING -->
+                <select class="form-select" name="status">
                     <option value="">Tất cả trạng thái</option>
-                    <option value="true" th:selected="${param.isActive != null and param.isActive[0] == 'true'}">Đang kích hoạt (Active)</option>
-                    <option value="false" th:selected="${param.isActive != null and param.isActive[0] == 'false'}">Đã tắt (Inactive)</option>
+                    <option value="ACTIVE"   th:selected="${status == 'ACTIVE'}">Đang kích hoạt (Active)</option>
+                    <option value="INACTIVE" th:selected="${status == 'INACTIVE'}">Đã tắt (Inactive)</option>
+                    <option value="EXPIRED"  th:selected="${status == 'EXPIRED'}">Hết hạn</option>
+                    <option value="UPCOMING" th:selected="${status == 'UPCOMING'}">Sắp diễn ra</option>
                 </select>
             </div>
             <div class="col-md-3 d-flex gap-1">
@@ -88,12 +93,23 @@
                         <div th:text="${#temporals.format(promo.startDate, 'dd/MM/yyyy HH:mm')}">01/01/2026</div>
                         <div class="text-muted" th:text="'đến ' + ${#temporals.format(promo.endDate, 'dd/MM/yyyy HH:mm')}">đến 01/02/2026</div>
                     </td>
-                    <td>
-                        <button class="btn btn-sm"
+                    <td th:with="now=${#temporals.createNow()}, isExpired=${promo.endDate.isBefore(now)}, isUpcoming=${promo.startDate.isAfter(now)}">
+                        <span th:if="${isExpired}"
+                              class="badge bg-danger"
+                              style="padding:5px 10px;font-size:0.8rem;">
+                            <i class="fas fa-clock me-1"></i>Hết hạn
+                        </span>
+                        <span th:if="${!isExpired and isUpcoming}"
+                              class="badge bg-warning text-dark"
+                              style="padding:5px 10px;font-size:0.8rem;">
+                            <i class="fas fa-hourglass-start me-1"></i>Sắp diễn ra
+                        </span>
+                        <button th:if="${!isExpired and !isUpcoming}"
+                                class="btn btn-sm"
                                 th:classappend="${promo.isActive} ? 'btn-success' : 'btn-secondary'"
                                 th:onclick="'togglePromotion(' + ${promo.id} + ')'"
                                 th:text="${promo.isActive} ? 'Active' : 'Inactive'"
-                                style="width: 75px; font-weight: bold;"
+                                style="width: 82px; font-weight: bold;"
                                 title="Click để Bật/Tắt">
                             Active
                         </button>
@@ -111,16 +127,23 @@
             </table>
         </div>
 
+        <!-- Pagination giữ nguyên keyword và status khi chuyển trang -->
         <nav th:if="${totalPages != null and totalPages > 1}">
             <ul class="pagination justify-content-center">
                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/promotions(page=${currentPage - 1},keyword=${param.keyword},isActive=${param.isActive})}">Trang trước</a>
+                    <a class="page-link"
+                       th:href="@{/admin/promotions(page=${currentPage - 1}, keyword=${keyword}, status=${status})}">Trang trước</a>
                 </li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link" th:href="@{/admin/promotions(page=${i},keyword=${param.keyword},isActive=${param.isActive})}" th:text="${i + 1}">1</a>
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/admin/promotions(page=${i}, keyword=${keyword}, status=${status})}"
+                       th:text="${i + 1}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/admin/promotions(page=${currentPage + 1},keyword=${param.keyword},isActive=${param.isActive})}">Trang sau</a>
+                    <a class="page-link"
+                       th:href="@{/admin/promotions(page=${currentPage + 1}, keyword=${keyword}, status=${status})}">Trang sau</a>
                 </li>
             </ul>
         </nav>
@@ -130,7 +153,6 @@
         const token = document.getElementById('csrfToken').value;
         const header = document.getElementById('csrfHeader').value;
 
-        // Hàm Bật/Tắt
         function togglePromotion(id) {
             fetch('/admin/promotions/' + id + '/toggle', {
                 method: 'PATCH',
@@ -141,7 +163,6 @@
                 .catch(error => alert("Đã xảy ra lỗi khi thay đổi trạng thái!"));
         }
 
-        // Hàm Xóa có xác nhận
         function deletePromotion(id) {
             if(confirm("Bạn có chắc chắn muốn XÓA vĩnh viễn mã giảm giá này không? Mọi dữ liệu liên quan có thể bị ảnh hưởng.")) {
                 fetch('/admin/promotions/' + id, {

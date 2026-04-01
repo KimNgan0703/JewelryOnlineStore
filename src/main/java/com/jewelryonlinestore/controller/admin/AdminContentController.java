@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 public class AdminContentController {
 
     private final BannerService bannerService;
-    private final BlogService blogService;
 
     @GetMapping("/banners")
     public String bannerList(Model model) {
@@ -77,51 +76,5 @@ public class AdminContentController {
     public ResponseEntity<ApiResponse<Void>> deleteBanner(@PathVariable Long id) {
         bannerService.deleteBanner(id);
         return ResponseEntity.ok(ApiResponse.ok("Đã xóa banner", null));
-    }
-
-    // --- CÁC API VỀ BLOG GIỮ NGUYÊN ---
-    @GetMapping("/blog")
-    public String blogList(@RequestParam(defaultValue = "0") int page, Model model) {
-        var posts = blogService.adminGetAllPosts(page, 15);
-        model.addAttribute("posts", posts.getContent());
-        model.addAttribute("currentPage", posts.getNumber());
-        model.addAttribute("totalPages", posts.getTotalPages());
-        model.addAttribute("activeSection", "blog");
-        model.addAttribute("pageTitle", "Quản Lý Blog");
-        return "admin/content";
-    }
-
-    @GetMapping("/blog/new")
-    public String newBlogForm(Model model) {
-        model.addAttribute("activeSection", "blog");
-        model.addAttribute("pageTitle", "Bài Viết Mới");
-        return "admin/content";
-    }
-
-    @PostMapping("/blog")
-    public String createPost(@RequestParam String title,
-                             @RequestParam String content,
-                             @RequestParam(required = false) String excerpt,
-                             @RequestParam(required = false) MultipartFile featuredImage,
-                             @RequestParam(defaultValue = "false") boolean publish,
-                             Authentication auth,
-                             RedirectAttributes redirectAttr) {
-        blogService.createPost(title, content, excerpt, featuredImage, publish, auth);
-        redirectAttr.addFlashAttribute("toast_success", "Đã tạo bài viết!");
-        return "redirect:/admin/content/blog";
-    }
-
-    @PostMapping("/blog/{id}/publish")
-    @ResponseBody
-    public ResponseEntity<ApiResponse<Boolean>> publishPost(@PathVariable Long id) {
-        boolean published = blogService.togglePublish(id);
-        return ResponseEntity.ok(ApiResponse.ok(published ? "Đã đăng bài" : "Đã ẩn bài", published));
-    }
-
-    @DeleteMapping("/blog/{id}")
-    @ResponseBody
-    public ResponseEntity<ApiResponse<Void>> deletePost(@PathVariable Long id) {
-        blogService.deletePost(id);
-        return ResponseEntity.ok(ApiResponse.ok("Đã xóa bài viết", null));
     }
 }

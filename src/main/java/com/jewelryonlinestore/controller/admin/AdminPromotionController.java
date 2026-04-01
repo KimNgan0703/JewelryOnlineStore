@@ -6,11 +6,14 @@ import com.jewelryonlinestore.service.ProductService;
 import com.jewelryonlinestore.service.PromotionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/promotions")
@@ -18,22 +21,22 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AdminPromotionController {
 
     private final PromotionService promotionService;
-
-    // TIÊM 2 SERVICE NÀY VÀO ĐỂ LẤY DỮ LIỆU
     private final CategoryService categoryService;
     private final ProductService productService;
 
     @GetMapping
     public String listPromotions(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(required = false) String keyword,
-                                 @RequestParam(required = false) Boolean active,
+                                 // Đổi Boolean isActive → String status
+                                 // Các giá trị hợp lệ: ACTIVE, INACTIVE, EXPIRED, UPCOMING (hoặc null = tất cả)
+                                 @RequestParam(required = false) String status,
                                  Model model) {
-        var promotions = promotionService.searchPromotions(keyword, active, page, 10);
+        var promotions = promotionService.searchPromotions(keyword, status, page, 10);
         model.addAttribute("promotions", promotions.getContent());
         model.addAttribute("currentPage", promotions.getNumber());
         model.addAttribute("totalPages", promotions.getTotalPages());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("active", active);
+        model.addAttribute("status", status);
         model.addAttribute("pageTitle", "Quản Lý Khuyến Mãi");
         return "admin/promotions";
     }
@@ -43,8 +46,6 @@ public class AdminPromotionController {
         model.addAttribute("promotionRequest", new PromotionRequest());
         model.addAttribute("isEdit", false);
         model.addAttribute("pageTitle", "Thêm Mã Khuyến Mãi");
-
-        // NẠP DANH SÁCH CHO DROPDOWN MENU
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("products", productService.getAllProducts());
         return "admin/promotion-form";
@@ -81,8 +82,6 @@ public class AdminPromotionController {
         model.addAttribute("id", id);
         model.addAttribute("isEdit", true);
         model.addAttribute("pageTitle", "Chỉnh Sửa Mã Khuyến Mãi");
-
-        // NẠP DANH SÁCH CHO DROPDOWN MENU
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("products", productService.getAllProducts());
         return "admin/promotion-form";
@@ -116,21 +115,21 @@ public class AdminPromotionController {
         return "redirect:/admin/promotions";
     }
 
-    @PostMapping("/{id}/toggle")
+    @PatchMapping("/{id}/toggle")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> togglePromotion(@PathVariable Long id) {
-        boolean isActive = promotionService.toggleActive(id);
-        return org.springframework.http.ResponseEntity.ok(java.util.Map.of("isActive", isActive, "message", "Đã cập nhật trạng thái!"));
+    public ResponseEntity<?> togglePromotion(@PathVariable Long id) {
+        boolean activeStatus = promotionService.toggleActive(id);
+        return ResponseEntity.ok(Map.of("isActive", activeStatus, "message", "Đã cập nhật trạng thái!"));
     }
 
-    @PostMapping("/{id}/delete")
-    public String deletePromotion(@PathVariable Long id, RedirectAttributes redirectAttr) {
+    @DeleteMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<?> deletePromotion(@PathVariable Long id) {
         try {
             promotionService.deletePromotion(id);
-            redirectAttr.addFlashAttribute("toast_success", "Đã xóa mã khuyến mãi!");
+            return ResponseEntity.ok(Map.of("message", "Đã xóa mã khuyến mãi thành công!"));
         } catch (Exception e) {
-            redirectAttr.addFlashAttribute("toast_error", "Lỗi: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
         }
-        return "redirect:/admin/promotions";
     }
 }

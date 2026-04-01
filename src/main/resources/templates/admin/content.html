@@ -10,13 +10,11 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h3 mb-0" style="color: #2c3e50; font-weight: bold;">Quản Lý Nội Dung</h1>
             <div class="btn-group shadow-sm">
-                <a class="btn" th:classappend="${activeSection == 'banners'} ? 'btn-dark' : 'btn-outline-dark'" th:href="@{/admin/content/banners}">Banners</a>
-                <a class="btn" th:classappend="${activeSection == 'blog'} ? 'btn-dark' : 'btn-outline-dark'" th:href="@{/admin/content/blog}">Blog</a>
+                <a class="btn btn-dark" th:href="@{/admin/content/banners}">Banners</a>
             </div>
         </div>
 
-        <div th:if="${activeSection == 'banners'}">
-
+        <div>
             <div th:if="${toast_error}" class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${toast_error}"></span>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -123,11 +121,11 @@
                                 <td class="text-center fw-bold text-secondary" th:text="${banner.sortOrder}">0</td>
                                 <td class="text-center">
                                     <th:block th:with="isExpired=${banner.endDate != null and banner.endDate.isBefore(T(java.time.LocalDateTime).now())},
-                       isScheduled=${banner.startDate != null and banner.startDate.isAfter(T(java.time.LocalDateTime).now())}">
+                                       isScheduled=${banner.startDate != null and banner.startDate.isAfter(T(java.time.LocalDateTime).now())}">
 
-        <span th:if="${isExpired}" class="badge bg-danger rounded-pill px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
-            <i class="fas fa-times-circle me-1"></i> Đã hết hạn
-        </span>
+                                        <span th:if="${isExpired}" class="badge bg-danger rounded-pill px-3 py-2 shadow-sm" style="font-size: 0.85rem;">
+                                            <i class="fas fa-times-circle me-1"></i> Đã hết hạn
+                                        </span>
 
                                         <div th:unless="${isExpired}" class="d-flex flex-column align-items-center gap-1">
                                             <button th:onclick="'toggleBanner(' + ${banner.id} + ')'"
@@ -139,8 +137,8 @@
                                             </button>
 
                                             <span th:if="${isScheduled and banner.isActive}" class="badge bg-info text-dark shadow-sm" style="font-size: 0.7rem;">
-                <i class="fas fa-hourglass-start me-1"></i> Chờ tới ngày
-            </span>
+                                                <i class="fas fa-hourglass-start me-1"></i> Chờ tới ngày
+                                            </span>
                                         </div>
                                     </th:block>
                                 </td>
@@ -224,38 +222,9 @@
                 </div>
             </div>
         </div>
-
-        <div th:if="${activeSection == 'blog'}" class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                <span class="fw-bold"><i class="fas fa-blog text-primary me-2"></i> Danh sách Bài viết (Blog)</span>
-                <a class="btn btn-sm btn-primary fw-bold" th:href="@{/admin/content/blog/new}"><i class="fas fa-plus"></i> Viết bài mới</a>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light text-muted">
-                    <tr>
-                        <th class="ps-4">Tiêu đề</th>
-                        <th>Tác giả</th>
-                        <th class="text-center">Trạng thái</th>
-                        <th class="text-center">Cập nhật lúc</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:if="${posts == null or posts.isEmpty()}"><td colspan="4" class="text-center text-muted py-4">Chưa có bài viết nào.</td></tr>
-                    <tr th:each="post : ${posts}">
-                        <td class="ps-4 fw-bold" th:text="${post.title}">Title</td>
-                        <td th:text="${post.authorName}">Author</td>
-                        <td class="text-center"><span class="badge" th:classappend="${post.isPublished} ? 'bg-success' : 'bg-warning text-dark'" th:text="${post.isPublished} ? 'Đã xuất bản' : 'Bản nháp'">Draft</span></td>
-                        <td class="text-center text-muted small" th:text="${#temporals.format(post.updatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
 
-    <script th:if="${activeSection == 'banners'}">
+    <script>
         const token = document.querySelector('meta[name="_csrf"]')?.content || '[[${_csrf.token}]]';
         const header = document.querySelector('meta[name="_csrf_header"]')?.content || '[[${_csrf.headerName}]]';
 
