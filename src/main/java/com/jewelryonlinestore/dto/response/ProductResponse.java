@@ -27,7 +27,6 @@ public class ProductResponse {
     private String categoryName;
     private Long categoryId;
     private String brandName;
-    private String collectionName;
     private String materialName;
     private String gender;
 

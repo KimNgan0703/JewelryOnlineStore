@@ -107,16 +107,6 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<com.jewelryonlinestore.entity.Collection> getAllCollections() {
-        return productRepository.findAll().stream()
-                .map(Product::getCollection)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Material> getAllMaterials() {
         return materialRepository.findAllByOrderByNameAsc();
     }
@@ -374,7 +364,6 @@ public class ProductServiceImpl implements ProductService {
         req.setDescription(p.getDescription());
         req.setCategoryId(p.getCategory() != null ? p.getCategory().getId() : null);
         req.setBrandId(p.getBrand() != null ? p.getBrand().getId() : null);
-        req.setCollectionId(p.getCollection() != null ? p.getCollection().getId() : null);
         req.setMaterialId(p.getMaterial() != null ? p.getMaterial().getId() : null);
         req.setGender(p.getGender() != null ? p.getGender().name().toLowerCase(java.util.Locale.ROOT) : null);
         req.setWeightGram(p.getWeightGram());
@@ -515,7 +504,6 @@ public class ProductServiceImpl implements ProductService {
                 .categoryName(p.getCategory() != null ? p.getCategory().getName() : null)
                 .categoryId(p.getCategory() != null ? p.getCategory().getId() : null)
                 .brandName(p.getBrand() != null ? p.getBrand().getName() : null)
-                .collectionName(p.getCollection() != null ? p.getCollection().getName() : null)
                 .materialName(p.getMaterial() != null ? p.getMaterial().getName() : null)
                 .gender(p.getGender() != null ? p.getGender().name().toLowerCase(Locale.ROOT) : null)
                 .basePrice(p.getBasePrice())

@@ -15,7 +15,6 @@ import java.util.List;
                 @Index(name = "idx_slug",       columnList = "slug"),
                 @Index(name = "idx_category",   columnList = "category_id"),
                 @Index(name = "idx_brand",      columnList = "brand_id"),
-                @Index(name = "idx_collection", columnList = "collection_id"),
                 @Index(name = "idx_material",   columnList = "material_id"),
                 @Index(name = "idx_active",     columnList = "is_active"),
                 @Index(name = "idx_created",    columnList = "created_at")
@@ -62,11 +61,6 @@ public class Product {
     @JoinColumn(name = "brand_id")
     @ToString.Exclude
     private Brand brand;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "collection_id")
-    @ToString.Exclude
-    private Collection collection;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "material_id")

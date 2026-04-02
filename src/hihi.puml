@@ -1,4 +1,4 @@
-@startuml JewelryOnlineStore_ERD
+﻿@startuml JewelryOnlineStore_ERD
 !define primary_key(x) <b><color:#b8861b><&key></color> x</b>
 !define foreign_key(x) <color:#aaaaaa><&key></color> x
 !define column(x) x
@@ -114,18 +114,6 @@ table(brands) {
   updated_at : datetime(6)
 }
 
-table(collections) {
-  primary_key(id) : bigint
-  --
-  name : varchar(255)
-  slug : varchar(255)
-  image_url : varchar(500)
-  description : text
-  is_active : bit(1)
-  created_at : datetime(6)
-  updated_at : datetime(6)
-}
-
 table(materials) {
   primary_key(id) : bigint
   --
@@ -139,7 +127,6 @@ table(products) {
   --
   foreign_key(category_id) : bigint
   foreign_key(brand_id) : bigint
-  foreign_key(collection_id) : bigint
   foreign_key(material_id) : bigint
   name : varchar(255)
   slug : varchar(255)
@@ -390,7 +377,6 @@ product_variants ||--o{ cart_items : "1:N"
 categories ||--o{ categories : "1:N (parent_id)"
 categories ||--o{ products : "1:N"
 brands ||--o{ products : "1:N"
-collections ||--o{ products : "1:N"
 materials ||--o{ products : "1:N"
 
 products ||--o{ product_variants : "1:N"

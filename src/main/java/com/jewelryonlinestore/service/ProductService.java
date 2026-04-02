@@ -14,7 +14,6 @@ public interface ProductService {
     List<ProductCardResponse> getNewProducts(int limit);
     List<ProductCardResponse> getRelatedProducts(Long productId, Long categoryId, int limit);
     List<Brand>               getAllBrands();
-    List<Collection>          getAllCollections();
     List<Material>            getAllMaterials();
 
     // Admin

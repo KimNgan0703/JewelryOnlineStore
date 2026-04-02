@@ -10,7 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * C02 — Trang chủ: banner, danh mục, bộ sưu tập, SP bán chạy, SP mới.
+ * C02 — Trang chủ: banner, danh mục, SP bán chạy, SP mới.
  */
 @Controller
 @RequiredArgsConstructor
@@ -25,8 +25,6 @@ public class HomeController {
         //System.out.println(auth.getPrincipal());
         model.addAttribute("banners",       bannerService.getActiveBanners());
         model.addAttribute("categories",    categoryService.getRootCategories());
-        // Thêm dòng này
-        model.addAttribute("collections",   productService.getAllCollections());
         model.addAttribute("bestSellers",   productService.getBestSellers(8));
         model.addAttribute("newProducts",   productService.getNewProducts(8));
         model.addAttribute("pageTitle",     "Trang Chủ");

@@ -13,7 +13,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 @Controller
@@ -151,7 +150,6 @@ public class AdminProductController {
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("brands", productService.getAllBrands());
         model.addAttribute("materials", productService.getAllMaterials());
-        model.addAttribute("collections", productService.getAllCollections()); // Bổ sung dòng này
         model.addAttribute("pageTitle", "Quản Lý Thuộc Tính");
         return "admin/categories";
     }
@@ -192,29 +190,6 @@ public class AdminProductController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
-    // API cho Collection (Bộ Sưu Tập)
-    @PostMapping("/quick-add/collection")
-    @ResponseBody
-    public ResponseEntity<?> quickAddCollection(@RequestParam("name") String name) {
-        // Tương tự quickAddBrand, bạn gọi ProductService để tạo Collection
-        // (Bạn có thể tự viết hàm createCollection(name) trong ProductService nhé)
-        return ResponseEntity.ok(Map.of("message", "Thêm bộ sưu tập thành công!"));
-    }
-
-    @PutMapping("/collections/{id}")
-    @ResponseBody
-    public ResponseEntity<?> updateCollection(@PathVariable Long id, @RequestParam String name) {
-        // productService.updateCollection(id, name);
-        return ResponseEntity.ok(Map.of("message", "Cập nhật thành công!"));
-    }
-
-    @DeleteMapping("/collections/{id}")
-    @ResponseBody
-    public ResponseEntity<?> deleteCollection(@PathVariable Long id) {
-        // productService.deleteCollection(id);
-        return ResponseEntity.ok(Map.of("message", "Đã xóa bộ sưu tập!"));
-    }
-
     // ── API Xóa Danh mục (AJAX) ─────────────────────────────
     @DeleteMapping("/categories/{id}")
     @ResponseBody
@@ -244,7 +219,6 @@ public class AdminProductController {
     private void populateFormModel(Model model) {
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("brands", productService.getAllBrands());
-        model.addAttribute("collections", productService.getAllCollections());
         model.addAttribute("materials", productService.getAllMaterials());
         model.addAttribute("cloudinaryCloudName", cloudinaryCloudName);
         model.addAttribute("cloudinaryUploadPreset", cloudinaryUploadPreset);

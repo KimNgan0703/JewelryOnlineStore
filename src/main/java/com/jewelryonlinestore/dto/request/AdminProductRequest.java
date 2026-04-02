@@ -26,7 +26,6 @@ public class AdminProductRequest {
 
     private Long categoryId;
     private Long brandId;
-    private Long collectionId;
     private Long materialId;
 
     private String gender; // male | female | unisex

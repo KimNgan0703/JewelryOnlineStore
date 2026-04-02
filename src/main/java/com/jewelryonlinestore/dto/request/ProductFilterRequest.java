@@ -19,8 +19,6 @@ public class ProductFilterRequest {
     // Lọc theo thương hiệu
     private Long brandId;
 
-    // Lọc theo bộ sưu tập
-    private Long collectionId;
 
     // Lọc theo chất liệu
     private Long materialId;

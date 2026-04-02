@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     // ── Public URLs ────────────────────────────────────────
     private static final String[] PUBLIC_URLS = {
-            "/", "/products/**", "/categories/**", "/collections/**",
+            "/", "/products/**", "/categories/**",
             "/search", "/blog/**",
             "/auth/**",                   // đăng ký, đăng nhập, quên mật khẩu
             "/oauth2/**", "/login/oauth2/**",
