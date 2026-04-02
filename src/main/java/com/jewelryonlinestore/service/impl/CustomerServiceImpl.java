@@ -69,6 +69,25 @@ public class CustomerServiceImpl implements CustomerService {
         detail.put("email", customer.getUser().getEmail());
         detail.put("status", customer.getUser().getStatus().name());
         detail.put("createdAt", customer.getCreatedAt());
+        
+        // Add addresses
+        List<Map<String, Object>> addresses = customer.getAddresses().stream()
+                .filter(a -> !a.isDeleted())
+                .map(a -> {
+                    Map<String, Object> addr = new HashMap<>();
+                    addr.put("id", a.getId());
+                    addr.put("recipientName", a.getRecipientName());
+                    addr.put("phone", a.getPhone());
+                    addr.put("province", a.getProvince());
+                    addr.put("district", a.getDistrict());
+                    addr.put("ward", a.getWard());
+                    addr.put("streetAddress", a.getStreetAddress());
+                    addr.put("fullAddress", a.getFullAddress());
+                    addr.put("isDefault", a.isDefault());
+                    return addr;
+                }).toList();
+        detail.put("addresses", addresses);
+        
         return detail;
     }
 

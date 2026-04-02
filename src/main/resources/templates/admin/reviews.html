@@ -58,7 +58,9 @@
         <form id="filterForm" th:action="@{/admin/reviews}" method="get" class="toolbar">
             <div>
                 <label for="reviewSearch" class="visually-hidden">Tìm kiếm</label>
-                <input id="reviewSearch" class="form-control" type="text" placeholder="Search by customer, product..." disabled>
+                <input id="reviewSearch" name="keyword" class="form-control" type="text"
+                       placeholder="Tìm theo khách hàng, sản phẩm..."
+                       th:value="${param.keyword}">
             </div>
             <div>
                 <label for="status" class="visually-hidden">Trạng thái</label>
@@ -202,6 +204,29 @@
         const csrfToken  = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
         const csrfHeader = /*[[${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}]]*/ 'X-CSRF-TOKEN';
 
+        // 0. XỬ LÝ TÌM KIẾM
+        document.addEventListener('DOMContentLoaded', function() {
+            const reviewSearch = document.getElementById('reviewSearch');
+            const filterForm = document.getElementById('filterForm');
+
+            // Gửi form tự động khi nhập từ khóa tìm kiếm (debounce)
+            let searchTimeout;
+            reviewSearch.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterForm.submit();
+                }, 500); // Chờ 500ms sau khi người dùng dừng nhập
+            });
+
+            // Cũng cho phép Enter key để tìm kiếm ngay
+            reviewSearch.addEventListener('keypress', function(e) {
+                if(e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    filterForm.submit();
+                }
+            });
+        });
+
         // 1. XỬ LÝ NÚT DUYỆT (APPROVE)
         document.querySelectorAll('.btn-approve').forEach(btn => {
             btn.addEventListener('click', async function() {
@@ -248,11 +273,11 @@
 
         // 3. XỬ LÝ NÚT TRẢ LỜI KHÁCH HÀNG
         let replyModal;
-        document.addEventListener('DOMContentLoaded', function() {
-            // Khởi tạo Bootstrap Modal
-            replyModal = new bootstrap.Modal(document.getElementById('replyModal'));
 
-            document.querySelectorAll('.btn-reply').forEach(btn => {
+        // Khởi tạo Bootstrap Modal
+        replyModal = new bootstrap.Modal(document.getElementById('replyModal'));
+
+                document.querySelectorAll('.btn-reply').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const id = this.getAttribute('data-id');
                     const existingReply = this.getAttribute('data-response');
@@ -264,7 +289,7 @@
                 });
             });
 
-            // Gửi API phản hồi
+                // Gửi API phản hồi
             document.getElementById('btnSubmitReply').addEventListener('click', async function() {
                 const id = document.getElementById('replyReviewId').value;
                 const content = document.getElementById('replyContent').value;

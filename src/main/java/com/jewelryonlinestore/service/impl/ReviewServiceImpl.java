@@ -141,7 +141,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public Page<ReviewResponse> adminFilterReviews(String status, Long productId,
-                                                   Integer rating, int page, int size) {
+                                                   Integer rating, String keyword, int page, int size) {
 
         Review.ReviewStatus statusEnum = null;
 
@@ -151,8 +151,16 @@ public class ReviewServiceImpl implements ReviewService {
             } catch (Exception ignored) {}
         }
 
+        // Trim and handle empty keyword
+        if (keyword != null) {
+            keyword = keyword.trim();
+            if (keyword.isEmpty()) {
+                keyword = null;
+            }
+        }
+
         return reviewRepository
-                .filterReviews(statusEnum, productId, rating, PageRequest.of(page, size))
+                .filterReviews(statusEnum, productId, rating, keyword, PageRequest.of(page, size))
                 .map(this::toResponse);
     }
 

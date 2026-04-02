@@ -15,9 +15,14 @@
                 <h1 class="h3 mb-0" style="color: #2c3e50; font-weight: bold;">Quản Lý Sản Phẩm</h1>
                 <div class="text-muted small">Tổng số: <span class="fw-bold" th:text="${totalItems}">0</span> sản phẩm</div>
             </div>
-            <a class="btn btn-dark fw-bold shadow-sm" th:href="@{/admin/products/new}">
-                <i class="fas fa-plus-circle me-1"></i> Thêm Sản Phẩm Mới
-            </a>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-secondary" th:href="@{/admin/dashboard}" title="Quay lại Dashboard">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+                <a class="btn btn-dark fw-bold shadow-sm" th:href="@{/admin/products/new}">
+                    <i class="fas fa-plus-circle me-1"></i> Thêm Sản Phẩm Mới
+                </a>
+            </div>
         </div>
 
         <div th:if="${toast_success}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
@@ -29,25 +34,28 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <form class="row g-2 mb-4" method="get" th:action="@{/admin/products}">
+        <form class="row g-2 mb-4" method="get" th:action="@{/admin/products}" id="filterForm">
             <div class="col-md-4">
                 <input class="form-control shadow-sm" type="text" id="keyword" name="keyword" placeholder="Tìm theo tên, mã SKU..." th:value="${keyword}">
             </div>
             <div class="col-md-3">
-                <select class="form-select shadow-sm" name="categoryId" onchange="this.form.submit()">
+                <select class="form-select shadow-sm" name="categoryId" onchange="document.getElementById('keyword').value=''; this.form.submit()">
                     <option value="">-- Tất cả danh mục --</option>
-                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id == param.categoryId?.get(0)?.longValue()}"></option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}" th:selected="${cat.id.toString() == param.categoryId?.get(0)}"></option>
                 </select>
             </div>
             <div class="col-md-3">
-                <select class="form-select shadow-sm" name="isActive" onchange="this.form.submit()">
+                <select class="form-select shadow-sm" name="isActive" onchange="document.getElementById('keyword').value=''; this.form.submit()">
                     <option value="">-- Mọi trạng thái --</option>
                     <option value="true" th:selected="${param.isActive?.get(0) == 'true'}">Đang bán (Hiển thị)</option>
                     <option value="false" th:selected="${param.isActive?.get(0) == 'false'}">Ngừng bán (Đã ẩn)</option>
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100 shadow-sm"><i class="fas fa-search me-1"></i> Lọc</button>
+                <div class="d-flex gap-1">
+                    <button type="submit" class="btn btn-primary w-100 shadow-sm"><i class="fas fa-search me-1"></i> Lọc</button>
+                    <a th:href="@{/admin/products}" class="btn btn-outline-secondary" title="Tải lại / Bỏ lọc"><i class="fas fa-redo"></i></a>
+                </div>
             </div>
         </form>
 

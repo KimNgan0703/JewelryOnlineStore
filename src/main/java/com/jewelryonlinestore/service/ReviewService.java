@@ -9,7 +9,7 @@ public interface ReviewService {
     ReviewResponse       submitReview(ReviewRequest req, Authentication auth);
     ProductReviewSummary getReviewSummary(Long productId, int page, int size);
     Page<ReviewResponse> adminFilterReviews(String status, Long productId,
-                                            Integer rating, int page, int size);
+                                            Integer rating, String keyword, int page, int size);
     void                 approveReview(Long id);
     void                 rejectReview(Long id);
     void                 addAdminResponse(Long id, String response, Authentication auth);

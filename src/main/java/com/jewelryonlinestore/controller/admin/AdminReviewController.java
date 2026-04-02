@@ -21,14 +21,16 @@ public class AdminReviewController {
     @GetMapping
     public String reviewList(@RequestParam(required = false) String status,
                              @RequestParam(required = false) Integer rating,
+                             @RequestParam(required = false) String keyword,
                              @RequestParam(defaultValue = "0") int page,
                              Model model) {
-        var reviews = reviewService.adminFilterReviews(status, null, rating, page, 15);
+        var reviews = reviewService.adminFilterReviews(status, null, rating, keyword, page, 15);
         model.addAttribute("reviews", reviews.getContent());
         model.addAttribute("currentPage", reviews.getNumber());
         model.addAttribute("totalPages", reviews.getTotalPages());
         model.addAttribute("totalItems", reviews.getTotalElements());
         model.addAttribute("activeStatus", status);
+        model.addAttribute("activeKeyword", keyword);
         model.addAttribute("pendingCount", reviewService.countPendingReviews());
         model.addAttribute("pageTitle", "Quản Lý Đánh Giá");
         return "admin/reviews"; // Ánh xạ tới reviews.html
