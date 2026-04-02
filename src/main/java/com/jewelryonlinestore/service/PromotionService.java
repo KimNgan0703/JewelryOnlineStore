@@ -15,13 +15,8 @@ public interface PromotionService {
     boolean              toggleActive(Long id);
     PromotionRequest     getPromotionForEdit(Long id);
     void                 incrementUsedCount(Long promotionId);
-<<<<<<< Updated upstream
     void                 deletePromotion(Long id);
 
     Optional<Promotion>  validateCoupon(String code, Cart cart);
     BigDecimal           calculateDiscount(Promotion promotion, Cart cart);
 }
-=======
-    void deletePromotion(Long id);
-}
->>>>>>> Stashed changes

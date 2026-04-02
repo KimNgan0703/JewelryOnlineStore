@@ -51,8 +51,4 @@ public class Banner {
 
     @PrePersist void onCreate() { createdAt = updatedAt = LocalDateTime.now(); }
     @PreUpdate  void onUpdate() { updatedAt = LocalDateTime.now(); }
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "collection_id")
-    @ToString.Exclude // TRÁNH LỖI TRÀN BỘ NHỚ KHI IN LOG
-    private Collection collection;
 }

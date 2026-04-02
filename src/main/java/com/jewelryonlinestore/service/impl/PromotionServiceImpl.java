@@ -190,7 +190,6 @@ public class PromotionServiceImpl implements PromotionService {
         return req;
     }
 
-
     @Override
     @Transactional
     public void incrementUsedCount(Long promotionId) {
@@ -221,13 +220,7 @@ public class PromotionServiceImpl implements PromotionService {
         target.setMinQuantity(req.getMinQuantity());
         return target;
     }
-    @Override
-    @Transactional
-    public void deletePromotion(Long id) {
-        Promotion promotion = promotionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy mã giảm giá này!"));
-        promotionRepository.delete(promotion);
-    }
+
     private Promotion.PromotionType parseType(String value) {
         if (value == null || value.isBlank()) return Promotion.PromotionType.PERCENTAGE;
         return Promotion.PromotionType.valueOf(value.trim().toUpperCase());

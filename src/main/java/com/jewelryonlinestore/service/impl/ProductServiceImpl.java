@@ -34,7 +34,6 @@ public class ProductServiceImpl implements ProductService {
     private final FileStorageService       fileStorageService;
     private final BrandRepository          brandRepository;
     private final MaterialRepository       materialRepository;
-    private final CollectionRepository     collectionRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -109,7 +108,11 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<com.jewelryonlinestore.entity.Collection> getAllCollections() {
-        return collectionRepository.findAll();
+        return productRepository.findAll().stream()
+                .map(Product::getCollection)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
     }
 
     @Override
@@ -442,14 +445,6 @@ public class ProductServiceImpl implements ProductService {
                     .orElseThrow(() -> new IllegalArgumentException("Material not found: " + req.getMaterialId()));
             product.setMaterial(material);
         }
-        // Gán hoặc xóa Bộ sưu tập
-        if (req.getCollectionId() != null) {
-            com.jewelryonlinestore.entity.Collection collection = collectionRepository.findById(req.getCollectionId())
-                    .orElseThrow(() -> new IllegalArgumentException("Collection not found: " + req.getCollectionId()));
-            product.setCollection(collection);
-        } else {
-            product.setCollection(null);
-        }
     }
 
     private String toUniqueSlug(String input, Long id) {
@@ -548,69 +543,5 @@ public class ProductServiceImpl implements ProductService {
         return productRepository.findByIsActiveTrue();
     }
 
-    // ── Collection Management ────────────────────────────
-    @Override
-    @Transactional
-    public com.jewelryonlinestore.entity.Collection createCollection(String name, String imageUrl) {
-        String cleanName = name.trim();
-        if (collectionRepository.existsByName(cleanName)) {
-            throw new IllegalArgumentException("Bộ sưu tập '" + cleanName + "' đã tồn tại!");
-        }
-        String slug = toUniqueCollectionSlug(cleanName, null);
-        com.jewelryonlinestore.entity.Collection col = new com.jewelryonlinestore.entity.Collection();
-        col.setName(cleanName);
-        col.setSlug(slug);
-        col.setImageUrl(imageUrl != null && !imageUrl.isBlank() ? imageUrl : null);
-        col.setActive(true);
-        return collectionRepository.save(col);
-    }
 
-    @Override
-    @Transactional
-    public void updateCollection(Long id, String name, String imageUrl) {
-        com.jewelryonlinestore.entity.Collection col = collectionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bộ sưu tập: " + id));
-        String cleanName = name.trim();
-        col.setName(cleanName);
-        col.setSlug(toUniqueCollectionSlug(cleanName, id));
-        if (imageUrl != null && !imageUrl.isBlank()) {
-            col.setImageUrl(imageUrl);
-        }
-        collectionRepository.save(col);
-    }
-
-    @Override
-    @Transactional
-    public void deleteCollection(Long id) {
-        collectionRepository.deleteById(id);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public com.jewelryonlinestore.entity.Collection getCollectionBySlug(String slug) {
-        return collectionRepository.findBySlugAndIsActiveTrue(slug)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy bộ sưu tập: " + slug));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public org.springframework.data.domain.Page<com.jewelryonlinestore.dto.response.ProductCardResponse>
-    filterProductsByCollection(Long collectionId, com.jewelryonlinestore.dto.request.ProductFilterRequest filter) {
-        org.springframework.data.domain.Sort sort = buildSort(filter.getSortBy());
-        org.springframework.data.domain.Pageable pageable =
-                org.springframework.data.domain.PageRequest.of(filter.getPage(), filter.getSize(), sort);
-        return productRepository.findByCollectionIdAndIsActiveTrue(collectionId, pageable)
-                .map(this::toCard);
-    }
-
-    private String toUniqueCollectionSlug(String input, Long excludeId) {
-        String base = toSlug(input);
-        String candidate = base;
-        int i = 1;
-        Long exclude = excludeId == null ? -1L : excludeId;
-        while (collectionRepository.existsBySlugAndIdNot(candidate, exclude)) {
-            candidate = base + "-" + i++;
-        }
-        return candidate;
-    }
 }

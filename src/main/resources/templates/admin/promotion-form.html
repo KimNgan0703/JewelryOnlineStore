@@ -5,7 +5,6 @@
 </head>
 <body>
 <div id="admin-content">
-<<<<<<< Updated upstream
 
     <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
     <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
@@ -33,53 +32,18 @@
                     <a th:href="@{/admin/promotions}" class="btn btn-outline-secondary">Hủy bỏ</a>
                     <button type="submit" class="btn btn-dark">
                         <i class="fas fa-floppy-disk me-1"></i> Lưu Mã Giảm Giá
-=======
-    <style>
-        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
-        .page-shell { padding: 10px 0; background: #f4f6f9; }
-        .form-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 25px; margin-bottom: 20px; }
-        .form-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .error-feedback { color: #dc3545; font-size: 0.85em; margin-top: 5px; }
-    </style>
-
-    <div class="page-shell">
-        <form th:action="${isEdit} ? @{/admin/promotions/{id}(id=${promoId})} : @{/admin/promotions}"
-              th:object="${promotionRequest}"
-              method="POST"
-              id="promoForm">
-
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="mb-0 h3" style="color: var(--secondary-color);" th:text="${pageTitle}">Promotion Form</h1>
-                    <p class="text-muted mb-0">Cấu hình mã giảm giá cho khách hàng.</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a th:href="@{/admin/promotions}" class="btn btn-outline-secondary">Trở về</a>
-                    <button type="submit" class="btn btn-dark" id="submitBtn">
-                        <i class="fas fa-save me-1"></i> Lưu Mã
->>>>>>> Stashed changes
                     </button>
                 </div>
             </div>
 
-<<<<<<< Updated upstream
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
             <div th:if="${toast_success}" class="alert alert-success" th:text="${toast_success}"></div>
 
             <div class="row g-4">
-=======
-            <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger alert-dismissible fade show">
-                <strong>Lỗi!</strong> Vui lòng kiểm tra lại các trường dữ liệu bên dưới.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-
-            <div class="row">
->>>>>>> Stashed changes
                 <div class="col-lg-8">
                     <div class="form-card">
                         <div class="form-title">Thông tin cơ bản</div>
                         <div class="row g-3">
-<<<<<<< Updated upstream
                             <div class="col-md-7">
                                 <label class="form-label">Tên chương trình *</label>
                                 <input type="text" class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" placeholder="VD: Siêu Sale Mùa Hè 2026">
@@ -163,53 +127,12 @@
                             <div class="col-12">
                                 <label class="form-label">Mô tả điều kiện (Tùy chọn)</label>
                                 <textarea class="form-control" rows="3" th:field="*{description}" placeholder="Mô tả chi tiết các điều kiện áp dụng mã giảm giá này..."></textarea>
-=======
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Mã Code (Chữ hoa) *</label>
-                                <input type="text" class="form-control text-uppercase" th:field="*{code}"
-                                       th:classappend="${#fields.hasErrors('code')} ? 'is-invalid'"
-                                       placeholder="VD: SUMMER2026">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
-                            </div>
-
-                            <div class="col-md-8">
-                                <label class="form-label fw-bold">Tên chương trình *</label>
-                                <input type="text" class="form-control" th:field="*{name}"
-                                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
-                                       placeholder="Chào Hè 2026 - Giảm 20%">
-                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Loại giảm giá *</label>
-                                <select class="form-select" th:field="*{type}" id="promoType">
-                                    <option value="PERCENTAGE">Giảm theo phần trăm (%)</option>
-                                    <option value="FIXED">Giảm số tiền cố định (đ)</option>
-                                </select>
-                            </div>
-                            <div class="col-md-8">
-                                <label class="form-label fw-bold">Giá trị giảm *</label>
-                                <div class="input-group">
-                                    <input type="number" step="0.01" class="form-control" th:field="*{value}"
-                                           th:classappend="${#fields.hasErrors('value')} ? 'is-invalid'"
-                                           placeholder="VD: 20 hoặc 100000">
-                                    <span class="input-group-text" id="unitAddon">%</span>
-                                </div>
-                                <div class="error-feedback" th:if="${#fields.hasErrors('value')}" th:errors="*{value}"></div>
-                            </div>
-
-                            <div class="col-12 mt-3">
-                                <label class="form-label fw-bold">Mô tả chi tiết</label>
-                                <textarea class="form-control" rows="3" th:field="*{description}" placeholder="Mô tả điều kiện áp dụng..."></textarea>
->>>>>>> Stashed changes
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-lg-4">
-<<<<<<< Updated upstream
                     <div class="form-card">
                         <div class="form-title">Trạng thái Kích hoạt</div>
                         <div class="form-check form-switch mt-3 mb-2">
@@ -218,58 +141,12 @@
                         </div>
                         <p class="text-muted small mt-2">Nếu tắt, khách hàng sẽ không thể nhập mã này ở trang Thanh toán kể cả khi mã còn hạn.</p>
                     </div>
-=======
-
-                    <div class="form-card">
-                        <div class="form-title">Trạng thái Kích hoạt</div>
-                        <select class="form-select" th:field="*{active}">
-                            <option th:value="true">Bật (Active)</option>
-                            <option th:value="false">Tắt (Inactive)</option>
-                        </select>
-                    </div>
-
-                    <div class="form-card">
-                        <div class="form-title">Điều kiện & Giới hạn</div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Đơn hàng tối thiểu (đ)</label>
-                            <input type="number" class="form-control" th:field="*{minOrderValue}" placeholder="VD: 500000">
-                            <small class="text-muted">Bỏ trống nếu không yêu cầu.</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Giới hạn số lượt dùng</label>
-                            <input type="number" class="form-control" th:field="*{usageLimit}" placeholder="VD: 100">
-                            <small class="text-muted">Bỏ trống nếu vô hạn lượt.</small>
-                        </div>
-                    </div>
-
-                    <div class="form-card mb-0">
-                        <div class="form-title">Thời gian áp dụng</div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Từ ngày *</label>
-                            <input type="datetime-local" class="form-control" th:field="*{startDate}"
-                                   th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid'">
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
-                        </div>
-
-                        <div>
-                            <label class="form-label fw-bold">Đến ngày *</label>
-                            <input type="datetime-local" class="form-control" th:field="*{endDate}"
-                                   th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'">
-                            <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
-                        </div>
-                    </div>
-
->>>>>>> Stashed changes
                 </div>
             </div>
         </form>
     </div>
 
     <script>
-<<<<<<< Updated upstream
         // JS Tự động ẩn/hiện ô chọn Danh mục hoặc Sản phẩm
         function toggleConditions() {
             const applyTo = document.getElementById('applyToSelect').value;
@@ -279,27 +156,6 @@
 
         // Chạy lần đầu khi load trang
         document.addEventListener('DOMContentLoaded', toggleConditions);
-=======
-        document.addEventListener('DOMContentLoaded', function() {
-            const promoTypeSelect = document.getElementById('promoType');
-            const unitAddon = document.getElementById('unitAddon');
-
-            // Tự động đổi ký hiệu % hoặc đ tùy loại
-            function updateUnit() {
-                unitAddon.textContent = promoTypeSelect.value === 'PERCENTAGE' ? '%' : 'đ';
-            }
-
-            promoTypeSelect.addEventListener('change', updateUnit);
-            updateUnit(); // Chạy lần đầu
-
-            // UX: Disable nút bấm sau khi submit để tránh gửi 2 lần
-            document.getElementById('promoForm').addEventListener('submit', function() {
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...';
-            });
-        });
->>>>>>> Stashed changes
     </script>
 </div>
 </body>

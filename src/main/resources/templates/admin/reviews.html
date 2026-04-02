@@ -17,7 +17,6 @@
         .table thead { background-color: var(--secondary-color); color: white; }
         .rating-star { color: #f4b400; margin-right: 2px; font-size: 0.85rem; }
         .review-snippet { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; }
-<<<<<<< Updated upstream
 
         /* Chỉnh lại màu sắc Badge cho đẹp */
         .badge.pending { background-color: #ffc107; color: #000; }
@@ -298,113 +297,6 @@
             });
         });
     </script>
-=======
-    </style>
-
-    <div class="page-shell">
-        <div class="page-header">
-            <div>
-                <h1 class="mb-0" style="color: var(--secondary-color);">Reviews</h1>
-                <p class="text-muted mb-0">Moderate product reviews and protect brand quality.</p>
-            </div>
-            <button class="btn btn-outline-secondary">
-                <i class="fas fa-download me-1"></i> Export Report
-            </button>
-        </div>
-
-        <div class="row g-3">
-            <div class="col-md-3">
-                <div class="summary-card">
-                    <div class="summary-label">Total Reviews</div>
-                    <div class="summary-value" th:text="${totalItems} ?: 1280">1,280</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="summary-card">
-                    <div class="summary-label">Pending</div>
-                    <div class="summary-value text-warning" th:text="${pendingCount} ?: 32">32</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="summary-card">
-                    <div class="summary-label">Average Rating</div>
-                    <div class="summary-value">4.6</div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="summary-card">
-                    <div class="summary-label">Reported</div>
-                    <div class="summary-value text-danger">9</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="toolbar">
-            <div>
-                <label for="reviewSearch" class="visually-hidden">Search reviews</label>
-                <input id="reviewSearch" class="form-control" type="text" placeholder="Search by customer, product, keyword...">
-            </div>
-            <div>
-                <label for="reviewStatus" class="visually-hidden">Filter status</label>
-                <select id="reviewStatus" class="form-select" th:value="${activeStatus}">
-                    <option value="">All Status</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="REJECTED">Rejected</option>
-                </select>
-            </div>
-            <div>
-                <label for="reviewRating" class="visually-hidden">Filter rating</label>
-                <select id="reviewRating" class="form-select">
-                    <option>All Ratings</option>
-                    <option>5 stars</option>
-                    <option>4 stars</option>
-                    <option>3 stars</option>
-                    <option>2 stars</option>
-                    <option>1 star</option>
-                </select>
-            </div>
-            <button class="btn btn-dark"><i class="fas fa-filter me-1"></i> Filter</button>
-        </div>
-
-        <div class="table-container">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th>Customer</th>
-                    <th>Product</th>
-                    <th>Rating</th>
-                    <th>Review</th>
-                    <th>Status</th>
-                    <th>Date</th>
-                    <th class="text-center">Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="review : ${reviews}">
-                    <td th:text="${review.customerName} ?: 'Customer name'">Customer name</td>
-                    <td th:text="${review.productName} ?: 'Product name'">Product name</td>
-                    <td>
-                        <i class="fas fa-star rating-star"></i>
-                        <span th:text="${review.rating} ?: 5">5</span>/5
-                    </td>
-                    <td><span class="review-snippet" th:text="${review.comment} ?: 'Beautiful product and very fast shipping.'">Beautiful product and very fast shipping.</span></td>
-                    <td>
-                            <span class="badge"
-                                  th:classappend="${review.status == 'APPROVED' ? ' text-bg-success' : (review.status == 'REJECTED' ? ' text-bg-danger' : ' text-bg-warning')}"
-                                  th:text="${review.status} ?: 'PENDING'">PENDING</span>
-                    </td>
-                    <td th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy')} ?: '19/03/2026'">19/03/2026</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-success" title="Approve"><i class="fas fa-check"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" title="Reject"><i class="fas fa-ban"></i></button>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
->>>>>>> Stashed changes
 </div>
 </body>
 </html>

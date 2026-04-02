@@ -105,11 +105,7 @@
             align-items: center;
             gap: 15px;
         }
-<<<<<<< Updated upstream
         .topbar-user-dropdown a, .topbar-user-dropdown button {
-=======
-        .topbar-user-dropdown a {
->>>>>>> Stashed changes
             color: var(--secondary-color);
             text-decoration: none;
             display: flex;
@@ -132,7 +128,6 @@
     <ul class="sidebar-menu">
         <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
         <li><a href="/admin/products"><i class="fas fa-box"></i> Products</a></li>
-<<<<<<< Updated upstream
         <li><a href="/admin/products/categories"><i class="fas fa-list"></i> Categories</a></li>
         <li><a href="/admin/orders"><i class="fas fa-shopping-bag"></i> Orders</a></li>
         <li><a href="/admin/customers"><i class="fas fa-users"></i> Customers</a></li>
@@ -150,23 +145,6 @@
                 </a>
             </form>
         </li>
-
-=======
-
-        <li><a href="/admin/products/categories"><i class="fas fa-list"></i> Categories</a></li>
-
-        <li><a href="/admin/orders"><i class="fas fa-shopping-bag"></i> Orders</a></li>
-        <li><a href="/admin/customers"><i class="fas fa-users"></i> Customers</a></li>
-        <li><a href="/admin/inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
-        <li><a href="/admin/promotions"><i class="fas fa-percentage"></i> Promotions</a></li>
-        <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
-
-        <li><a href="/admin/content/banners"><i class="fas fa-file"></i> Content</a></li>
-
-        <li><a href="/admin/settings"><i class="fas fa-cog"></i> Settings</a></li>
-        <li><hr style="margin: 10px 0; border-color: rgba(255, 255, 255, 0.1);"></li>
-        <li><a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
->>>>>>> Stashed changes
     </ul>
 </aside>
 
@@ -190,7 +168,6 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
                     <li><a class="dropdown-item" href="/admin/profile"><i class="fas fa-user-cog me-2"></i> My Profile</a></li>
                     <li><hr class="dropdown-divider"></li>
-<<<<<<< Updated upstream
                     <li>
                         <form th:action="@{/auth/logout}" method="post" class="m-0 p-0">
                             <button type="submit" class="dropdown-item text-danger" style="border: none; background: none; width: 100%; text-align: left;">
@@ -198,9 +175,6 @@
                             </button>
                         </form>
                     </li>
-=======
-                    <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
->>>>>>> Stashed changes
                 </ul>
             </div>
         </div>
@@ -219,7 +193,6 @@
 
         menuLinks.forEach(function(link) {
             link.classList.remove('active');
-<<<<<<< Updated upstream
             const href = link.getAttribute('href');
 
             if (href === '#') return; // Bỏ qua link của nút dropdown và logout
@@ -230,21 +203,13 @@
             } else if (href === '/admin/products' && currentPath.startsWith('/admin/products') && !currentPath.includes('categories')) {
                 link.classList.add('active');
             } else if (href !== '/admin/dashboard' && href !== '/admin/products' && currentPath.startsWith(href)) {
-=======
-            if (currentPath === link.getAttribute('href') ||
-                (currentPath.startsWith(link.getAttribute('href')) && link.getAttribute('href') !== '/admin/dashboard')) {
->>>>>>> Stashed changes
                 link.classList.add('active');
             }
         });
 
         if(currentPath === '/admin/dashboard' || currentPath === '/admin' || currentPath === '/admin/') {
-<<<<<<< Updated upstream
             const dashboardLink = document.querySelector('.sidebar-menu a[href="/admin/dashboard"]');
             if (dashboardLink) dashboardLink.classList.add('active');
-=======
-            menuLinks[0].classList.add('active');
->>>>>>> Stashed changes
         }
     });
 </script>
