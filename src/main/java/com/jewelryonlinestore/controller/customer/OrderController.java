@@ -144,6 +144,29 @@ public class OrderController {
         return "customer/order-detail";
     }
 
+    @PostMapping("/{orderNumber}/retry-momo")
+    public String retryMomoPayment(@PathVariable String orderNumber,
+                                   Authentication auth,
+                                   RedirectAttributes redirectAttr) {
+        try {
+            OrderDetailResponse order = orderService.getOrderDetail(orderNumber, auth);
+            if (!Boolean.TRUE.equals(order.getCanRetryMomoPayment())) {
+                redirectAttr.addFlashAttribute("toast_error", "Đơn hàng này không thể thanh toán lại bằng MoMo.");
+                return "redirect:/orders/" + orderNumber;
+            }
+
+            String payUrl = momoService.createMomoPaymentUrl(
+                    order.getOrderNumber(),
+                    String.valueOf(order.getTotal().longValue()),
+                    "Thanh toan lai don hang " + order.getOrderNumber()
+            );
+            return "redirect:" + payUrl;
+        } catch (Exception e) {
+            redirectAttr.addFlashAttribute("toast_error", "Không thể tạo liên kết thanh toán MoMo lúc này.");
+            return "redirect:/orders/" + orderNumber;
+        }
+    }
+
     // ── Hủy đơn (C07 - AJAX) ─────────────────────────────
     @PostMapping("/{orderNumber}/cancel")
     @ResponseBody
@@ -152,8 +175,9 @@ public class OrderController {
             @RequestParam(required = false) String reason,
             Authentication auth) {
         try {
-            orderService.cancelOrder(orderNumber, reason, auth);
-            return ResponseEntity.ok(ApiResponse.ok("Đơn hàng đã được hủy", null));
+            boolean refunded = orderService.cancelOrder(orderNumber, reason, auth);
+            String message = refunded ? "Đã hoàn tiền thành công" : "Đơn hàng đã được hủy";
+            return ResponseEntity.ok(ApiResponse.ok(message, null));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {

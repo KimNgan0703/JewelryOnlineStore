@@ -122,7 +122,7 @@ public class Order {
 
     // ── Business logic helpers ────────────────────────────
     public boolean canCancel() {
-        return orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.PROCESSING;
+        return orderStatus == OrderStatus.PENDING;
     }
 
     public boolean isDelivered() { return orderStatus == OrderStatus.DELIVERED; }

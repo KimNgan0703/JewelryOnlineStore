@@ -15,7 +15,7 @@ public interface OrderService {
     OrderDetailResponse  getOrderDetail(String orderNumber, Authentication auth);
     OrderDetailResponse  getOrderDetailAdmin(String orderNumber);
     Page<OrderSummaryResponse> getMyOrders(Authentication auth, String status, int page, int size);
-    void                 cancelOrder(String orderNumber, String reason, Authentication auth);
+    boolean              cancelOrder(String orderNumber, String reason, Authentication auth);
     int                  reorder(String orderNumber, Authentication auth, HttpSession session);
 
     // Admin

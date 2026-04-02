@@ -38,7 +38,12 @@ public class PaymentController {
     @GetMapping("/momo/return")
     public String momoReturnCallback(@RequestParam Map<String, String> params,
                                      RedirectAttributes redirectAttr) {
-        String orderId = params.getOrDefault("orderId", "");
+        String rawOrderId = params.getOrDefault("orderId", "");
+        String extraData = params.get("extraData");
+        String orderId = (extraData != null && !extraData.isBlank()) 
+                ? extraData 
+                : (rawOrderId.contains("_") ? rawOrderId.split("_")[0] : rawOrderId);
+        
         String resultCode = params.get("resultCode");
 
         try {

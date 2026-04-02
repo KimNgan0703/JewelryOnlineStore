@@ -182,7 +182,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void cancelOrder(String orderNumber, String reason, Authentication auth) {
+    public boolean cancelOrder(String orderNumber, String reason, Authentication auth) {
         Customer customer = requireCustomer(auth);
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
@@ -191,6 +191,15 @@ public class OrderServiceImpl implements OrderService {
         }
         if (!order.canCancel()) {
             throw new IllegalStateException("Order cannot be cancelled at current status");
+        }
+
+        boolean refunded = false;
+
+        // Symbolic refund for paid MoMo orders: mark refunded locally without calling gateway.
+        if (order.getPaymentMethod() == Order.PaymentMethod.MOMO
+                && order.getPaymentStatus() == Order.PaymentStatus.PAID) {
+            refunded = true;
+            order.setPaymentStatus(Order.PaymentStatus.REFUNDED);
         }
 
         order.setOrderStatus(Order.OrderStatus.CANCELLED);
@@ -209,6 +218,8 @@ public class OrderServiceImpl implements OrderService {
             return variant;
         }).filter(Objects::nonNull).toList();
         productVariantRepository.saveAll(variantsToRestore);
+
+        return refunded;
     }
 
     @Override
@@ -426,6 +437,17 @@ public class OrderServiceImpl implements OrderService {
         return value == null || value.isBlank() ? null : value;
     }
 
+    private boolean canRetryMomoPayment(Order order) {
+        if (order == null || order.getPaymentMethod() != Order.PaymentMethod.MOMO) {
+            return false;
+        }
+        if (order.getOrderStatus() != Order.OrderStatus.PENDING) {
+            return false;
+        }
+        return order.getPaymentStatus() == Order.PaymentStatus.FAILED
+                || order.getPaymentStatus() == Order.PaymentStatus.PENDING;
+    }
+
     private OrderSummaryResponse toSummary(Order order) {
         return OrderSummaryResponse.builder()
                 .id(order.getId())
@@ -442,6 +464,7 @@ public class OrderServiceImpl implements OrderService {
                 .firstProductImage(null)
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
+                .canRetryMomoPayment(canRetryMomoPayment(order))
                 .build();
     }
 
@@ -492,6 +515,7 @@ public class OrderServiceImpl implements OrderService {
                 .updatedAt(order.getUpdatedAt())
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
+                .canRetryMomoPayment(canRetryMomoPayment(order))
                 .build();
     }
 }

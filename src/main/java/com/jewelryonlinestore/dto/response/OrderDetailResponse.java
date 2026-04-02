@@ -51,6 +51,7 @@ public class OrderDetailResponse {
 
     private boolean canCancel;
     private boolean canReview;
+    private Boolean canRetryMomoPayment;
 
     // ---- Inner classes ----
     @Data

@@ -104,6 +104,8 @@
                         <span>Trạng thái TT</span>
                         <span class="badge bg-success" th:if="${order.paymentStatus == 'paid'}">Đã thanh toán</span>
                         <span class="badge bg-warning text-dark" th:if="${order.paymentStatus == 'pending'}">Chưa thanh toán</span>
+                        <span class="badge bg-danger" th:if="${order.paymentStatus == 'failed'}">Lỗi thanh toán</span>
+                        <span class="badge bg-info text-dark" th:if="${order.paymentStatus == 'refunded'}">Đã hoàn tiền</span>
                     </div>
 
                     <hr>

@@ -94,6 +94,12 @@ public class EmailServiceImpl implements EmailService {
             context.setVariable("order", order);
 
             String subject = "Cập nhật trạng thái đơn hàng #" + order.getOrderNumber();
+            if (order.getOrderStatus() == Order.OrderStatus.CANCELLED) {
+                subject = "Đơn hàng #" + order.getOrderNumber() + " đã hủy";
+                if (order.getPaymentStatus() == Order.PaymentStatus.REFUNDED) {
+                    subject += " và đã hoàn tiền";
+                }
+            }
             sendMimeMessage(order.getCustomer().getUser().getEmail(), subject, "email/order-status", context);
 
             log.info("Đã gửi email cập nhật trạng thái đơn hàng #{} thành công", orderNumber);

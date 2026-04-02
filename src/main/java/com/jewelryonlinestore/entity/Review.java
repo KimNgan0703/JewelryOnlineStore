@@ -10,8 +10,7 @@ import java.util.List;
 @Entity
 @Table(name = "reviews",
         uniqueConstraints = {
-                @UniqueConstraint(name = "unique_order_item",       columnNames = "order_item_id"),
-                @UniqueConstraint(name = "unique_customer_product", columnNames = {"customer_id", "product_id"})
+                @UniqueConstraint(name = "unique_order_item", columnNames = "order_item_id")
         },
         indexes = {
                 @Index(name = "idx_product", columnList = "product_id"),
@@ -37,13 +36,12 @@ public class Review {
     @ToString.Exclude
     private Product product;
 
-    /** Đảm bảo khách hàng đã thực sự mua hàng */
+    // ✅ Mỗi sản phẩm trong đơn (order_item) chỉ được review 1 lần
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", nullable = false, unique = true)
     @ToString.Exclude
     private OrderItem orderItem;
 
-    /** 1–5 sao */
     @Column(nullable = false)
     private int rating;
 
