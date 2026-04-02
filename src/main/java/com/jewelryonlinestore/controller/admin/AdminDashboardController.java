@@ -1,8 +1,13 @@
 package com.jewelryonlinestore.controller.admin;
 
+<<<<<<< Updated upstream
 import com.jewelryonlinestore.entity.Order;
 import com.jewelryonlinestore.repository.CustomerRepository;
 import com.jewelryonlinestore.repository.OrderRepository;
+=======
+import com.jewelryonlinestore.dto.response.DashboardResponse;
+import com.jewelryonlinestore.service.DashboardService;
+>>>>>>> Stashed changes
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -31,6 +36,7 @@ public class AdminDashboardController {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
 
+<<<<<<< Updated upstream
     @GetMapping
     public String dashboard(@RequestParam(defaultValue = "month") String period, Model model) {
         LocalDateTime now = LocalDateTime.now();
@@ -119,7 +125,18 @@ public class AdminDashboardController {
 
         model.addAttribute("chartSalesLabels", labels);
         model.addAttribute("chartSalesData", data);
+=======
+    @GetMapping({"/", "/dashboard"})
+    public String dashboard(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Model model) {
+        DashboardResponse data = dashboardService.getDashboard(from, to);
+        model.addAttribute("dashboard", data);
+        model.addAttribute("from", from);
+        model.addAttribute("to", to);
+>>>>>>> Stashed changes
         model.addAttribute("pageTitle", "Dashboard");
-        return "admin/dashboard";
+        return "admin/dashboard"; // Ánh xạ tới dashboard.html
     }
 }

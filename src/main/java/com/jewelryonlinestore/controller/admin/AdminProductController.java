@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.ArrayList;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class AdminProductController {
 
     private final ProductService productService;
     private final CategoryService categoryService;
+
 
     @Value("${cloudinary.cloud-name}")
     private String cloudinaryCloudName;
@@ -45,26 +47,38 @@ public class AdminProductController {
         model.addAttribute("keyword", keyword);
         model.addAttribute("categories", categoryService.getAllCategories());
         model.addAttribute("pageTitle", "Quản Lý Sản Phẩm");
+<<<<<<< Updated upstream
         return "admin/products";
     }
 
     @GetMapping("/new")
     public String showCreateForm(Model model) {
-        // 1. Tạo mới một request
         AdminProductRequest req = new AdminProductRequest();
+        req.setSku(productService.generateNextSku()); // Tự sinh SKU ngẫu nhiên
 
-        // 2. Gán sẵn mã SKU tự động
-        req.setSku(productService.generateNextSku());
-
-        // 3. Đưa xuống giao diện
         model.addAttribute("productRequest", req);
         model.addAttribute("isEdit", false);
         model.addAttribute("pageTitle", "Thêm Sản Phẩm Mới");
 
-        // 4. Lấy danh sách để hiện vào dropdown (Select Box)
-        populateFormModel(model);
-
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("brands", productService.getAllBrands());
+        model.addAttribute("collections", productService.getAllCollections());
+        model.addAttribute("materials", productService.getAllMaterials());
         return "admin/product-form";
+=======
+        return "admin/products"; // Ánh xạ tới products.html
+    }
+
+    @GetMapping("/new")
+    public String newProductForm(Model model) {
+        if (!model.containsAttribute("productRequest")) {
+            model.addAttribute("productRequest", new AdminProductRequest());
+        }
+        populateFormModel(model);
+        model.addAttribute("pageTitle", "Thêm Sản Phẩm Mới");
+        model.addAttribute("isEdit", false);
+        return "admin/product-form"; // Ánh xạ tới product-form.html
+>>>>>>> Stashed changes
     }
 
     @PostMapping
@@ -133,6 +147,7 @@ public class AdminProductController {
         return ResponseEntity.ok(com.jewelryonlinestore.dto.response.ApiResponse.ok(active ? "Đã hiện sản phẩm" : "Đã ẩn sản phẩm", active));
     }
 
+<<<<<<< Updated upstream
     @PostMapping("/{id}/delete")
     public String deleteProduct(@PathVariable Long id, RedirectAttributes redirectAttr) {
         try {
@@ -192,15 +207,6 @@ public class AdminProductController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
-    // API cho Collection (Bộ Sưu Tập)
-    @PostMapping("/quick-add/collection")
-    @ResponseBody
-    public ResponseEntity<?> quickAddCollection(@RequestParam("name") String name) {
-        // Tương tự quickAddBrand, bạn gọi ProductService để tạo Collection
-        // (Bạn có thể tự viết hàm createCollection(name) trong ProductService nhé)
-        return ResponseEntity.ok(Map.of("message", "Thêm bộ sưu tập thành công!"));
-    }
-
     @PutMapping("/collections/{id}")
     @ResponseBody
     public ResponseEntity<?> updateCollection(@PathVariable Long id, @RequestParam String name) {
@@ -239,6 +245,23 @@ public class AdminProductController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+=======
+    @DeleteMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<com.jewelryonlinestore.dto.response.ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok(com.jewelryonlinestore.dto.response.ApiResponse.ok("Đã xóa sản phẩm", null));
+    }
+
+    @GetMapping("/categories")
+    public String categoryList(Model model) {
+        model.addAttribute("categories", categoryService.getAllCategoriesTree());
+        model.addAttribute("pageTitle", "Quản Lý Danh Mục");
+        model.addAttribute("products", new ArrayList<>());
+        model.addAttribute("totalPages", 0);
+        model.addAttribute("currentPage", 0);
+        return "admin/products"; // Vẫn trả về products.html vì bạn không upload categories.html
+>>>>>>> Stashed changes
     }
 
     private void populateFormModel(Model model) {
@@ -287,5 +310,15 @@ public class AdminProductController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
-
+    @PostMapping("/quick-add/collection")
+    @ResponseBody
+    public ResponseEntity<?> quickAddCollection(@RequestParam("name") String name,
+                                                @RequestParam(value="imageUrl", required=false) String imageUrl) {
+        try {
+            var newCol = productService.createCollection(name, imageUrl);
+            return ResponseEntity.ok(Map.of("id", newCol.getId(), "name", newCol.getName()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

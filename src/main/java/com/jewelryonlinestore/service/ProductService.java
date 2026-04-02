@@ -13,29 +13,42 @@ public interface ProductService {
     List<ProductCardResponse> getBestSellers(int limit);
     List<ProductCardResponse> getNewProducts(int limit);
     List<ProductCardResponse> getRelatedProducts(Long productId, Long categoryId, int limit);
+
     List<Brand>               getAllBrands();
     List<Collection>          getAllCollections();
     List<Material>            getAllMaterials();
 
-    // Admin
-    Page<ProductResponse>     adminSearchProducts(String keyword, Long categoryId,
-                                                  Boolean isActive, int page, int size);
+    // Admin Product
+    Page<ProductResponse>     adminSearchProducts(String keyword, Long categoryId, Boolean isActive, int page, int size);
     Long                      createProduct(AdminProductRequest req);
     void                      updateProduct(Long id, AdminProductRequest req);
     boolean                   toggleActive(Long id);
     void                      deleteProduct(Long id);
-    // Bổ sung CRUD cho Brand & Material
-    void updateBrand(Long id, String name);
-    void deleteBrand(Long id);
-    void updateMaterial(Long id, String name);
-    void deleteMaterial(Long id);
+
     AdminProductRequest       getProductForEdit(Long id);
 
-    // API hỗ trợ thêm nhanh Brand & Material từ form Admin
+<<<<<<< Updated upstream
+    // Helpers
+    List<Product>             getAllProducts();
+    String                    generateNextSku();
+
+    // Brand Management
     Brand                     createBrand(String name);
+    void                      updateBrand(Long id, String name);
+    void                      deleteBrand(Long id);
+
+    // Material Management
     Material                  createMaterial(String name);
-    // Thêm hàm này để lấy danh sách sản phẩm cho Dropdown Khuyến mãi
-    List<Product> getAllProducts();
-    // Hàm tự động sinh mã SKU theo thứ tự
-    String generateNextSku();
+    void                      updateMaterial(Long id, String name);
+    void                      deleteMaterial(Long id);
+
+    // Collection Management (Phong cách PNJ)
+    Collection                createCollection(String name, String imageUrl);
+    void                      updateCollection(Long id, String name, String imageUrl);
+    void                      deleteCollection(Long id);
+    Collection                getCollectionBySlug(String slug);
+    Page<ProductCardResponse> filterProductsByCollection(Long collectionId, ProductFilterRequest filter);
 }
+=======
+}
+>>>>>>> Stashed changes

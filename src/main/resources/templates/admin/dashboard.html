@@ -9,16 +9,27 @@
     <style>
         :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
         .stat-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 4px solid var(--primary-color); }
+<<<<<<< Updated upstream
         .stat-value { font-size: 2.2rem; font-weight: bold; color: var(--primary-color); }
         .stat-label { color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .chart-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .chart-title { font-weight: bold; color: var(--secondary-color); margin-bottom: 20px; }
         .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; padding-bottom: 10px; }
+=======
+        .stat-value { font-size: 2.5rem; font-weight: bold; color: var(--primary-color); }
+        .stat-label { color: #7f8c8d; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-change { color: #27ae60; font-size: 0.9rem; margin-top: 10px; }
+        .stat-change.negative { color: #e74c3c; }
+        .chart-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .chart-title { font-weight: bold; color: var(--secondary-color); margin-bottom: 20px; }
+        .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+>>>>>>> Stashed changes
         .table { margin-bottom: 0; }
         .table thead { background-color: var(--secondary-color); color: white; }
         .table-hover tbody tr:hover { background-color: #f1ede1; }
         .status-badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
         .status-pending { background-color: #fef5e7; color: #d68910; }
+<<<<<<< Updated upstream
         .status-processing, .status-preparing { background-color: #ebf5fb; color: #2980b9; }
         .status-shipping { background-color: #e8f8f5; color: #0e6251; }
         .status-delivered { background-color: #eafaf1; color: #186a3b; }
@@ -41,36 +52,105 @@
                     <option value="year" th:selected="${period == 'year'}">Năm nay</option>
                 </select>
             </form>
+=======
+        .status-processing { background-color: #ebf5fb; color: #2980b9; }
+        .status-shipped { background-color: #e8f8f5; color: #0e6251; }
+        .status-completed { background-color: #eafaf1; color: #186a3b; }
+        .quick-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .action-btn { background: white; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-decoration: none; color: var(--secondary-color); display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .action-btn:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.2); transform: translateY(-5px); text-decoration: none; color: var(--primary-color); }
+        .action-btn i { font-size: 2rem; color: var(--primary-color); }
+        .activity-log { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .activity-item { padding: 15px 0; border-bottom: 1px solid #ecf0f1; display: flex; gap: 15px; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; background-color: #f1ede1; display: flex; align-items: center; justify-content: center; color: var(--primary-color); flex-shrink: 0; }
+        .activity-content { flex: 1; }
+        .activity-title { font-weight: bold; color: var(--secondary-color); }
+        .activity-time { color: #7f8c8d; font-size: 0.9rem; }
+    </style>
+
+    <div style="padding: 10px 0; background-color: #f4f6f9; min-height: 100vh;">
+        <div class="quick-actions">
+            <a href="/admin/products" class="action-btn">
+                <i class="fas fa-box-open"></i>
+                <span>Sản phẩm</span>
+            </a>
+            <a href="/admin/orders" class="action-btn">
+                <i class="fas fa-list-check"></i>
+                <span>New Orders</span>
+            </a>
+            <a href="/admin/customers" class="action-btn">
+                <i class="fas fa-users"></i>
+                <span>Customers</span>
+            </a>
+            <a href="/admin/promotions" class="action-btn">
+                <i class="fas fa-percentage"></i>
+                <span>Promotions</span>
+            </a>
+>>>>>>> Stashed changes
         </div>
 
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stat-card">
+<<<<<<< Updated upstream
                     <div class="stat-label" th:text="'Doanh thu ' + ${periodLabel.toLowerCase()}">Doanh thu</div>
                     <div class="stat-value" th:text="${#numbers.formatDecimal(totalSales, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+=======
+                    <div class="stat-label">Total Sales</div>
+                    <div class="stat-value">$<span th:text="${totalSales}">25,890</span></div>
+                    <div class="stat-change">
+                        <i class="fas fa-arrow-up"></i> 12% from last month
+                    </div>
+>>>>>>> Stashed changes
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
+<<<<<<< Updated upstream
                     <div class="stat-label" th:text="'Đơn hàng ' + ${periodLabel.toLowerCase()}">Tổng đơn hàng</div>
                     <div class="stat-value" th:text="${totalOrders}">0</div>
+=======
+                    <div class="stat-label">Total Orders</div>
+                    <div class="stat-value" th:text="${totalOrders}">1,245</div>
+                    <div class="stat-change">
+                        <i class="fas fa-arrow-up"></i> 8% from last month
+                    </div>
+>>>>>>> Stashed changes
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
+<<<<<<< Updated upstream
                     <div class="stat-label" th:text="'Khách hàng ' + ${periodLabel.toLowerCase()}">Tổng khách hàng</div>
                     <div class="stat-value" th:text="${totalCustomers}">0</div>
+=======
+                    <div class="stat-label">Total Customers</div>
+                    <div class="stat-value" th:text="${totalCustomers}">456</div>
+                    <div class="stat-change">
+                        <i class="fas fa-arrow-up"></i> 5% from last month
+                    </div>
+>>>>>>> Stashed changes
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
+<<<<<<< Updated upstream
                     <div class="stat-label" th:text="'Chờ xử lý ' + ${periodLabel.toLowerCase()}">Đơn chờ xử lý</div>
                     <div class="stat-value" style="color: #e74c3c;" th:text="${pendingOrders}">0</div>
+=======
+                    <div class="stat-label">Pending Orders</div>
+                    <div class="stat-value" th:text="${pendingOrders}">23</div>
+                    <div class="stat-change negative">
+                        <i class="fas fa-arrow-down"></i> 15% from last week
+                    </div>
+>>>>>>> Stashed changes
                 </div>
             </div>
         </div>
 
         <div class="row mb-4">
+<<<<<<< Updated upstream
             <div class="col-md-7">
                 <div class="chart-container">
                     <div class="chart-title" th:text="${chartTitle}">Doanh thu</div>
@@ -115,11 +195,100 @@
                         </tr>
                         </tbody>
                     </table>
+=======
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">Sales Trend (Last 7 Days)</div>
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="chart-container">
+                    <div class="chart-title">Order Status Distribution</div>
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="table-container">
+                    <h5 style="padding: 20px 20px 0; font-weight: bold; color: var(--secondary-color);">Recent Orders</h5>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="order : ${recentOrders}">
+                            <td><strong th:text="${order.orderNumber}">ORD-001</strong></td>
+                            <td th:text="${order.customerName}">John Doe</td>
+                            <td><strong style="color: var(--primary-color);">$<span th:text="${order.totalAmount}">199.99</span></strong></td>
+                            <td>
+                                <span th:classappend="'status-' + ${order.status?.toLowerCase()}" class="status-badge" th:text="${order.status}">Pending</span>
+                            </td>
+                            <td th:text="${#dates.format(order.createdAt, 'MMM dd, yyyy')}">Jan 01, 2026</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="activity-log">
+                    <h5 style="font-weight: bold; color: var(--secondary-color); margin-bottom: 20px;">Recent Activity</h5>
+
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas fa-shopping-bag"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">New Order</div>
+                            <div class="activity-time">2 minutes ago</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background-color: #ebf5fb; color: #3498db;">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">New Customer</div>
+                            <div class="activity-time">15 minutes ago</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background-color: #eafaf1; color: #27ae60;">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Order Shipped</div>
+                            <div class="activity-time">1 hour ago</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background-color: #fadbd8; color: #e74c3c;">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Low Stock Alert</div>
+                            <div class="activity-time">2 hours ago</div>
+                        </div>
+                    </div>
+>>>>>>> Stashed changes
                 </div>
             </div>
         </div>
     </div>
 
+<<<<<<< Updated upstream
     <script th:inline="javascript">
         const salesLabels = /*[[${chartSalesLabels}]]*/ [];
         const salesData   = /*[[${chartSalesData}]]*/ [];
@@ -138,6 +307,22 @@
                     borderColor: '#d4af37',
                     borderWidth: 1,
                     borderRadius: 4
+=======
+    <script>
+        // Sales Chart
+        const salesCtx = document.getElementById('salesChart').getContext('2d');
+        new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Sales',
+                    data: [1200, 1900, 1600, 2100, 2500, 2200, 2800],
+                    borderColor: '#d4af37',
+                    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                    tension: 0.4,
+                    fill: true
+>>>>>>> Stashed changes
                 }]
             },
             options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
@@ -148,6 +333,7 @@
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
+<<<<<<< Updated upstream
                 labels: ['Đã giao', 'Đang xử lý', 'Chờ xác nhận', 'Đang giao', 'Đã hủy'],
                 datasets: [{
                     data: statusData,
@@ -156,6 +342,15 @@
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+=======
+                labels: ['Completed', 'Processing', 'Pending', 'Cancelled'],
+                datasets: [{
+                    data: [300, 100, 50, 20],
+                    backgroundColor: ['#27ae60', '#3498db', '#f39c12', '#e74c3c']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+>>>>>>> Stashed changes
         });
     </script>
 </div>

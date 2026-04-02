@@ -5,10 +5,13 @@
 </head>
 <body>
 <div id="admin-content">
+<<<<<<< Updated upstream
 
     <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
     <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
 
+=======
+>>>>>>> Stashed changes
     <style>
         :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
         .page-shell { padding: 10px 0; background: #f4f6f9; }
@@ -50,6 +53,7 @@
         .preview-item:hover .remove-btn { opacity: 1; }
         .preview-item .img-num { position: absolute; bottom: 0; left: 0; right: 0; font-size: 9px; text-align: center; padding: 2px 0; color: #fff; background: rgba(45,74,107,0.55); }
         .preview-item:first-child .img-num { background: rgba(91,164,207,0.8); font-weight: 600; }
+<<<<<<< Updated upstream
 
         /* ===== VARIANTS ===== */
         .variant-table-wrap { overflow-x: auto; }
@@ -78,6 +82,17 @@
 
     <div class="page-shell">
         <form th:action="${isEdit} ? @{'/admin/products/' + ${product.id}} : @{/admin/products}"
+=======
+    </style>
+
+    <div id="cld-cfg"
+         th:data-cloud-name="${cloudinaryCloudName} ?: 'YOUR_CLOUD_NAME'"
+         th:data-upload-preset="${cloudinaryUploadPreset} ?: 'YOUR_UPLOAD_PRESET'"
+         style="display:none"></div>
+
+    <div class="page-shell">
+        <form th:action="${isEdit} ? @{|/admin/products/${product.id}|} : @{/admin/products}"
+>>>>>>> Stashed changes
               th:object="${productRequest}"
               method="POST"
               id="productForm">
@@ -86,6 +101,14 @@
                 <div>
                     <h1 class="mb-0" style="color: var(--secondary-color);" th:text="${pageTitle}">Product Form</h1>
                     <p class="text-muted mb-0">Điền thông tin chi tiết để quản lý sản phẩm trên cửa hàng.</p>
+<<<<<<< Updated upstream
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/admin/products}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-dark" id="submitBtn">
+                        <i class="fas fa-floppy-disk me-1"></i> Lưu Sản Phẩm
+                    </button>
+=======
                 </div>
                 <div class="d-flex gap-2">
                     <a th:href="@{/admin/products}" class="btn btn-outline-secondary">Hủy bỏ</a>
@@ -95,6 +118,164 @@
                 </div>
             </div>
 
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${toast_success}" class="alert alert-success" th:text="${toast_success}"></div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="form-card">
+                        <div class="form-title">Thông tin cơ bản</div>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Tên sản phẩm *</label>
+                                <input type="text" class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" placeholder="VD: Nhẫn vàng 18K Aurora">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">SKU *</label>
+                                <input type="text" class="form-control" th:field="*{sku}" th:classappend="${#fields.hasErrors('sku')} ? 'is-invalid'" placeholder="SKU-001">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('sku')}" th:errors="*{sku}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Danh mục</label>
+                                <select class="form-select" th:field="*{categoryId}">
+                                    <option value="">-- Chọn Danh mục --</option>
+                                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Thương hiệu</label>
+                                <select class="form-select" th:field="*{brandId}">
+                                    <option value="">-- Chọn Thương hiệu --</option>
+                                    <option th:each="brand : ${brands}" th:value="${brand.id}" th:text="${brand.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giới tính</label>
+                                <select class="form-select" th:field="*{gender}">
+                                    <option value="">Unisex</option>
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Trọng lượng (Gram)</label>
+                                <input type="number" step="0.01" class="form-control" th:field="*{weightGram}" placeholder="4.5">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả ngắn</label>
+                                <textarea class="form-control" rows="2" th:field="*{shortDescription}"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả chi tiết</label>
+                                <textarea class="form-control" rows="5" th:field="*{description}" placeholder="Mô tả chất liệu, kiểu dáng..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="form-title">Giá & Tồn kho (Biến thể mặc định)</div>
+                        <div class="error-message mb-2" th:if="${#fields.hasErrors('variants')}" th:errors="*{variants}"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Giá cơ sở (Base Price) *</label>
+                                <input type="number" class="form-control" th:field="*{basePrice}" th:classappend="${#fields.hasErrors('basePrice')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giá so sánh (Compare Price)</label>
+                                <input type="number" class="form-control" th:field="*{comparePrice}">
+                            </div>
+                            <div class="col-12 mt-4"><hr><h6>Biến thể (Kích thước / Size)</h6></div>
+                            <div class="col-md-3">
+                                <label class="form-label">Kích thước (Size) *</label>
+                                <input type="text" class="form-control" th:field="*{variants[0].size}" th:classappend="${#fields.hasErrors('variants[0].size')} ? 'is-invalid'" placeholder="VD: Freesize">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('variants[0].size')}" th:errors="*{variants[0].size}"></div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Giá Biến thể *</label>
+                                <input type="number" class="form-control" th:field="*{variants[0].price}" th:classappend="${#fields.hasErrors('variants[0].price')} ? 'is-invalid'" placeholder="Giá bán thực tế">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('variants[0].price')}" th:errors="*{variants[0].price}"></div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Số lượng kho *</label>
+                                <input type="number" class="form-control" th:field="*{variants[0].stockQuantity}" th:classappend="${#fields.hasErrors('variants[0].stockQuantity')} ? 'is-invalid'" placeholder="VD: 10">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('variants[0].stockQuantity')}" th:errors="*{variants[0].stockQuantity}"></div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Cảnh báo sắp hết</label>
+                                <input type="number" class="form-control" th:field="*{variants[0].lowStockThreshold}" placeholder="VD: 5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="form-card">
+                        <div class="form-title">Trạng thái</div>
+                        <select class="form-select mb-3" th:field="*{active}">
+                            <option th:value="true">Hiển thị (Active)</option>
+                            <option th:value="false">Ẩn / Bản nháp (Draft)</option>
+                        </select>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" th:field="*{new}">
+                            <label class="form-check-label">Sản phẩm Mới (New Arrival)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{bestSeller}">
+                            <label class="form-check-label">Bán chạy (Best Seller)</label>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="form-title">Hình ảnh Sản phẩm</div>
+                        <input type="hidden" name="imageUrls" id="imageUrlsInput" th:value="${productRequest.imageUrls}">
+
+                        <div class="upload-zone" id="uploadZone">
+                            <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none">
+                            <div class="upload-icon-wrap"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <p class="upload-title">Kéo & thả ảnh vào đây</p>
+                            <p class="upload-sub">JPG, PNG, WEBP · tối đa 10MB/ảnh</p>
+                            <span class="upload-cta" id="browseBtn"><i class="fas fa-folder-open me-1"></i>Chọn từ máy tính</span>
+                        </div>
+
+                        <div class="url-input-wrap mt-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text url-addon"><i class="fas fa-link"></i></span>
+                                <input type="text" class="form-control url-input" id="urlInput" placeholder="Hoặc dán link ảnh từ web...">
+                                <button class="btn btn-url" type="button" id="urlUploadBtn">Tải lên</button>
+                            </div>
+                            <div id="urlError" class="text-danger mt-1" style="font-size:0.72rem;display:none;"></div>
+                        </div>
+
+                        <div id="uploadQueue"></div>
+
+                        <div id="imagePreviewGrid"></div>
+                        <div id="previewCount" class="mt-1" style="font-size:0.78rem;"></div>
+                        <p class="mt-1 mb-0 text-muted" th:if="${isEdit}" style="font-size:0.75rem;">
+                            <i class="fas fa-info-circle me-1 text-primary"></i>
+                            Ảnh hiện tại đã được load — bạn có thể xóa bớt hoặc thêm ảnh mới.
+                        </p>
+                    </div>
+
+                    <div class="form-card mb-0">
+                        <div class="form-title">SEO (Tối ưu tìm kiếm)</div>
+                        <div class="mb-3">
+                            <label class="form-label">Tiêu đề (Meta Title)</label>
+                            <input type="text" class="form-control" th:field="*{metaTitle}" placeholder="Luxury 18K Gold Ring">
+                        </div>
+                        <div>
+                            <label class="form-label">Mô tả SEO (Meta Description)</label>
+                            <textarea class="form-control" rows="4" th:field="*{metaDescription}" placeholder="Mô tả tóm tắt cho Google..."></textarea>
+                        </div>
+                    </div>
+>>>>>>> Stashed changes
+                </div>
+            </div>
+        </form>
+    </div>
+
+<<<<<<< Updated upstream
             <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
             <div th:if="${toast_success}" class="alert alert-success" th:text="${toast_success}"></div>
 
@@ -148,6 +329,19 @@
                                         <option th:each="mat : ${materials}" th:value="${mat.id}" th:text="${mat.name}"></option>
                                     </select>
                                     <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddMaterial" title="Thêm nhanh">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Bộ sưu tập (Collection)</label>
+                                <div class="input-group">
+                                    <select class="form-select" th:field="*{collectionId}" id="collectionId">
+                                        <option value="">-- Không thuộc BST nào --</option>
+                                        <option th:each="col : ${collections}" th:value="${col.id}" th:text="${col.name}"></option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddCollection" title="Thêm nhanh">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
@@ -373,6 +567,25 @@
         </div>
     </div>
 
+    <div class="modal fade" id="modalQuickAddCollection" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm Bộ Sưu Tập Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="newCollectionName" class="form-control" placeholder="Nhập tên bộ sưu tập (VD: Cưới 2025)">
+                    <div id="errorCollection" class="text-danger mt-2" style="display: none; font-size: 0.85rem;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="quickAdd('collection', 'collectionId', 'newCollectionName', 'errorCollection')">Lưu & Chọn</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function quickAdd(type, selectId, inputId, errorId) {
             const nameVal = document.getElementById(inputId).value.trim();
@@ -554,6 +767,30 @@
 
             const uploadedUrls = (urlsInput.value || '').split(',').filter(Boolean);
 
+=======
+    <script>
+        (function () {
+            'use strict';
+            const cfg          = document.getElementById('cld-cfg');
+            const CLOUD_NAME   = cfg.dataset.cloudName;
+            const UPLOAD_PRESET= cfg.dataset.uploadPreset;
+            const UPLOAD_URL   = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/image/upload';
+
+            const fileInput    = document.getElementById('fileInput');
+            const uploadZone   = document.getElementById('uploadZone');
+            const browseBtn    = document.getElementById('browseBtn');
+            const uploadQueue  = document.getElementById('uploadQueue');
+            const grid         = document.getElementById('imagePreviewGrid');
+            const countLabel   = document.getElementById('previewCount');
+            const urlsInput    = document.getElementById('imageUrlsInput');
+            const submitBtn    = document.getElementById('submitBtn');
+            const urlInput     = document.getElementById('urlInput');
+            const urlUploadBtn = document.getElementById('urlUploadBtn');
+            const urlError     = document.getElementById('urlError');
+
+            const uploadedUrls = (urlsInput.value || '').split(',').filter(Boolean);
+
+>>>>>>> Stashed changes
             function renderPreviews() {
                 grid.innerHTML = '';
                 uploadedUrls.forEach(function(url, idx) {
@@ -571,7 +808,11 @@
                     grid.appendChild(item);
                 });
                 countLabel.innerHTML = uploadedUrls.length > 0
+<<<<<<< Updated upstream
                     ? '<span style="color:#57c4a7"><i class="fas fa-check-circle me-1"></i>' + uploadedUrls.length + ' ảnh da tai len</span>'
+=======
+                    ? '<span style="color:#57c4a7"><i class="fas fa-check-circle me-1"></i>' + uploadedUrls.length + ' anh da tai len</span>'
+>>>>>>> Stashed changes
                     : '';
             }
 

@@ -52,6 +52,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     boolean existsByMaterialId(Long materialId);
 
     boolean existsByCategoryId(Long categoryId);
+    Page<Product> findByCollectionIdAndIsActiveTrue(Long collectionId, Pageable pageable);
     // Sản phẩm cùng danh mục (gợi ý liên quan - C04)
     @Query("""
         SELECT p FROM Product p
@@ -134,4 +135,5 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
             @Param("isActive") Boolean isActive,
             Pageable pageable
     );
+
 }

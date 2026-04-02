@@ -13,6 +13,7 @@
             </div>
         </div>
 
+<<<<<<< Updated upstream
         <form class="row g-2 mb-4" method="get" th:action="@{/admin/customers}">
             <div class="col-md-5">
                 <input class="form-control" type="text" id="keyword" name="keyword" placeholder="Tìm tên, email, SĐT..." th:value="${param.keyword}">
@@ -29,6 +30,21 @@
                 <a th:href="@{/admin/customers}" class="btn btn-outline-secondary" title="Tải lại / Bỏ lọc"><i class="fas fa-redo"></i></a>
             </div>
         </form>
+=======
+        <form class="row g-2 mb-3" method="get" th:action="@{/admin/customers}">
+            <div class="col-md-7"><input class="form-control" type="text" name="keyword" placeholder="Search by name, email, phone..." th:value="${keyword}"></div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="">All status</option>
+                    <option value="ACTIVE" th:selected="${activeStatus == 'ACTIVE'}">ACTIVE</option>
+                    <option value="LOCKED" th:selected="${activeStatus == 'LOCKED'}">LOCKED</option>
+                    <option value="PENDING" th:selected="${activeStatus == 'PENDING'}">PENDING</option>
+                </select>
+            </div>
+            <div class="col-md-2"><button class="btn btn-outline-secondary w-100" type="submit">Filter</button></div>
+        </form>
+
+>>>>>>> Stashed changes
         <div class="table-responsive bg-white rounded shadow-sm mb-3">
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-dark">
