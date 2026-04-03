@@ -46,7 +46,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void sendPasswordResetEmail(String toEmail, String token) {
         try {
             Context context = new Context();
@@ -88,7 +88,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     @Transactional(readOnly = true)
     public void sendOrderStatusUpdateEmail(String orderNumber) {
         try {
