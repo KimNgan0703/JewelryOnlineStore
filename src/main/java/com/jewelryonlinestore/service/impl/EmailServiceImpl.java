@@ -32,7 +32,7 @@ public class EmailServiceImpl implements EmailService {
     private final String baseUrl = "http://localhost:8080";
 
     @Override
-    @Async
+    //@Async
     public void sendVerificationEmail(String toEmail, String token) {
         try {
             Context context = new Context();
@@ -50,7 +50,10 @@ public class EmailServiceImpl implements EmailService {
     public void sendPasswordResetEmail(String toEmail, String token) {
         try {
             Context context = new Context();
-            context.setVariable("resetUrl", baseUrl + "/auth/reset-password?token=" + token);
+            context.setVariable("resetLink", baseUrl + "/auth/reset-password?token=" + token);
+            context.setVariable("contactUrl", baseUrl + "/contact");
+            context.setVariable("companyUrl", baseUrl);
+            context.setVariable("privacyUrl", baseUrl + "/privacy");
 
             sendMimeMessage(toEmail, "Đặt lại mật khẩu Jewelry Store", "email/reset-password", context);
             log.info("Đã gửi email đặt lại mật khẩu tới {}", toEmail);

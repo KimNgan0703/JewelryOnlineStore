@@ -128,31 +128,40 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public String forgotPassword(@Valid @ModelAttribute ForgotPasswordRequest req,
+    public String forgotPassword(@Valid @ModelAttribute("forgotPasswordRequest") ForgotPasswordRequest req,
                                  BindingResult result, Model model) {
-        if (result.hasErrors()) return "customer/forgot-password";
+
+        log.info("=== BẮT ĐẦU XỬ LÝ QUÊN MẬT KHẨU ===");
+        log.info("Email nhận được từ Form: '{}'", req.getEmail());
+
+        // 1. Kiểm tra Validation
+        if (result.hasErrors()) {
+            log.warn("Dữ liệu form bị lỗi Validation: {}", result.getAllErrors());
+            model.addAttribute("pageTitle", "Quên Mật Khẩu");
+            return "customer/forgot-password";
+        }
 
         try {
-            // Gọi Service để gửi email
+            // 2. Gọi Service để gửi email
+            log.info("Tiến hành gọi authService.sendPasswordResetEmail()...");
             authService.sendPasswordResetEmail(req.getEmail());
+            log.info("Gọi Service gửi email thành công!");
 
-            // Nếu chạy qua được dòng trên nghĩa là Email tồn tại -> Báo thành công
+            // 3. Báo thành công
             model.addAttribute("successMessage", "Vui lòng kiểm tra email của bạn để nhận liên kết đặt lại mật khẩu.");
 
         } catch (IllegalArgumentException e) {
-            // Nếu Email không tồn tại -> Báo lỗi đỏ
+            log.warn("Lỗi logic (ví dụ email không tồn tại): {}", e.getMessage());
             model.addAttribute("errorMessage", e.getMessage());
 
         } catch (Exception e) {
-            // Nếu lỗi mạng, lỗi Google Mail...
-            log.error("Lỗi khi gửi email đặt lại mật khẩu: ", e);
+            log.error("Lỗi Exception hệ thống khi gửi email: ", e);
             model.addAttribute("errorMessage", "Hệ thống đang bận, không thể gửi email lúc này.");
         }
 
         model.addAttribute("pageTitle", "Quên Mật Khẩu");
         return "customer/forgot-password";
     }
-
     // ── Đặt lại mật khẩu ─────────────────────────────────
     @GetMapping("/reset-password")
     public String showResetPasswordPage(@RequestParam String token, Model model) {

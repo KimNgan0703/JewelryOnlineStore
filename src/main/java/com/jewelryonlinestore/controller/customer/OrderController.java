@@ -3,7 +3,6 @@ package com.jewelryonlinestore.controller.customer;
 import com.jewelryonlinestore.dto.request.PlaceOrderRequest;
 import com.jewelryonlinestore.dto.request.AddressRequest;
 import com.jewelryonlinestore.dto.response.*;
-import com.jewelryonlinestore.entity.Promotion;
 import com.jewelryonlinestore.service.*;
 import jakarta.servlet.http.*;
 import jakarta.validation.Valid;
@@ -17,10 +16,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * C06 — Đặt hàng & thanh toán.
@@ -37,16 +34,43 @@ public class OrderController {
     private final PromotionService promotionService;
     private final MomoService      momoService;
 
-    // ── Trang Checkout (C06) ─────────────────────────────
+    // ── Nhận selectedItemIds từ cart, lưu session, redirect checkout ──────
+    @PostMapping("/select-items")
+    public String selectItems(@RequestParam(value = "selectedItemIds", required = false) List<Long> selectedItemIds,
+                              HttpSession session) {
+        if (selectedItemIds == null || selectedItemIds.isEmpty()) {
+            return "redirect:/cart";
+        }
+        session.setAttribute("selectedCartItemIds", selectedItemIds);
+        return "redirect:/orders/checkout";
+    }
+
+    // ── Trang Checkout (C06) ──────────────────────────────
     @GetMapping("/checkout")
     public String checkoutPage(Authentication auth, HttpSession session, Model model) {
-        CartResponse cart = cartService.getCart(auth, session);
+        CartResponse fullCart = cartService.getCart(auth, session);
+        if (fullCart.getItems() == null || fullCart.getItems().isEmpty()) {
+            return "redirect:/cart";
+        }
+
+        // Lọc chỉ các item được chọn
+        @SuppressWarnings("unchecked")
+        List<Long> selectedIds = (List<Long>) session.getAttribute("selectedCartItemIds");
+
+        CartResponse cart;
+        if (selectedIds != null && !selectedIds.isEmpty()) {
+            // Tạo CartResponse chỉ chứa items được chọn
+            cart = filterCartBySelectedIds(fullCart, selectedIds);
+        } else {
+            cart = fullCart;
+        }
+
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             return "redirect:/cart";
         }
+
         PlaceOrderRequest placeOrderRequest = new PlaceOrderRequest();
         placeOrderRequest.setNewAddress(new AddressRequest());
-        // Mặc định chọn COD
         placeOrderRequest.setPaymentMethod("COD");
 
         model.addAttribute("cart",              cart);
@@ -56,7 +80,28 @@ public class OrderController {
         return "customer/checkout";
     }
 
-    // ── Đặt hàng (C06) ───────────────────────────────────
+    // ── Helper: lọc CartResponse theo danh sách itemId ───
+    private CartResponse filterCartBySelectedIds(CartResponse fullCart, List<Long> selectedIds) {
+        List<CartResponse.CartItemInfo> filteredItems = fullCart.getItems().stream()
+                .filter(item -> selectedIds.contains(item.getCartItemId()))
+                .toList();
+
+        java.math.BigDecimal subtotal = filteredItems.stream()
+                .map(CartResponse.CartItemInfo::getLineTotal)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        return CartResponse.builder()
+                .cartId(fullCart.getCartId())
+                .items(filteredItems)
+                .subtotal(subtotal)
+                .discountAmount(java.math.BigDecimal.ZERO)
+                .shippingFee(java.math.BigDecimal.ZERO)
+                .total(subtotal)
+                .totalItems(filteredItems.stream().mapToInt(CartResponse.CartItemInfo::getQuantity).sum())
+                .build();
+    }
+
+    // ── Đặt hàng (C06) ────────────────────────────────────
     @PostMapping("/place")
     public String placeOrder(@Valid @ModelAttribute PlaceOrderRequest req,
                              BindingResult result,
@@ -68,7 +113,13 @@ public class OrderController {
             if (req.getNewAddress() == null) {
                 req.setNewAddress(new AddressRequest());
             }
-            CartResponse cart = cartService.getCart(auth, session);
+            CartResponse fullCart = cartService.getCart(auth, session);
+            @SuppressWarnings("unchecked")
+            List<Long> selectedIds = (List<Long>) session.getAttribute("selectedCartItemIds");
+            CartResponse cart = (selectedIds != null && !selectedIds.isEmpty())
+                    ? filterCartBySelectedIds(fullCart, selectedIds)
+                    : fullCart;
+
             model.addAttribute("cart",              cart);
             model.addAttribute("addresses",         addressService.getMyAddresses(auth));
             model.addAttribute("placeOrderRequest", req);
@@ -76,22 +127,23 @@ public class OrderController {
         }
 
         try {
-            // 1. Lưu đơn hàng vào Database
+            // Lấy selectedItemIds từ session để placeOrder chỉ xử lý items được chọn
+            @SuppressWarnings("unchecked")
+            List<Long> selectedIds = (List<Long>) session.getAttribute("selectedCartItemIds");
+            req.setSelectedCartItemIds(selectedIds);
+
             OrderDetailResponse order = orderService.placeOrder(req, auth, session);
 
-            // ==============================================================
-            // 2. KIỂM TRA PHƯƠNG THỨC THANH TOÁN (MOMO HAY COD)
-            // ==============================================================
+            // Xóa selectedItemIds khỏi session sau khi đặt hàng xong
+            session.removeAttribute("selectedCartItemIds");
+
             if ("MOMO".equalsIgnoreCase(req.getPaymentMethod())) {
                 try {
-                    // Gọi sang MoMo lấy link thanh toán
-                    String amountStr = String.valueOf(order.getTotal().longValue());
                     String payUrl = momoService.createMomoPaymentUrl(
                             order.getOrderNumber(),
-                            amountStr,
+                            String.valueOf(order.getTotal().longValue()),
                             "Thanh toan don hang " + order.getOrderNumber()
                     );
-                    // Chuyển hướng trình duyệt sang MoMo luôn!
                     return "redirect:" + payUrl;
                 } catch (Exception e) {
                     redirectAttr.addFlashAttribute("toast_error", "Không thể tạo liên kết MoMo lúc này.");
@@ -99,7 +151,6 @@ public class OrderController {
                 }
             }
 
-            // 3. Nếu là COD thì hiển thị trang Đặt hàng thành công luôn
             redirectAttr.addFlashAttribute("order",         order);
             redirectAttr.addFlashAttribute("toast_success", "Đặt hàng thành công!");
             return "redirect:/orders/success/" + order.getOrderNumber();
@@ -110,7 +161,7 @@ public class OrderController {
         }
     }
 
-    // ── Trang xác nhận đặt hàng thành công ──────────────
+    // ── Trang xác nhận đặt hàng thành công ───────────────
     @GetMapping("/success/{orderNumber}")
     public String orderSuccess(@PathVariable String orderNumber,
                                Authentication auth, Model model) {
@@ -120,7 +171,7 @@ public class OrderController {
         return "customer/order-success";
     }
 
-    // ── Danh sách đơn hàng (C07) ─────────────────────────
+    // ── Danh sách đơn hàng (C07) ──────────────────────────
     @GetMapping
     public String myOrders(@RequestParam(defaultValue = "0") int page,
                            @RequestParam(required = false)   String status,
@@ -134,7 +185,7 @@ public class OrderController {
         return "customer/order-list";
     }
 
-    // ── Chi tiết đơn hàng (C07) ──────────────────────────
+    // ── Chi tiết đơn hàng (C07) ───────────────────────────
     @GetMapping("/{orderNumber}")
     public String orderDetail(@PathVariable String orderNumber,
                               Authentication auth, Model model) {
@@ -154,7 +205,6 @@ public class OrderController {
                 redirectAttr.addFlashAttribute("toast_error", "Đơn hàng này không thể thanh toán lại bằng MoMo.");
                 return "redirect:/orders/" + orderNumber;
             }
-
             String payUrl = momoService.createMomoPaymentUrl(
                     order.getOrderNumber(),
                     String.valueOf(order.getTotal().longValue()),
@@ -167,7 +217,7 @@ public class OrderController {
         }
     }
 
-    // ── Hủy đơn (C07 - AJAX) ─────────────────────────────
+    // ── Hủy đơn (C07 - AJAX) ──────────────────────────────
     @PostMapping("/{orderNumber}/cancel")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> cancelOrder(
@@ -185,7 +235,7 @@ public class OrderController {
         }
     }
 
-    // ── Khách xác nhận Đã nhận hàng (C07 - AJAX) ────────────────
+    // ── Khách xác nhận Đã nhận hàng ──────────────────────
     @PostMapping("/{orderNumber}/receive")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> receiveOrder(
@@ -201,7 +251,7 @@ public class OrderController {
         }
     }
 
-    // ── Mua lại (C07) ────────────────────────────────────
+    // ── Mua lại (C07) ─────────────────────────────────────
     @PostMapping("/{orderNumber}/reorder")
     public String reorder(@PathVariable String orderNumber,
                           Authentication auth, HttpSession session,
@@ -211,12 +261,12 @@ public class OrderController {
         return "redirect:/cart";
     }
 
-    // ── API: Kiểm tra & Áp dụng mã giảm giá (AJAX) ───────
+    // ── API: Áp dụng mã giảm giá ──────────────────────────
     @PostMapping("/coupon/apply")
     @ResponseBody
-    public ResponseEntity<?> applyCoupon(@RequestParam("code") String code, Authentication auth, HttpSession session) {
+    public ResponseEntity<?> applyCoupon(@RequestParam("code") String code,
+                                         Authentication auth, HttpSession session) {
         try {
-            // Giao phó toàn bộ logic áp mã, kiểm tra món hàng và tính tiền cho CartService
             CartResponse updatedCart = cartService.applyCoupon(code, auth, session);
             return ResponseEntity.ok(updatedCart);
         } catch (IllegalArgumentException e) {
@@ -226,7 +276,7 @@ public class OrderController {
         }
     }
 
-    // ── API: Gỡ mã giảm giá (AJAX) ───────────────────────
+    // ── API: Gỡ mã giảm giá ──────────────────────────────
     @PostMapping("/coupon/remove")
     @ResponseBody
     public ResponseEntity<?> removeCoupon(Authentication auth, HttpSession session) {

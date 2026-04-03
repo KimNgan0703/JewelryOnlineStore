@@ -62,7 +62,11 @@ public class OrderServiceImpl implements OrderService {
     public OrderDetailResponse placeOrder(PlaceOrderRequest req, Authentication auth, HttpSession session) {
         Customer customer = requireCustomer(auth);
         Address  address  = resolveAddress(req, customer);
-        Cart     cart     = getCheckoutCart(auth, session);
+        Cart cart = getCheckoutCart(auth, session);
+        List<Long> selectedIds = req.getSelectedCartItemIds();
+        if (selectedIds != null && !selectedIds.isEmpty()) {
+            cart.getItems().removeIf(item -> !selectedIds.contains(item.getId()));
+        }
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");

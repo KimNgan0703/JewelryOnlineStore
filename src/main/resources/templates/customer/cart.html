@@ -19,11 +19,7 @@
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
         .summary-row.total { border-top: 2px solid #ececec; padding-top: 12px; font-size: 1.2rem; font-weight: bold; }
         .empty-cart { text-align: center; padding: 60px 20px; color: #7f8c8d; }
-        .item-check {
-            width: 20px; height: 20px;
-            accent-color: var(--primary-color);
-            cursor: pointer; flex-shrink: 0;
-        }
+        .item-check { width: 20px; height: 20px; accent-color: var(--primary-color); cursor: pointer; flex-shrink: 0; }
         .select-all-bar {
             background: white; border-radius: 8px 8px 0 0;
             padding: 14px 20px; border-bottom: 1px solid #ecf0f1;
@@ -126,20 +122,21 @@
                     <span>Shipping</span>
                     <span th:text="${#numbers.formatInteger(cart.shippingFee, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
-                <div class="summary-row"
-                     th:if="${cart.discountAmount != null and cart.discountAmount > 0}">
-                    <span>Discount</span>
-                    <span>-<span th:text="${#numbers.formatInteger(cart.discountAmount, 0, 'COMMA')} + ' ₫'">0</span></span>
-                </div>
                 <div class="summary-row total">
                     <span>Total</span>
                     <span id="summaryTotal"
                           th:text="${#numbers.formatInteger(cart.total, 0, 'COMMA')} + ' ₫'">0</span>
                 </div>
                 <div class="text-muted small text-center mb-1" id="selectedInfo"></div>
-                <a class="btn btn-warning w-100 mt-2" id="checkoutBtn" th:href="@{/orders/checkout}">
-                    <i class="fas fa-credit-card"></i> Proceed to Checkout
-                </a>
+
+                <!-- Form POST gửi selectedItemIds lên server -->
+                <form id="checkoutForm" method="POST" th:action="@{/orders/select-items}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div id="selectedItemsInputs"></div>
+                    <button type="submit" class="btn btn-warning w-100 mt-2" id="checkoutBtn">
+                        <i class="fas fa-credit-card"></i> Proceed to Checkout
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -175,7 +172,7 @@
         return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' ₫';
     }
 
-    // ── Tính lại summary theo checkbox đang chọn ──────────
+    // ── Tính lại summary & cập nhật hidden inputs ─────────
     function recalcSummary() {
         const checkboxes  = document.querySelectorAll('.item-checkbox');
         const checked     = [...checkboxes].filter(c => c.checked);
@@ -185,8 +182,9 @@
         const checkoutBtn = document.getElementById('checkoutBtn');
         const subtotalEl  = document.getElementById('summarySubtotal');
         const totalEl     = document.getElementById('summaryTotal');
+        const hiddenDiv   = document.getElementById('selectedItemsInputs');
 
-        // Tính tổng từ lineTotal text của các item được chọn
+        // Tính tổng
         let total = 0;
         checked.forEach(cb => {
             const row = document.getElementById('cart-item-' + cb.dataset.itemId);
@@ -211,13 +209,10 @@
             selectAllCb.indeterminate = n > 0 && n < t;
         }
 
-        // Disable checkout nếu không có item nào được chọn
+        // Disable checkout nếu không chọn item nào
         if (checkoutBtn) {
-            if (n === 0) {
-                checkoutBtn.classList.add('checkout-disabled');
-            } else {
-                checkoutBtn.classList.remove('checkout-disabled');
-            }
+            checkoutBtn.disabled = n === 0;
+            checkoutBtn.classList.toggle('checkout-disabled', n === 0);
         }
 
         // Làm mờ item không chọn
@@ -225,9 +220,19 @@
             const cb = row.querySelector('.item-checkbox');
             if (cb) row.classList.toggle('dimmed', !cb.checked);
         });
+
+        // Cập nhật hidden inputs cho form checkout
+        hiddenDiv.innerHTML = '';
+        checked.forEach(cb => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = 'selectedItemIds';
+            input.value = cb.dataset.itemId;
+            hiddenDiv.appendChild(input);
+        });
     }
 
-    // ── Chọn tất cả ───────────────────────────────────────
+    // ── Chọn tất cả ──────────────────────────────────────
     const selectAllCb = document.getElementById('selectAll');
     if (selectAllCb) {
         selectAllCb.addEventListener('change', function () {
@@ -237,12 +242,11 @@
         });
     }
 
-    // ── Checkbox từng item ────────────────────────────────
     document.querySelectorAll('.item-checkbox').forEach(cb => {
         cb.addEventListener('change', recalcSummary);
     });
 
-    recalcSummary(); // chạy lần đầu
+    recalcSummary();
 
     // ── Xóa sản phẩm ─────────────────────────────────────
     document.querySelectorAll('.delete-btn').forEach(btn => {
