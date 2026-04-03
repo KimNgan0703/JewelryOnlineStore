@@ -17,14 +17,20 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MomoService {
 
-    @Value("${momo.endpoint}")    private String endpoint;
+    @Value("${momo.endpoint}")
+    private String endpoint;
     @Value("${momo.refund-endpoint:https://payment.momo.vn/v2/gateway/api/refund}")
     private String refundEndpoint;
-    @Value("${momo.partner-code}")private String partnerCode;
-    @Value("${momo.access-key}")  private String accessKey;
-    @Value("${momo.secret-key}")  private String secretKey;
-    @Value("${momo.redirect-url}")private String redirectUrl;
-    @Value("${momo.ipn-url}")     private String ipnUrl;
+    @Value("${momo.partner-code}")
+    private String partnerCode;
+    @Value("${momo.access-key}")
+    private String accessKey;
+    @Value("${momo.secret-key}")
+    private String secretKey;
+    @Value("${momo.redirect-url}")
+    private String redirectUrl;
+    @Value("${momo.ipn-url}")
+    private String ipnUrl;
 
     public String createMomoPaymentUrl(String orderId, String totalAmount, String orderInfo) throws Exception {
         String requestId = orderId + "_" + System.currentTimeMillis();
@@ -114,7 +120,8 @@ public class MomoService {
         Map<String, Object> response = restTemplate.postForObject(refundEndpoint, entity, Map.class);
         String resultCode = response == null ? null : String.valueOf(response.get("resultCode"));
         boolean success = "0".equals(resultCode);
-        String message = response == null ? "Không nhận được phản hồi từ MoMo" : String.valueOf(response.get("message"));
+        String message = response == null ? "Không nhận được phản hồi từ MoMo"
+                : String.valueOf(response.get("message"));
         String refundTransId = response == null || response.get("transId") == null
                 ? null
                 : String.valueOf(response.get("transId"));
@@ -127,7 +134,6 @@ public class MomoService {
             String resultCode,
             String message,
             String refundTransId,
-            Map<String, Object> rawResponse
-    ) {
+            Map<String, Object> rawResponse) {
     }
 }

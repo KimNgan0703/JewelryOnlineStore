@@ -121,9 +121,14 @@ public class OrderServiceImpl implements OrderService {
         Order saved = orderRepository.save(order);
 
         // CHỈ gửi mail ngay nếu là COD. Nếu là MOMO thì để PaymentService lo sau.
-        if (emailService != null && saved.getPaymentMethod() == Order.PaymentMethod.COD) {
-            emailService.sendOrderConfirmationEmail(saved.getOrderNumber());
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (emailService != null && saved.getPaymentMethod() == Order.PaymentMethod.COD) {
+                    emailService.sendOrderConfirmationEmail(saved.getOrderNumber());
+                }
+            }
+        });
 
         List<ProductVariant> variantsToUpdate = cart.getItems().stream()
                 .map(CartItem::getVariant)
