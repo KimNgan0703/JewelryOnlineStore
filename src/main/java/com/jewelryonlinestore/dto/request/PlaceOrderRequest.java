@@ -3,6 +3,8 @@ package com.jewelryonlinestore.dto.request;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * DTO nhận thông tin đặt hàng từ trang checkout (C06).
  */
@@ -17,6 +19,8 @@ public class PlaceOrderRequest {
 
     // Mã giảm giá (nếu có, đã apply trước)
     private String couponCode;
+
+    private List<Long> selectedCartItemIds; // các cartItemId được chọn thanh toán
 
     @NotBlank(message = "Vui lòng chọn phương thức thanh toán")
     private String paymentMethod; // cod | bank_transfer | vnpay | momo

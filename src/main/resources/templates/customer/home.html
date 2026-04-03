@@ -93,13 +93,10 @@
             <div class="carousel-item"
                  th:each="banner, iterStat : ${banners}"
                  th:classappend="${iterStat.index == 0} ? 'active' : ''"
-                 data-bs-interval="4000"> <a th:href="${banner.linkUrl != null and !banner.linkUrl.isEmpty() ? banner.linkUrl : '#'}">
-                <img th:src="${banner.imageUrl}" class="d-block w-100" th:alt="${banner.title}" style="height: 500px; object-fit: cover; object-position: center;">
-            </a>
-
-                <div class="carousel-caption d-none d-md-block" style="background: rgba(0,0,0,0.4); border-radius: 10px; padding: 15px;">
-                    <h3 th:text="${banner.title}" style="margin: 0; font-weight: bold; text-shadow: 1px 1px 4px rgba(0,0,0,0.8);">Tên Banner</h3>
-                </div>
+                 data-bs-interval="4000">
+                <a th:href="${banner.linkUrl != null and !banner.linkUrl.isEmpty() ? banner.linkUrl : '#'}">
+                    <img th:src="${banner.imageUrl}" class="d-block w-100" th:alt="${banner.title}" style="height: 500px; object-fit: cover; object-position: center;">
+                </a>
             </div>
         </div>
 
