@@ -244,8 +244,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<OrderSummaryResponse> adminSearchOrders(String keyword, String status,
-                                                        LocalDateTime from, LocalDateTime to,
-                                                        int page, int size) {
+            LocalDateTime from, LocalDateTime to,
+            int page, int size) {
         Order.OrderStatus statusEnum = null;
         if (status != null && !status.trim().isEmpty()) {
             try {
@@ -262,7 +262,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req,
-                                                 Authentication auth) {
+            Authentication auth) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
 
@@ -512,7 +512,7 @@ public class OrderServiceImpl implements OrderService {
                         .reviewed(item.hasReview())
                         .reviewId(item.getReview() != null ? item.getReview().getId() : null)
                         .build())
-                .toList();
+                        .toList();
 
         return OrderDetailResponse.builder()
                 .id(order.getId())
