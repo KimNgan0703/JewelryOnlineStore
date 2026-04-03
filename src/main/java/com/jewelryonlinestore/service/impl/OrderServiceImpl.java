@@ -31,6 +31,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -45,23 +47,23 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
-    private final OrderRepository     orderRepository;
-    private final UserRepository      userRepository;
-    private final CustomerRepository  customerRepository;
-    private final AddressRepository   addressRepository;
-    private final CartRepository      cartRepository;
-    private final CartItemRepository  cartItemRepository;
-    private final PromotionService    promotionService;
+    private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
+    private final AddressRepository addressRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final PromotionService promotionService;
 
     // Inject EmailService và ProductVariantRepository
-    private final EmailService             emailService;
+    private final EmailService emailService;
     private final ProductVariantRepository productVariantRepository;
 
     @Override
     @Transactional
     public OrderDetailResponse placeOrder(PlaceOrderRequest req, Authentication auth, HttpSession session) {
         Customer customer = requireCustomer(auth);
-        Address  address  = resolveAddress(req, customer);
+        Address address = resolveAddress(req, customer);
         Cart cart = getCheckoutCart(auth, session);
         List<Long> selectedIds = req.getSelectedCartItemIds();
         if (selectedIds != null && !selectedIds.isEmpty()) {
@@ -78,20 +80,21 @@ public class OrderServiceImpl implements OrderService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal shippingFee = BigDecimal.ZERO;
 
-        BigDecimal discountAmount  = BigDecimal.ZERO;
-        Promotion  appliedPromotion = null;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        Promotion appliedPromotion = null;
         if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
             // Validate bằng cart
             Optional<Promotion> promoOpt = promotionService.validateCoupon(req.getCouponCode(), cart);
             if (promoOpt.isPresent()) {
                 appliedPromotion = promoOpt.get();
                 // ĐÃ SỬA LỖI Ở ĐÂY: Truyền cart vào thay vì subtotal
-                discountAmount   = promotionService.calculateDiscount(appliedPromotion, cart);
+                discountAmount = promotionService.calculateDiscount(appliedPromotion, cart);
             }
         }
 
         BigDecimal total = subtotal.add(shippingFee).subtract(discountAmount);
-        if (total.compareTo(BigDecimal.ZERO) < 0) total = BigDecimal.ZERO;
+        if (total.compareTo(BigDecimal.ZERO) < 0)
+            total = BigDecimal.ZERO;
 
         Order order = Order.builder()
                 .orderNumber("ORD" + UUID.randomUUID().toString().replace("-", "")
@@ -166,8 +169,7 @@ public class OrderServiceImpl implements OrderService {
         // 1. Nếu không có status hoặc status là "all" -> Lấy tất cả
         if (status == null || status.isBlank() || status.equalsIgnoreCase("all")) {
             orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), pageable);
-        }
-        else {
+        } else {
             try {
                 // 2. Chuyển String từ URL (pending) -> Enum (PENDING)
                 Order.OrderStatus statusEnum = Order.OrderStatus.valueOf(status.toUpperCase(Locale.ROOT));
@@ -199,7 +201,8 @@ public class OrderServiceImpl implements OrderService {
 
         boolean refunded = false;
 
-        // Symbolic refund for paid MoMo orders: mark refunded locally without calling gateway.
+        // Symbolic refund for paid MoMo orders: mark refunded locally without calling
+        // gateway.
         if (order.getPaymentMethod() == Order.PaymentMethod.MOMO
                 && order.getPaymentStatus() == Order.PaymentStatus.PAID) {
             refunded = true;
@@ -210,9 +213,15 @@ public class OrderServiceImpl implements OrderService {
         order.setCancelledReason(reason);
         Order savedOrder = orderRepository.save(order);
 
-        if (emailService != null) {
-            emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (emailService != null) {
+                    System.out.println("Don hang hien tai: " + savedOrder.getOrderStatus());
+                    emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
+                }
+            }
+        });
 
         List<ProductVariant> variantsToRestore = order.getItems().stream().map(item -> {
             ProductVariant variant = item.getVariant();
@@ -252,7 +261,8 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req, Authentication auth) {
+    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req,
+                                                 Authentication auth) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
 
@@ -284,9 +294,15 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdatedAt(LocalDateTime.now());
         Order savedOrder = orderRepository.save(order);
 
-        if (emailService != null) {
-            emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (emailService != null) {
+                    System.out.println("Don hang hien tai: " + savedOrder.getOrderStatus());
+                    emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
+                }
+            }
+        });
 
         return toDetail(savedOrder);
     }
@@ -416,7 +432,7 @@ public class OrderServiceImpl implements OrderService {
             cartItem.getVariant().setStockQuantity(
                     cartItem.getVariant().getStockQuantity() - cartItem.getQuantity());
 
-            BigDecimal price     = cartItem.getVariant().getPrice();
+            BigDecimal price = cartItem.getVariant().getPrice();
             BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(cartItem.getQuantity()));
 
             return OrderItem.builder()
@@ -464,7 +480,8 @@ public class OrderServiceImpl implements OrderService {
                 .paymentStatus(order.getPaymentStatus().name().toLowerCase(Locale.ROOT))
                 .itemCount(order.getItems() == null ? 0 : order.getItems().size())
                 .firstProductName(order.getItems() == null || order.getItems().isEmpty()
-                        ? null : order.getItems().get(0).getProductName())
+                        ? null
+                        : order.getItems().get(0).getProductName())
                 .firstProductImage(null)
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
@@ -479,13 +496,16 @@ public class OrderServiceImpl implements OrderService {
                         .orderItemId(item.getId())
                         .variantId(item.getVariant() != null ? item.getVariant().getId() : null)
                         .productId(item.getVariant() != null && item.getVariant().getProduct() != null
-                                ? item.getVariant().getProduct().getId() : null)
+                                ? item.getVariant().getProduct().getId()
+                                : null)
                         .productSlug(item.getVariant() != null && item.getVariant().getProduct() != null
-                                ? item.getVariant().getProduct().getSlug() : null)
+                                ? item.getVariant().getProduct().getSlug()
+                                : null)
                         .productName(item.getProductName())
                         .variantSize(item.getVariantSize())
                         .imageUrl(item.getVariant() != null && item.getVariant().getProduct() != null
-                                ? item.getVariant().getProduct().getPrimaryImageUrl() : null)
+                                ? item.getVariant().getProduct().getPrimaryImageUrl()
+                                : null)
                         .quantity(item.getQuantity())
                         .price(item.getPrice())
                         .total(item.getTotal())

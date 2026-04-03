@@ -32,7 +32,7 @@ public class EmailServiceImpl implements EmailService {
     private final String baseUrl = "http://localhost:8080";
 
     @Override
-    //@Async
+    // @Async
     public void sendVerificationEmail(String toEmail, String token) {
         try {
             Context context = new Context();
@@ -46,7 +46,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     public void sendPasswordResetEmail(String toEmail, String token) {
         try {
             Context context = new Context();
@@ -68,10 +68,12 @@ public class EmailServiceImpl implements EmailService {
     public void sendOrderConfirmationEmail(String orderNumber) {
         try {
             Order order = orderRepository.findByOrderNumber(orderNumber).orElse(null);
-            if (order == null || order.getCustomer() == null) return;
+            if (order == null || order.getCustomer() == null)
+                return;
 
             // Ép Hibernate tải danh sách items để tránh lỗi LazyInit trong Template
-            if (order.getItems() != null) order.getItems().size();
+            if (order.getItems() != null)
+                order.getItems().size();
 
             Context context = new Context();
             context.setVariable("order", order);
@@ -86,12 +88,13 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
+    @Async("taskExecutor")
     @Transactional(readOnly = true)
     public void sendOrderStatusUpdateEmail(String orderNumber) {
         try {
             Order order = orderRepository.findByOrderNumber(orderNumber).orElse(null);
-            if (order == null || order.getCustomer() == null) return;
+            if (order == null || order.getCustomer() == null)
+                return;
 
             Context context = new Context();
             context.setVariable("order", order);
@@ -105,6 +108,8 @@ public class EmailServiceImpl implements EmailService {
             }
             sendMimeMessage(order.getCustomer().getUser().getEmail(), subject, "email/order-status", context);
 
+            System.out.println("Đã gửi email cập nhật trạng thái đơn hàng #" + orderNumber + " thành công: "
+                    + order.getOrderStatus());
             log.info("Đã gửi email cập nhật trạng thái đơn hàng #{} thành công", orderNumber);
         } catch (Exception e) {
             log.error("Lỗi gửi email cập nhật trạng thái {}: {}", orderNumber, e.getMessage());
@@ -114,7 +119,8 @@ public class EmailServiceImpl implements EmailService {
     /**
      * Hàm hỗ trợ gửi Email định dạng HTML
      */
-    private void sendMimeMessage(String to, String subject, String templateName, Context context) throws MessagingException {
+    private void sendMimeMessage(String to, String subject, String templateName, Context context)
+            throws MessagingException {
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
