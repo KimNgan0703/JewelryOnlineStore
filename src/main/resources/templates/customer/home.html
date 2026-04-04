@@ -50,6 +50,7 @@
             color: var(--secondary-color); font-weight: bold;
         }
         .btn-add-cart:hover { background-color: #c09b2d; border-color: #c09b2d; }
+
         .category-section { padding: 40px 0; }
         .category-card {
             text-align: center; padding: 20px;
@@ -62,7 +63,27 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.1);
             background: #fffbef;
         }
-        .category-icon { font-size: 3rem; color: var(--primary-color); margin-bottom: 15px; }
+
+        /* Đã cập nhật CSS cho icon và ảnh danh mục */
+        .category-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 70px;
+        }
+        .category-icon img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        .category-card:hover .category-icon img {
+            transform: scale(1.1);
+        }
+
         .newsletter-section {
             background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
             color: white; padding: 50px 0; margin-top: 50px;
@@ -76,7 +97,6 @@
 <body>
 <div th:replace="~{layout/customer-header :: customerHeader}"></div>
 
-<!-- Hero Section -->
 <section class="banner-section">
     <div th:if="${banners != null and !banners.isEmpty()}" id="homeBannerCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
 
@@ -119,14 +139,8 @@
     </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════
-     Categories — DYNAMIC (lấy từ ${categories} do controller truyền)
-     ═══════════════════════════════════════════════════════════ -->
 <section class="category-section">
     <div class="container">
-        <h2 class="section-title">Browse by Category</h2>
-
-        <!-- Dynamic: lấy từ ${categories} do controller truyền -->
         <div class="row justify-content-center"
              th:if="${categories != null and !categories.isEmpty()}">
             <div class="col-6 col-md-3 mb-4" th:each="cat : ${categories}">
@@ -134,7 +148,12 @@
                    class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon">
-                            <i th:class="${#strings.containsIgnoreCase(cat.name,'nhẫn')    or #strings.containsIgnoreCase(cat.name,'ring')}       ? 'fas fa-ring'
+                            <img th:if="${cat.imageUrl != null and !cat.imageUrl.isEmpty()}"
+                                 th:src="${cat.imageUrl}"
+                                 th:alt="${cat.name}">
+
+                            <i th:unless="${cat.imageUrl != null and !cat.imageUrl.isEmpty()}"
+                               th:class="${#strings.containsIgnoreCase(cat.name,'nhẫn')    or #strings.containsIgnoreCase(cat.name,'ring')}       ? 'fas fa-ring'
                                            : (${#strings.containsIgnoreCase(cat.name,'dây')    or #strings.containsIgnoreCase(cat.name,'necklace')}    ? 'fas fa-crown'
                                            : (${#strings.containsIgnoreCase(cat.name,'vòng')   or #strings.containsIgnoreCase(cat.name,'bracelet')}    ? 'fas fa-circle-dot'
                                            : (${#strings.containsIgnoreCase(cat.name,'tai')    or #strings.containsIgnoreCase(cat.name,'earring')}     ? 'fas fa-gem'
@@ -147,7 +166,6 @@
             </div>
         </div>
 
-        <!-- Fallback tĩnh khi chưa có ${categories} -->
         <div class="row" th:unless="${categories != null and !categories.isEmpty()}">
             <div class="col-md-3">
                 <a href="/products?categoryId=1" class="text-decoration-none text-dark">
@@ -185,9 +203,6 @@
     </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
-     Sản phẩm Bán Chạy
-     ═══════════════════════════════════════════════════════ -->
 <section class="featured-products" style="background: #fff;">
     <div class="container">
         <div class="d-flex align-items-center justify-content-between mb-4">
@@ -203,11 +218,9 @@
         <div class="row" th:if="${bestSellers != null and !bestSellers.isEmpty()}">
             <div class="col-6 col-md-3 mb-4" th:each="product : ${bestSellers}">
                 <div class="card product-card h-100">
-                    <!-- Badge giảm giá -->
                     <div class="product-badge" th:if="${product.discountPercent != null}">
                         <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
                     </div>
-                    <!-- Badge bán chạy -->
                     <div style="position:absolute;top:10px;left:10px;background:#e74c3c;color:#fff;padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;z-index:1;">
                         <i class="fas fa-fire me-1"></i>Hot
                     </div>
@@ -244,7 +257,6 @@
             </div>
         </div>
 
-        <!-- Fallback khi không có dữ liệu -->
         <div th:unless="${bestSellers != null and !bestSellers.isEmpty()}"
              class="text-center py-5 text-muted">
             <i class="fas fa-box-open fa-3x mb-3 d-block"></i>
@@ -253,9 +265,6 @@
     </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════
-     Sản phẩm Mới
-     ═══════════════════════════════════════════════════════ -->
 <section class="featured-products" style="background: #fafafa; padding-top: 40px;">
     <div class="container">
         <div class="d-flex align-items-center justify-content-between mb-4">
@@ -271,11 +280,9 @@
         <div class="row" th:if="${newProducts != null and !newProducts.isEmpty()}">
             <div class="col-6 col-md-3 mb-4" th:each="product : ${newProducts}">
                 <div class="card product-card h-100">
-                    <!-- Badge giảm giá -->
                     <div class="product-badge" th:if="${product.discountPercent != null}">
                         <span th:text="'-' + ${product.discountPercent} + '%'">-20%</span>
                     </div>
-                    <!-- Badge NEW -->
                     <div style="position:absolute;top:10px;left:10px;background:var(--primary-color);color:var(--secondary-color);padding:3px 9px;border-radius:20px;font-size:0.7rem;font-weight:700;z-index:1;">
                         NEW
                     </div>
@@ -312,7 +319,6 @@
             </div>
         </div>
 
-        <!-- Fallback -->
         <div th:unless="${newProducts != null and !newProducts.isEmpty()}"
              class="text-center py-5 text-muted">
             <i class="fas fa-box-open fa-3x mb-3 d-block"></i>
@@ -321,7 +327,6 @@
     </div>
 </section>
 
-<!-- Newsletter Section -->
 <section class="newsletter-section">
     <div class="container">
         <div class="row">
@@ -337,7 +342,6 @@
     </div>
 </section>
 
-<!-- Footer -->
 <footer style="background-color: var(--secondary-color); color: #ecf0f1; margin-top: 50px; padding: 30px 0;">
     <div class="container">
         <div class="row">

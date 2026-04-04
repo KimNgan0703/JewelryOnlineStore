@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Map;
@@ -206,10 +207,13 @@ public class AdminProductController {
     // API Sửa tên Danh mục
     @PutMapping("/categories/{id}")
     @ResponseBody
-    public ResponseEntity<?> updateCategory(@PathVariable Long id, @RequestParam String name) {
+    public ResponseEntity<?> updateCategory(@PathVariable Long id,
+                                            @RequestParam("name") String name,
+                                            @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            // Gọi service để cập nhật (Nếu service chưa có, hãy xem Bước 2 bên dưới)
-            categoryService.updateCategoryName(id, name);
+            // LƯU Ý QUAN TRỌNG: Bạn cần mở file CategoryService.java ra
+            // và sửa lại hàm này để nó nhận thêm biến 'image' và tiến hành upload ảnh nhé!
+            categoryService.updateCategory(id, name, image);
             return ResponseEntity.ok(Map.of("message", "Cập nhật danh mục thành công!"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
@@ -230,12 +234,13 @@ public class AdminProductController {
 
     @PostMapping("/quick-add/category")
     @ResponseBody
-    public ResponseEntity<?> quickAddCategory(@RequestParam("name") String name) {
+    public ResponseEntity<?> quickAddCategory(@RequestParam("name") String name,
+                                              @RequestParam(value = "image", required = false) MultipartFile image) {
         try {
-            var newCategory = categoryService.createCategory(name);
+            // Tương tự, cập nhật service để nhận file ảnh và upload (giống lúc làm Banner)
+            var newCategory = categoryService.createCategory(name, image);
             return ResponseEntity.ok(Map.of("id", newCategory.getId(), "name", newCategory.getName()));
         } catch (Exception e) {
-            // Đã bỏ chữ "Lỗi: " đi để giao diện hiện thông báo mượt hơn
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }

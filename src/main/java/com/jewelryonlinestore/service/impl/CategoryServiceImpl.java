@@ -3,10 +3,12 @@ package com.jewelryonlinestore.service.impl;
 import com.jewelryonlinestore.entity.Category;
 import com.jewelryonlinestore.repository.CategoryRepository;
 import com.jewelryonlinestore.service.CategoryService;
+import com.jewelryonlinestore.service.FileUploadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.Normalizer;
 import java.util.List;
@@ -22,6 +24,7 @@ public class CategoryServiceImpl implements CategoryService {
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
 
     private final CategoryRepository categoryRepository;
+    private final FileUploadService fileUploadService;
 
     @Override
     @Transactional(readOnly = true)
@@ -47,20 +50,34 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("Category not found: " + slug));
     }
+
     @Override
     @Transactional
-    public Category updateCategoryName(Long id, String name) {
+    public Category updateCategory(Long id, String name, MultipartFile image) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy danh mục"));
-        category.setName(name);
-        // Nếu bạn muốn tự động tạo lại URL thân thiện (slug), có thể set lại slug ở đây
+
+        String cleanName = name == null ? "" : name.trim();
+        if (cleanName.isEmpty()) {
+            throw new IllegalArgumentException("Tên danh mục không được để trống");
+        }
+
+        category.setName(cleanName);
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = fileUploadService.upload(image, "categories");
+            category.setImageUrl(imageUrl);
+        }
         return categoryRepository.save(category);
     }
+
     // ── Hàm Thêm Nhanh (Đã sửa lỗi thiếu Slug) ─────────────────
     @Override
     @Transactional
-    public Category createCategory(String name) {
-        String cleanName = name.trim();
+    public Category createCategory(String name, MultipartFile image) {
+        String cleanName = name == null ? "" : name.trim();
+        if (cleanName.isEmpty()) {
+            throw new IllegalArgumentException("Tên danh mục không được để trống");
+        }
 
         // 1. Kiểm tra trùng lặp
         if (categoryRepository.existsByNameIgnoreCase(cleanName)) {
@@ -73,8 +90,14 @@ public class CategoryServiceImpl implements CategoryService {
         category.setSlug(generateUniqueSlug(cleanName));
         category.setActive(true);
 
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = fileUploadService.upload(image, "categories");
+            category.setImageUrl(imageUrl);
+        }
+
         return categoryRepository.save(category);
     }
+
     @Override
     @Transactional
     public void deleteCategory(Long id) {
@@ -89,6 +112,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new IllegalStateException("Không thể xóa! Đang có sản phẩm thuộc danh mục này. Vui lòng chuyển sản phẩm sang danh mục khác trước khi xóa.");
         }
     }
+
     // ── Helper: Logic chuyển đổi chuỗi thành Slug ─────────────────
     private String generateUniqueSlug(String input) {
         // 1. Chuyển tiếng Việt có dấu thành không dấu
