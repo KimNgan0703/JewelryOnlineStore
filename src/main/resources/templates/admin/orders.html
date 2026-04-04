@@ -6,29 +6,28 @@
 <body>
 <div id="admin-content">
     <style>
-        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        :root { --primary-color: #6f5959; --secondary-color: #3d3434; --border-color: #e4d9d9; --text-muted: #766c6c; }
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .toolbar { display: flex; gap: 10px; margin-bottom: 20px; }
-        .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        .table-container { background: white; border-radius: 14px; box-shadow: 0 14px 30px -22px rgba(35, 24, 24, 0.25); overflow: hidden; border: 1px solid var(--border-color); }
         .table { margin-bottom: 0; }
-        .table thead { background-color: var(--secondary-color); color: white; }
-        .table-hover tbody tr:hover { background-color: #f1ede1; }
-        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
-        .status-pending { background-color: #fef5e7; color: #d68910; }
-        .status-processing { background-color: #ebf5fb; color: #2980b9; }
-        .status-preparing { background-color: #e8ebf8; color: #4a23bd; }
-        .status-shipping { background-color: #e8f8f5; color: #0e6251; }
-        .status-delivered { background-color: #eafaf1; color: #186a3b; }
-        .status-cancelled { background-color: #fadbd8; color: #922b21; }
-        .btn-view { background-color: var(--primary-color); border-color: var(--primary-color); color: var(--secondary-color); }
-        .btn-view:hover { background-color: #c09b2d; border-color: #c09b2d; }
+        .table thead { background-color: #f3f3f3; color: var(--secondary-color); }
+        .table-hover tbody tr:hover { background-color: #fbf6f6; }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+        .status-pending { background-color: #fdf2e2; color: #a36422; }
+        .status-processing { background-color: #ebeef9; color: #455896; }
+        .status-preparing { background-color: #ece7fb; color: #5e43ab; }
+        .status-shipping { background-color: #e4f0ec; color: #366958; }
+        .status-delivered { background-color: #e6f3e8; color: #2d6a3e; }
+        .status-cancelled { background-color: #fce7e5; color: #9e2f2f; }
+        .amount-highlight { color: var(--primary-color); }
     </style>
 
     <div style="padding: 10px 0; min-height: 100vh;">
         <div class="page-header">
             <div>
-                <h1 style="color: var(--secondary-color); margin: 0;">Đơn Hàng</h1>
-                <p style="color: #7f8c8d; margin: 5px 0 0 0;">Quản lý và theo dõi đơn hàng của khách</p>
+                <h1 style="color: var(--secondary-color); margin: 0; font-weight: 800;">Đơn Hàng</h1>
+                <p style="color: var(--text-muted); margin: 5px 0 0 0;">Quản lý và theo dõi đơn hàng của khách</p>
             </div>
         </div>
 
@@ -80,7 +79,7 @@
                         </div>
                     </td>
 
-                    <td><strong style="color: var(--primary-color);" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">$199.99</strong></td>
+                    <td><strong class="amount-highlight" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">$199.99</strong></td>
                     <td class="text-center" th:text="${order.itemCount}">3</td>
 
                     <td>

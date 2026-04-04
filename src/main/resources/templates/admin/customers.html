@@ -5,11 +5,21 @@
 </head>
 <body>
 <div id="admin-content">
-    <div class="p-4 bg-light" style="min-height: 100vh; border-radius: 8px;">
+    <style>
+        :root { --primary-color: #6f5959; --secondary-color: #3d3434; --text-muted: #766c6c; --border-color: #e4d9d9; }
+        .customers-shell { min-height: 100vh; border-radius: 14px; }
+        .customers-title { color: var(--secondary-color); font-weight: 800; }
+        .customers-subtitle { color: var(--text-muted); }
+        .customers-table { background: #fff; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 14px 30px -22px rgba(35, 24, 24, 0.25); }
+        .customers-table thead { background: #f3f3f3; color: var(--secondary-color); }
+        .detail-card { border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 14px 30px -22px rgba(35, 24, 24, 0.25); }
+    </style>
+
+    <div class="p-4 customers-shell">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h1 class="h3 mb-0">Customers</h1>
-                <div class="text-muted small">Total: <span th:text="${totalItems}">0</span></div>
+                <h1 class="h3 mb-0 customers-title">Customers</h1>
+                <div class="customers-subtitle small">Total: <span th:text="${totalItems}">0</span></div>
             </div>
         </div>
 
@@ -29,9 +39,9 @@
                 <a th:href="@{/admin/customers}" class="btn btn-outline-secondary" title="Tải lại / Bỏ lọc"><i class="fas fa-redo"></i></a>
             </div>
         </form>
-        <div class="table-responsive bg-white rounded shadow-sm mb-3">
+        <div class="table-responsive customers-table mb-3">
             <table class="table table-hover mb-0 align-middle">
-                <thead class="table-dark">
+                <thead>
                 <tr>
                     <th>Customer</th>
                     <th>Email</th>
@@ -56,7 +66,7 @@
             </table>
         </div>
 
-        <div class="card" th:if="${isDetail != null and isDetail}">
+        <div class="card detail-card" th:if="${isDetail != null and isDetail}">
             <div class="card-body">
                 <h5 class="card-title">Customer Detail</h5>
                 <div><strong>Name:</strong> <span th:text="${customer.fullName}">Name</span></div>

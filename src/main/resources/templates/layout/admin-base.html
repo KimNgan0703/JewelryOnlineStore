@@ -6,36 +6,47 @@
     <title th:text="${pageTitle} ?: 'Admin Dashboard'">Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
-            --accent-color: #e74c3c;
+            --primary-pink: #f7dada;
+            --primary-color: #6f5959;
+            --dark-charcoal: #3d3434;
+            --soft-gray: #f9f9f9;
+            --surface-color: #ffffff;
+            --surface-muted: #f3f3f3;
+            --medium-gray: #766c6c;
+            --border-color: #e4d9d9;
             --sidebar-width: 250px;
+            --shadow-soft: 0 14px 30px -22px rgba(35, 24, 24, 0.25);
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Manrope', sans-serif;
             display: flex;
             min-height: 100vh;
             margin: 0;
+            color: var(--dark-charcoal);
+            background-color: var(--soft-gray);
         }
         .sidebar {
             width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);
+            background: var(--surface-color);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
-            color: #ecf0f1;
+            color: var(--dark-charcoal);
             padding-top: 20px;
+            border-right: 1px solid var(--border-color);
         }
         .sidebar-brand {
             padding: 0 20px 30px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-color);
             margin-bottom: 30px;
             font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
+            font-weight: 600;
+            color: var(--dark-charcoal);
         }
+        .sidebar-brand i { color: var(--primary-color); }
         .sidebar-menu {
             list-style: none;
             padding: 0;
@@ -47,15 +58,16 @@
         .sidebar-menu a {
             display: block;
             padding: 12px 20px;
-            color: #ecf0f1;
+            color: var(--dark-charcoal);
             text-decoration: none;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             border-left: 3px solid transparent;
+            font-weight: 600;
         }
         .sidebar-menu a:hover,
         .sidebar-menu a.active {
-            background-color: rgba(212, 175, 55, 0.1);
-            color: var(--primary-color);
+            background-color: var(--primary-pink);
+            color: var(--dark-charcoal);
             border-left-color: var(--primary-color);
             padding-left: 25px;
         }
@@ -67,9 +79,9 @@
             min-height: 100vh;
         }
         .topbar {
-            background: white;
+            background: var(--surface-color);
             padding: 15px 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -81,7 +93,7 @@
             gap: 15px;
         }
         .btn-back-dashboard {
-            color: #7f8c8d;
+            color: var(--medium-gray);
             text-decoration: none;
             font-size: 0.9rem;
             display: flex;
@@ -90,15 +102,15 @@
             transition: color 0.2s ease;
         }
         .btn-back-dashboard:hover {
-            color: var(--primary-color);
+            color: var(--dark-charcoal);
         }
         .topbar-title {
             font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--secondary-color);
+            font-weight: 700;
+            color: var(--dark-charcoal);
             margin: 0;
             padding-left: 15px;
-            border-left: 2px solid #eee;
+            border-left: 2px solid var(--border-color);
         }
         .topbar-user {
             display: flex;
@@ -106,17 +118,89 @@
             gap: 15px;
         }
         .topbar-user-dropdown a, .topbar-user-dropdown button {
-            color: var(--secondary-color);
+            color: var(--dark-charcoal);
             text-decoration: none;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-weight: 500;
+            font-weight: 600;
+        }
+        .dropdown-menu {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+        .dropdown-item:active,
+        .dropdown-item:focus,
+        .dropdown-item:hover {
+            background-color: var(--primary-pink);
+            color: var(--dark-charcoal);
         }
         .page-content {
             padding: 25px;
             flex: 1;
-            background-color: #f4f6f9;
+            background: radial-gradient(circle at top right, #f7dada 0%, var(--soft-gray) 35%);
+        }
+
+        .form-control,
+        .form-select {
+            border-color: #dccfcf;
+            border-radius: 10px;
+        }
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(111, 89, 89, 0.15);
+        }
+        .btn-dark,
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+        .btn-dark:hover,
+        .btn-primary:hover {
+            background-color: #5f4b4b;
+            border-color: #5f4b4b;
+        }
+        .btn-outline-secondary {
+            border-color: #ccbebe;
+            color: #6b5f5f;
+        }
+        .btn-outline-secondary:hover {
+            background-color: var(--surface-muted);
+            border-color: #bdaaaa;
+            color: var(--dark-charcoal);
+        }
+        .table-dark,
+        .table-dark > th,
+        .table-dark > td,
+        .table thead.table-dark th {
+            background-color: var(--surface-muted) !important;
+            color: var(--dark-charcoal) !important;
+            border-color: #eadfdf !important;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #fbf6f6;
+        }
+        .card,
+        .table-responsive {
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-soft);
+            background: var(--surface-color);
+        }
+        .pagination .page-link {
+            color: #6b5f5f;
+            border-color: #dbcfcf;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+        .badge.bg-secondary {
+            background-color: #a89797 !important;
         }
     </style>
 </head>
@@ -136,7 +220,7 @@
         <li><a href="/admin/reviews"><i class="fas fa-star"></i> Reviews</a></li>
         <li><a href="/admin/content/banners"><i class="fas fa-file"></i> Content</a></li>
 
-        <li><hr style="margin: 10px 0; border-color: rgba(255, 255, 255, 0.1);"></li>
+        <li><hr style="margin: 10px 0; border-color: var(--border-color);"></li>
 
         <li>
             <form th:action="@{/auth/logout}" method="post" class="m-0 p-0">
@@ -195,9 +279,8 @@
             link.classList.remove('active');
             const href = link.getAttribute('href');
 
-            if (href === '#') return; // Bỏ qua link của nút dropdown và logout
+            if (href === '#') return;
 
-            // Logic bắt menu chính xác, không bị dính chùm
             if (currentPath === href) {
                 link.classList.add('active');
             } else if (href === '/admin/products' && currentPath.startsWith('/admin/products') && !currentPath.includes('categories')) {

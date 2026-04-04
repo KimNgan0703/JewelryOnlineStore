@@ -6,20 +6,52 @@
     <title>My Account - Jewelry Online Store</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/customer-theme.css}">
     <style>
         :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
+            --primary-color: #6f5959;
+            --primary-container: #f7dada;
+            --on-primary-container: #745e5e;
+            --primary-fixed: #f9dcdc;
+            --on-primary-fixed: #271718;
+            --secondary-color: #1a1c1c;
+            --surface-color: #f9f9f9;
+            --surface-low: #f3f3f3;
+            --surface-card: #ffffff;
+            --outline-variant: #d2c3c3;
+            --on-surface-variant: #4f4444;
+        }
+        body {
+            background: var(--surface-color);
+            color: var(--secondary-color);
+            font-family: 'Be Vietnam Pro', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6,
+        .content-title,
+        .sidebar-menu,
+        .btn {
+            font-family: 'Manrope', sans-serif;
+        }
+        .page-title {
+            color: var(--secondary-color);
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+        .account-shell {
+            max-width: 1200px;
         }
         .account-sidebar,
         .account-content {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: var(--surface-card);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(26, 28, 28, 0.06);
         }
         .account-sidebar {
             padding: 0;
             overflow: hidden;
+            border: 1px solid rgba(210, 195, 195, 0.4);
         }
         .sidebar-menu {
             list-style: none;
@@ -32,49 +64,139 @@
         .sidebar-menu li:last-child {
             border-bottom: none;
         }
-        .sidebar-menu a,
+        .sidebar-menu a.account-tab,
         .sidebar-menu button.nav-link {
             display: block;
             width: 100%;
             text-align: left;
-            padding: 14px 18px;
-            color: var(--secondary-color);
-            text-decoration: none;
-            border-left: 3px solid transparent;
-            border-radius: 0;
-        }
-        .sidebar-menu a:hover,
-        .sidebar-menu a.active {
-            background-color: #f8f9fa;
+            padding: 14px 16px;
             color: var(--primary-color);
-            border-left-color: var(--primary-color);
+            text-decoration: none;
+            border-left: 0;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .sidebar-menu a.account-tab {
+            margin: 6px 10px;
+            width: calc(100% - 20px);
+        }
+        .sidebar-menu a.account-tab:hover {
+            background-color: #fbe9e9;
+            color: var(--on-primary-container);
+        }
+        .sidebar-menu a.account-tab.active {
+            background-color: var(--primary-container) !important;
+            color: var(--on-primary-container) !important;
+            font-weight: 700;
+            box-shadow: inset 0 0 0 1px rgba(111, 89, 89, 0.08);
+        }
+        .sidebar-menu a.account-tab.active i,
+        .sidebar-menu a.account-tab:hover i {
+            color: inherit !important;
+        }
+        .sidebar-menu button.nav-link:hover {
+            background-color: #fff3f3;
+            color: #ba1a1a;
         }
         .account-content {
-            padding: 24px;
+            padding: 28px;
+            border: 1px solid rgba(210, 195, 195, 0.35);
         }
         .content-title {
             font-size: 1.25rem;
             font-weight: 700;
             color: var(--secondary-color);
             margin-bottom: 20px;
+            letter-spacing: -0.01em;
+        }
+        .account-content .form-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+            color: #817474;
+            margin-bottom: 6px;
+        }
+        .account-content .form-control,
+        .account-content .form-select {
+            border: 0;
+            border-bottom: 1px solid rgba(210, 195, 195, 0.6);
+            border-radius: 0;
+            background-color: transparent;
+            padding-left: 0;
+            padding-right: 0;
+            color: var(--secondary-color);
+        }
+        .account-content .form-control:focus,
+        .account-content .form-select:focus {
+            border-bottom-color: var(--primary-color);
+            box-shadow: none;
+            background-color: transparent;
+        }
+        .account-content .form-control[readonly] {
+            color: #817474;
+            cursor: not-allowed;
+        }
+        .account-content .btn-warning {
+            background-color: var(--on-primary-fixed);
+            border-color: var(--on-primary-fixed);
+            color: var(--primary-fixed);
+            font-weight: 700;
+            padding-left: 1.2rem;
+            padding-right: 1.2rem;
+        }
+        .account-content .btn-warning:hover {
+            background-color: #3c2526;
+            border-color: #3c2526;
+            color: var(--primary-fixed);
+        }
+        .account-content .btn-outline-secondary,
+        .account-content .btn-outline-primary,
+        .account-content .btn-outline-danger {
+            border-color: rgba(129, 116, 116, 0.35);
+            color: var(--primary-color);
+        }
+        .account-content .btn-outline-danger {
+            color: #ba1a1a;
+            border-color: rgba(186, 26, 26, 0.35);
         }
         .address-card {
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 12px;
+            border: 1px solid rgba(210, 195, 195, 0.5);
+            border-radius: 10px;
+            padding: 14px;
             margin-bottom: 12px;
+            background: var(--surface-card);
+            transition: all 0.2s ease;
+        }
+        .address-card:hover {
+            box-shadow: 0 8px 24px rgba(26, 28, 28, 0.06);
         }
         .address-card.default {
-            border-color: var(--primary-color);
-            background: #fcfbf6;
+            border-left: 4px solid var(--primary-color);
+            background: #fff7f7;
+        }
+        .badge.bg-warning {
+            background-color: var(--primary-container) !important;
+            color: var(--on-primary-fixed) !important;
+        }
+        #accountMessage.alert-success {
+            background-color: #e7f4ea;
+            border-color: #bfdcc5;
+            color: #1f5f2f;
+        }
+        #accountMessage.alert-danger {
+            background-color: #ffefee;
+            border-color: #f3c3bf;
+            color: #8f1d13;
         }
     </style>
 </head>
 <body>
 <div th:replace="~{layout/customer-header :: customerHeader}"></div>
 
-<div class="container my-5">
-    <h1 class="mb-4" style="color: var(--secondary-color);">My Account</h1>
+<div class="container account-shell my-5">
+    <h1 class="mb-4 page-title">My Account</h1>
 
     <div id="accountMessage" class="alert d-none" role="alert"></div>
 

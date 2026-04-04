@@ -1,0 +1,184 @@
+:root {
+    --primary-pink: #f7dada;
+    --dark-charcoal: #2d2d2d;
+    --soft-gray: #f8f9fa;
+    --medium-gray: #717171;
+    --border-color: #eee;
+    --accent-gold: #d4af37;
+
+    /* Backward-compatible tokens for existing templates */
+    --primary-color: var(--primary-pink);
+    --secondary-color: var(--dark-charcoal);
+}
+
+body {
+    font-family: 'Manrope', sans-serif;
+    color: var(--dark-charcoal);
+    background-color: #fff;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--dark-charcoal);
+}
+
+.card,
+.box,
+.card-box,
+.account-sidebar,
+.account-content,
+.cart-table,
+.cart-summary,
+.orders-container,
+.order-card,
+.sidebar,
+.products-toolbar,
+.product-card,
+.wishlist-card,
+.policy-content,
+.policy-nav,
+.empty-state,
+.register-container {
+    border-radius: 0;
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
+.btn {
+    border-radius: 0;
+}
+
+.btn-primary,
+.btn-warning,
+.btn-dark,
+.btn-register,
+.btn-apply {
+    background-color: var(--dark-charcoal) !important;
+    border-color: var(--dark-charcoal) !important;
+    color: #fff !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.btn-primary:hover,
+.btn-warning:hover,
+.btn-dark:hover,
+.btn-register:hover,
+.btn-apply:hover {
+    background-color: #000 !important;
+    border-color: #000 !important;
+}
+
+.btn-outline-secondary,
+.btn-outline-dark,
+.btn-outline-warning {
+    border-color: var(--dark-charcoal) !important;
+    color: var(--dark-charcoal) !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-dark:hover,
+.btn-outline-warning:hover {
+    background-color: var(--dark-charcoal) !important;
+    color: #fff !important;
+}
+
+.btn-view-home {
+    background-color: var(--soft-gray) !important;
+    border: none !important;
+    color: var(--dark-charcoal) !important;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.btn-view-home:hover,
+.btn-view-home:focus,
+.btn-view-home:focus-visible,
+.btn-view-home:active,
+.btn-view-home.active {
+    background-color: var(--primary-pink) !important;
+    border-color: var(--primary-pink) !important;
+    color: var(--dark-charcoal) !important;
+    box-shadow: none !important;
+}
+
+.form-control,
+.form-select {
+    border-radius: 0;
+    border-color: #ddd;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+    border-color: #cfcfcf;
+    box-shadow: 0 0 0 0.2rem rgba(45, 45, 45, 0.12);
+}
+
+.form-check-input:checked {
+    background-color: var(--dark-charcoal);
+    border-color: var(--dark-charcoal);
+}
+
+.price,
+.product-price,
+.item-price {
+    color: var(--dark-charcoal) !important;
+}
+
+.policy-header,
+.hero-like,
+.newsletter-like {
+    background: var(--primary-pink) !important;
+    color: var(--dark-charcoal) !important;
+}
+
+.policy-nav a:hover,
+.policy-nav a.active,
+.sidebar-menu a:hover,
+.sidebar-menu a.active,
+.sidebar-menu button.nav-link:hover {
+    background-color: var(--soft-gray) !important;
+    color: var(--dark-charcoal) !important;
+    border-left-color: var(--dark-charcoal) !important;
+}
+
+.order-status,
+.status-badge {
+    border-radius: 0;
+}
+
+.pagination .page-link {
+    color: var(--dark-charcoal);
+    border-radius: 0 !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--dark-charcoal);
+    border-color: var(--dark-charcoal);
+}
+
+/* Header fragment uses inline styles, so enforce a matching home-like palette */
+header a,
+header .nav-link,
+header .dropdown-item,
+header button.dropdown-item {
+    color: var(--dark-charcoal) !important;
+}
+
+header .dropdown-menu {
+    border-radius: 0;
+    border-color: var(--border-color);
+}
+
+header i.fa-gem {
+    color: #000 !important;
+}

@@ -7,34 +7,81 @@
 <div id="admin-content">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
-        .stat-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 4px solid var(--primary-color); }
-        .stat-value { font-size: 2.2rem; font-weight: bold; color: var(--primary-color); }
-        .stat-label { color: #7f8c8d; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .chart-container { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .chart-title { font-weight: bold; color: var(--secondary-color); margin-bottom: 20px; }
-        .table-container { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; padding-bottom: 10px; }
+        :root {
+            --primary-color: #6f5959;
+            --secondary-color: #3d3434;
+            --bg-color: #f9f9f9;
+            --surface-color: #ffffff;
+            --surface-muted: #f3f3f3;
+            --surface-strong: #ebe7e7;
+            --border-color: #e4d9d9;
+            --text-muted: #766c6c;
+            --danger-color: #ba1a1a;
+            --shadow-soft: 0 14px 30px -22px rgba(35, 24, 24, 0.25);
+        }
+        .dashboard-shell { padding: 14px 0; background: radial-gradient(circle at top right, #f7dada 0%, var(--bg-color) 40%); min-height: 100vh; }
+        .dashboard-title { color: var(--secondary-color); letter-spacing: -0.4px; font-weight: 800; }
+        .period-select {
+            border-radius: 999px;
+            font-weight: 700;
+            width: 140px;
+            border: 1px solid #d7c7c7;
+            cursor: pointer;
+            color: var(--secondary-color);
+            background-color: #fff;
+            box-shadow: inset 0 0 0 2px #f4eded;
+        }
+        .period-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 0.2rem rgba(111, 89, 89, 0.15); }
+        .stat-card {
+            background: linear-gradient(180deg, var(--surface-color) 0%, #fefcfc 100%);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 68px;
+            height: 68px;
+            border-radius: 0 14px 0 100%;
+            background: rgba(247, 218, 218, 0.45);
+        }
+        .stat-value { font-size: 2.1rem; font-weight: 800; color: var(--secondary-color); position: relative; z-index: 1; }
+        .pending-value { color: var(--danger-color); }
+        .stat-label { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 6px; }
+        .chart-container { background: var(--surface-color); border-radius: 14px; padding: 20px; box-shadow: var(--shadow-soft); margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .chart-title { font-weight: 800; color: var(--secondary-color); margin-bottom: 20px; }
+        .table-container { background: var(--surface-color); border-radius: 14px; box-shadow: var(--shadow-soft); overflow: hidden; padding-bottom: 10px; border: 1px solid var(--border-color); }
+        .section-title { padding: 20px 20px 10px; font-weight: 800; color: var(--secondary-color); margin: 0; }
         .table { margin-bottom: 0; }
-        .table thead { background-color: var(--secondary-color); color: white; }
-        .table-hover tbody tr:hover { background-color: #f1ede1; }
-        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
-        .status-pending { background-color: #fef5e7; color: #d68910; }
-        .status-processing, .status-preparing { background-color: #ebf5fb; color: #2980b9; }
-        .status-shipping { background-color: #e8f8f5; color: #0e6251; }
-        .status-delivered { background-color: #eafaf1; color: #186a3b; }
-        .status-cancelled { background-color: #fadbd8; color: #e74c3c; }
+        .table thead { background-color: var(--surface-muted); color: var(--secondary-color); }
+        .table-hover tbody tr:hover { background-color: #fbf6f6; }
+        .table tbody tr td { border-color: #f0e8e8; }
+        .amount-highlight { color: var(--primary-color); }
+        .status-badge { display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+        .status-pending { background-color: #fdf2e2; color: #a36422; }
+        .status-processing, .status-preparing { background-color: #ebeef9; color: #455896; }
+        .status-shipping { background-color: #e4f0ec; color: #366958; }
+        .status-delivered { background-color: #e6f3e8; color: #2d6a3e; }
+        .status-cancelled { background-color: #fce7e5; color: #9e2f2f; }
     </style>
 
-    <div style="padding: 10px 0; background-color: #f4f6f9; min-height: 100vh;">
+    <div class="dashboard-shell">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h3 mb-0" style="color: var(--secondary-color);">Thống kê tổng quan</h1>
+                <h1 class="h3 mb-0 dashboard-title">Thống kê tổng quan</h1>
                 <p class="text-muted mb-0">Hiệu suất cửa hàng theo mốc thời gian.</p>
             </div>
             <form method="get" th:action="@{/admin/dashboard}" class="d-flex align-items-center">
                 <label for="period" class="me-2 fw-bold text-muted">Thời gian:</label>
-                <select id="period" name="period" class="form-select shadow-sm" style="border-radius: 20px; font-weight: bold; width: 140px; border: 2px solid var(--primary-color); cursor: pointer; color: var(--secondary-color);" onchange="this.form.submit()">
+                <select id="period" name="period" class="form-select shadow-sm period-select" onchange="this.form.submit()">
                     <option value="day" th:selected="${period == 'day'}">Hôm nay</option>
                     <option value="week" th:selected="${period == 'week'}">Tuần này</option>
                     <option value="month" th:selected="${period == 'month'}">Tháng này</option>
@@ -65,7 +112,7 @@
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-label" th:text="'Chờ xử lý ' + ${periodLabel.toLowerCase()}">Đơn chờ xử lý</div>
-                    <div class="stat-value" style="color: #e74c3c;" th:text="${pendingOrders}">0</div>
+                    <div class="stat-value pending-value" th:text="${pendingOrders}">0</div>
                 </div>
             </div>
         </div>
@@ -88,7 +135,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="table-container table-responsive">
-                    <h5 style="padding: 20px 20px 10px; font-weight: bold; color: var(--secondary-color); margin: 0;">5 Đơn hàng mới nhất</h5>
+                    <h5 class="section-title">5 Đơn hàng mới nhất</h5>
                     <table class="table table-hover align-middle">
                         <thead>
                         <tr>
@@ -106,7 +153,7 @@
                         <tr th:each="order : ${recentOrders}">
                             <td class="ps-3"><strong th:text="${order.orderNumber}">ORD-001</strong></td>
                             <td th:text="${order.customer.fullName}">John Doe</td>
-                            <td><strong style="color: var(--primary-color);" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">199.99</strong></td>
+                            <td><strong class="amount-highlight" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">199.99</strong></td>
                             <td>
                                 <span th:classappend="'status-' + ${order.orderStatus.name().toLowerCase()}"
                                       class="status-badge" th:text="${order.orderStatus.label}">Pending</span>
@@ -134,13 +181,27 @@
                 datasets: [{
                     label: 'Doanh thu (VNĐ)',
                     data: salesData,
-                    backgroundColor: 'rgba(212, 175, 55, 0.8)',
-                    borderColor: '#d4af37',
+                    backgroundColor: 'rgba(188, 159, 159, 0.8)',
+                    borderColor: '#6f5959',
                     borderWidth: 1,
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#eee5e5' },
+                        ticks: { color: '#766c6c' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#766c6c' }
+                    }
+                }
+            }
         });
 
         // Status Chart
@@ -151,11 +212,21 @@
                 labels: ['Đã giao', 'Đang xử lý', 'Chờ xác nhận', 'Đang giao', 'Đã hủy'],
                 datasets: [{
                     data: statusData,
-                    backgroundColor: ['#27ae60', '#3498db', '#f39c12', '#0e6251', '#e74c3c'],
-                    borderWidth: 0
+                    backgroundColor: ['#87b897', '#8ca0cc', '#e3bd82', '#7a9a90', '#d08f8f'],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { color: '#5f5252', boxWidth: 12, usePointStyle: true }
+                    }
+                }
+            }
         });
     </script>
 </div>
