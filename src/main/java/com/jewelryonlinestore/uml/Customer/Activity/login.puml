@@ -1,0 +1,47 @@
+@startuml
+title Activity Diagram - Use Case: Đăng nhập
+
+|Người dùng (Actor)|
+start
+:Nhấn nút "Đăng nhập";
+
+|Hệ thống|
+:Hiển thị form đăng nhập (Email, Mật khẩu);
+
+|Người dùng (Actor)|
+switch (Lựa chọn hành động?)
+case ( Nhập Email & Mật khẩu )
+  :Nhập thông tin và nhấn "Đăng nhập";
+  |Hệ thống|
+  :Truy vấn DB kiểm tra Email;
+  if (Tồn tại & khớp mật khẩu BCrypt?) then (Sai)
+    :Hiển thị "Tên đăng nhập hoặc mật khẩu không đúng" (E1);
+    stop
+  else (Đúng)
+  endif
+case ( Đăng nhập bằng Google (A1) )
+  |Hệ thống|
+  :Chuyển hướng sang Google OAuth2;
+  :Xác thực và lấy thông tin Email;
+  :Truy vấn DB theo Email;
+case ( Quên mật khẩu (A2) )
+  |Hệ thống|
+  :Chuyển hướng sang chức năng Quên mật khẩu (UC C03);
+  stop
+endswitch
+
+|Hệ thống|
+if (Trạng thái tài khoản == ACTIVE?) then (Không)
+  :Hiển thị "Tài khoản của bạn đã bị vô hiệu hóa" (E2);
+  stop
+else (Có)
+  :Cấp JWT token / Lưu Session;
+  :Xác nhận vai trò tài khoản;
+  if (Vai trò là Admin?) then (Đúng)
+    :Chuyển hướng đến Dashboard quản trị;
+  else (Sai - Khách hàng)
+    :Chuyển hướng về Trang chủ;
+  endif
+endif
+stop
+@enduml

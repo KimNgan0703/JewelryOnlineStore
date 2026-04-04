@@ -64,7 +64,6 @@
             background: #fffbef;
         }
 
-        /* Đã cập nhật CSS cho icon và ảnh danh mục */
         .category-icon {
             font-size: 3rem;
             color: var(--primary-color);
@@ -141,9 +140,10 @@
 
 <section class="category-section">
     <div class="container">
-        <div class="row justify-content-center"
+        <div class="row row-cols-2 row-cols-md-5 justify-content-center"
              th:if="${categories != null and !categories.isEmpty()}">
-            <div class="col-6 col-md-3 mb-4" th:each="cat : ${categories}">
+
+            <div class="col mb-4" th:each="cat : ${categories}">
                 <a th:href="@{/products(categoryId=${cat.id})}"
                    class="text-decoration-none text-dark">
                     <div class="category-card">
@@ -166,8 +166,8 @@
             </div>
         </div>
 
-        <div class="row" th:unless="${categories != null and !categories.isEmpty()}">
-            <div class="col-md-3">
+        <div class="row row-cols-2 row-cols-md-5 justify-content-center" th:unless="${categories != null and !categories.isEmpty()}">
+            <div class="col mb-4">
                 <a href="/products?categoryId=1" class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon"><i class="fas fa-ring"></i></div>
@@ -175,7 +175,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-md-3">
+            <div class="col mb-4">
                 <a href="/products?categoryId=2" class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon"><i class="fas fa-crown"></i></div>
@@ -183,7 +183,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-md-3">
+            <div class="col mb-4">
                 <a href="/products?categoryId=3" class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon"><i class="fas fa-circle-dot"></i></div>
@@ -191,7 +191,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-md-3">
+            <div class="col mb-4">
                 <a href="/products?categoryId=4" class="text-decoration-none text-dark">
                     <div class="category-card">
                         <div class="category-icon"><i class="fas fa-gem"></i></div>

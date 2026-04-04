@@ -1,0 +1,47 @@
+@startuml
+title Activity Diagram - Use Case: Xem chi tiết sản phẩm
+
+|Khách hàng|
+start
+:Nhấp vào một sản phẩm từ danh sách;
+
+|Hệ thống|
+:Truy vấn CSDL (bảng products);
+if (Tồn tại & is_active == true?) then (Không - E1)
+  :Chuyển hướng về trang 404;
+  stop
+else (Có)
+  :Truy vấn hình ảnh (product_images);
+  :Truy vấn biến thể/size (product_variants);
+  :Truy vấn đánh giá & tính trung bình (reviews);
+  :Tổng hợp thông tin (Tên, Giá, Phân loại...);
+  :Hiển thị trang Chi tiết sản phẩm;
+endif
+
+|Khách hàng|
+:Xem thông tin chi tiết;
+:Chọn biến thể (Kích cỡ/Size);
+
+switch (Hành động?)
+case ( Thêm vào giỏ hàng )
+  if (Đã chọn kích cỡ chưa?) then (Chưa - E2)
+    |Hệ thống|
+    :Hiển thị lỗi "Vui lòng chọn kích cỡ";
+  else (Đã chọn)
+    |Hệ thống|
+    :Thực hiện thêm vào Giỏ hàng;
+    :Hiển thị thông báo thành công;
+  endif
+case ( Thêm vào danh sách yêu thích )
+  |Hệ thống|
+  if (Đã đăng nhập?) then (Chưa - A1)
+    :Yêu cầu đăng nhập / Chuyển hướng Form Login;
+  else (Đã đăng nhập)
+    :Thêm vào bảng wishlists;
+    :Hiển thị thông báo thành công;
+  endif
+endswitch
+
+|Khách hàng|
+stop
+@enduml

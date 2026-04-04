@@ -1,0 +1,38 @@
+@startuml
+title Object Diagram - Trạng thái Quản lý thông tin cá nhân
+
+object "u1 : User" as user {
+  id = 1005
+  email = "binh.jewelry@gmail.com"
+  passwordHash = "$2a$12$NewHash..."
+}
+
+object "c1 : Customer" as customer {
+  id = 2005
+  fullName = "Nguyễn Văn Bình"
+  gender = "Nam"
+  dob = "1999-05-15"
+  phone = "0901234567"
+}
+
+object "addr1 : Address (Mặc định)" as addr1 {
+  id = 3001
+  recipientName = "Nguyễn Văn Bình"
+  streetAddress = "123 Lê Lợi"
+  isDefault = true
+  isDeleted = false
+}
+
+object "addr2 : Address (Đã xóa)" as addr2 {
+  id = 3002
+  recipientName = "Bình Công Ty"
+  streetAddress = "456 Nguyễn Huệ"
+  isDefault = false
+  isDeleted = true
+}
+
+c1 --> user : user_id = 1005
+addr1 --> c1 : customer_id = 2005
+addr2 --> c1 : customer_id = 2005
+
+@enduml

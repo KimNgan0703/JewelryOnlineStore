@@ -1,0 +1,38 @@
+@startuml
+title Object Diagram - Sau khi hoàn tất đăng ký (Post-Conditions)
+
+object "u1 : User" as u1 {
+  id = 1001
+  email = "binh.jewelry@gmail.com"
+  passwordHash = "$2a$12$xG1... (BCrypt)"
+  status = AccountStatus.ACTIVE
+  provider = AuthProvider.LOCAL
+}
+
+object "vt1 : VerificationToken" as vt1 {
+  id = 505
+  token = "abc123xyz-random-uuid"
+  expiryDate = "2026-04-05T10:00:00"
+  isUsed = true
+}
+
+object "c1 : Customer" as c1 {
+  id = 2001
+  fullName = "Nguyễn Văn Bình"
+  gender = "Nam"
+  dob = "1999-05-15"
+  phone = "0901234567"
+}
+
+object "a1 : Address" as a1 {
+  id = 3001
+  street = "123 Lê Lợi, Quận 1"
+  city = "Hồ Chí Minh"
+  isDefault = true
+}
+
+vt1 --> u1 : user_id = 1001
+c1 --> u1 : user_id = 1001
+a1 --> c1 : customer_id = 2001
+
+@enduml

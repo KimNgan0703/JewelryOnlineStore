@@ -1,0 +1,34 @@
+@startuml
+title Activity Diagram - Use Case: Đánh giá sản phẩm
+
+|Khách hàng (Đã đăng nhập)|
+start
+:Mở chi tiết đơn hàng \n(Trạng thái: DELIVERED);
+:Nhấn "Đánh giá" tại một sản phẩm \nchưa được đánh giá;
+
+|Hệ thống|
+:Kiểm tra điều kiện (Đã mua & Chưa đánh giá);
+:Hiển thị form Đánh giá \n(Xếp hạng sao, Nhận xét, Tải ảnh);
+
+|Khách hàng (Đã đăng nhập)|
+repeat
+  :Nhập số sao (1-5);
+  :Nhập nội dung nhận xét (tuỳ chọn);
+  :Chọn hình ảnh tải lên (tuỳ chọn);
+  :Nhấn "Gửi đánh giá";
+
+  |Hệ thống|
+  :Kiểm tra dữ liệu đầu vào;
+  if (Đã chọn số sao chưa?) then (Chưa - E1)
+    :Hiển thị lỗi "Vui lòng chọn số sao đánh giá";
+  else (Đã chọn)
+    :Tải hình ảnh lên Cloudinary (nếu có);
+    :Lưu bản ghi vào bảng reviews \n(Trạng thái: PENDING / Chờ duyệt);
+    :Lưu hình ảnh vào bảng review_images;
+    :Hiển thị thông báo "Đánh giá của bạn\nđang chờ kiểm duyệt";
+    break
+  endif
+repeat while
+|Khách hàng (Đã đăng nhập)|
+stop
+@enduml

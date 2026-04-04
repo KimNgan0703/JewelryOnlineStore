@@ -1,0 +1,63 @@
+@startuml
+title Sequence Diagram - Use Case: Xem chi tiết sản phẩm
+actor "Khách hàng" as C
+participant "UI" as UI
+participant "ProductController" as Ctrl
+participant "ProductService" as Svc
+participant "Database" as DB
+
+== Tải trang chi tiết sản phẩm ==
+
+C -> UI: Nhấp vào sản phẩm
+UI -> Ctrl: GET /products/{id}
+Ctrl -> Svc: getProductDetailById(id)
+Svc -> DB: SELECT * FROM products WHERE id = ?
+
+alt Sản phẩm không tồn tại hoặc is_active = false (E1)
+    DB --> Svc: null
+    Svc --> Ctrl: throw ResourceNotFoundException
+    Ctrl --> UI: Redirect (/404)
+    UI --> C: Hiển thị trang 404
+else Hợp lệ (Main Flow)
+    DB --> Svc: Product Entity
+    Svc -> DB: Fetch ProductImages (ORDER BY sort_order)
+    Svc -> DB: Fetch ProductVariants
+    Svc -> DB: Fetch Reviews (WHERE is_approved = true)
+    Svc -> Svc: Map to ProductDetailResponse
+    Svc --> Ctrl: responseData
+    Ctrl --> UI: Render View(responseData)
+    UI --> C: Hiển thị trang chi tiết
+end
+
+== Tương tác của Khách hàng ==
+
+C -> UI: Chọn Kích cỡ (Size)
+
+alt Hành động: Thêm vào giỏ hàng
+    C -> UI: Nhấn "Thêm vào giỏ hàng"
+    UI -> Ctrl: POST /cart/add (productId, variantId, qty)
+    alt Chưa chọn kích cỡ (E2)
+        Ctrl --> UI: ValidationError
+        UI --> C: Hiển thị "Vui lòng chọn kích cỡ"
+    else Đã chọn kích cỡ
+        Ctrl -> DB: Cập nhật CartItem
+        Ctrl --> UI: Success
+        UI --> C: Báo thêm giỏ hàng thành công
+    end
+end
+
+alt Hành động: Thêm vào yêu thích
+    C -> UI: Nhấn "Thêm vào yêu thích"
+    UI -> Ctrl: POST /wishlist/add (productId)
+    Ctrl -> Ctrl: Kiểm tra Session/Security
+    alt Chưa đăng nhập (A1)
+        Ctrl --> UI: 401 Unauthorized
+        UI --> C: Yêu cầu đăng nhập
+    else Đã đăng nhập
+        Ctrl -> DB: INSERT INTO wishlists
+        Ctrl --> UI: Success
+        UI --> C: Báo thêm yêu thích thành công
+    end
+end
+
+@enduml

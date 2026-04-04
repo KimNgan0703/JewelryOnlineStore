@@ -1,0 +1,41 @@
+@startuml
+title Object Diagram - Kết quả tìm kiếm theo bộ lọc
+
+object "filter : ProductFilterRequest" as req {
+  categoryId = 5 (Nhẫn)
+  materialId = 2 (Vàng 18K)
+  gender = FEMALE
+  page = 0
+}
+
+object "p1 : Product" as p1 {
+  id = 101
+  name = "Nhẫn Kim Cương Hope"
+  basePrice = 15000000
+  isActive = true
+  isBestSeller = true
+}
+
+object "p2 : Product" as p2 {
+  id = 102
+  name = "Nhẫn Vàng Ý Classic"
+  basePrice = 8000000
+  isActive = true
+  isNew = true
+}
+
+object "cat : Category" as cat {
+  id = 5
+  name = "Nhẫn"
+}
+
+object "mat : Material" as mat {
+  id = 2
+  name = "Vàng 18K"
+}
+
+p1 -- cat
+p2 -- cat
+p1 -- mat
+p2 -- mat
+@enduml

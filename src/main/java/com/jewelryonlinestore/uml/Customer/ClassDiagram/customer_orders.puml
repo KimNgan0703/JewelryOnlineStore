@@ -1,0 +1,64 @@
+@startuml
+title Class Diagram - Use Case: Quản lý đơn hàng (Khách hàng)
+skinparam classAttributeIconSize 0
+
+class OrderController {
+  + getMyOrders(userId: Long): String
+  + getOrderDetail(orderId: Long): String
+  + cancelOrder(orderId: Long): String
+  + reorder(orderId: Long): String
+}
+
+class OrderService {
+  + getOrdersByUserId(userId: Long): List<OrderSummaryResponse>
+  + getOrderDetail(orderId: Long, userId: Long): OrderDetailResponse
+  + cancelOrder(orderId: Long, userId: Long): void
+  + processReorder(orderId: Long, userId: Long): void
+}
+
+class InventoryService {
+  + restoreStock(items: List<OrderItem>): void
+}
+
+class CartService {
+  + addItemsToCart(userId: Long, items: List<OrderItem>): void
+}
+
+class Order {
+  - id: Long
+  - orderNumber: String
+  - totalAmount: BigDecimal
+  - orderStatus: OrderStatus
+  - createdAt: LocalDateTime
+  + setOrderStatus(status: OrderStatus): void
+}
+
+class OrderItem {
+  - id: Long
+  - quantity: int
+  - price: BigDecimal
+}
+
+class ProductVariant {
+  - id: Long
+  - stockQuantity: int
+  - size: String
+  + addStock(qty: int): void
+}
+
+class OrderStatusHistory {
+  - id: Long
+  - status: OrderStatus
+  - changeTime: LocalDateTime
+}
+
+OrderController --> OrderService : uses
+OrderService --> InventoryService : delegates
+OrderService --> CartService : delegates
+OrderService ..> Order : queries/updates
+
+Order "1" *-- "1..*" OrderItem : contains
+Order "1" *-- "1..*" OrderStatusHistory : tracks
+OrderItem "N" --> "1" ProductVariant : references
+
+@enduml
