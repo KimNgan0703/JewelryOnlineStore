@@ -1,0 +1,75 @@
+@startuml
+title Class Diagram - Đăng Nhập Admin
+
+class AuthController {
+  + loginAdmin(request: LoginRequest): ResponseEntity<ApiResponse>
+}
+
+class LoginRequest {
+  - email: String
+  - password: String
+}
+
+class ApiResponse {
+  - status: int
+  - message: String
+  - data: Object
+}
+
+interface AuthService {
+  + authenticateAdmin(request: LoginRequest): String
+}
+
+class AuthServiceImpl {
+  - userRepository: UserRepository
+  - adminActionsLogRepo: AdminActionsLogRepository
+  - passwordEncoder: PasswordEncoder
+  - jwtUtils: JwtUtils
+  + authenticateAdmin(request: LoginRequest): String
+}
+
+interface UserRepository {
+  + findByEmail(email: String): Optional<User>
+}
+
+interface AdminActionsLogRepository {
+  + save(log: AdminActionsLog): AdminActionsLog
+}
+
+class User {
+  - id: Long
+  - email: String
+  - passwordHash: String
+  - role: Role
+  - status: Status
+}
+
+class AdminActionsLog {
+  - id: Long
+  - adminId: Long
+  - action: String
+  - timestamp: LocalDateTime
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+}
+
+AuthController --> LoginRequest : "nhận"
+AuthController --> ApiResponse : "trả về"
+AuthController --> AuthService : "gọi"
+AuthService <|.. AuthServiceImpl
+AuthServiceImpl --> UserRepository : "truy vấn"
+AuthServiceImpl --> AdminActionsLogRepository : "lưu lịch sử"
+UserRepository --> User : "trả về"
+AdminActionsLogRepository --> AdminActionsLog : "quản lý"
+User -> Role
+User -> Status
+
+@enduml

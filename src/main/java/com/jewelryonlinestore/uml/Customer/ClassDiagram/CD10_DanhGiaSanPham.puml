@@ -1,0 +1,60 @@
+@startuml
+title Class Diagram - Use Case: Đánh giá sản phẩm
+skinparam classAttributeIconSize 0
+
+class ReviewController {
+  + showReviewForm(orderItemId: Long): String
+  + submitReview(req: ReviewRequest): String
+}
+
+class ReviewService {
+  + isEligibleForReview(userId: Long, orderItemId: Long): boolean
+  + createReview(userId: Long, req: ReviewRequest, imageUrls: List<String>): Review
+}
+
+class FileUploadService {
+  + uploadImage(file: MultipartFile): String
+}
+
+class Review {
+  - id: Long
+  - rating: int
+  - comment: String
+  - isApproved: boolean
+  - createdAt: LocalDateTime
+}
+
+class ReviewImage {
+  - id: Long
+  - imageUrl: String
+}
+
+class Product {
+  - id: Long
+  - name: String
+  - averageRating: Double
+  - reviewCount: int
+}
+
+class User {
+  - id: Long
+  - email: String
+}
+
+class OrderItem {
+  - id: Long
+  - isReviewed: boolean
+}
+
+ReviewController --> ReviewService : uses
+ReviewController --> FileUploadService : uses
+
+ReviewService ..> Review : creates
+ReviewService ..> ReviewImage : creates
+ReviewService ..> OrderItem : updates status
+
+Review "1" *-- "0..*" ReviewImage : contains
+Review "N" -- "1" Product : belongs to
+Review "N" -- "1" User : written by
+OrderItem "1" -- "0..1" Review : linked to
+@enduml

@@ -1,0 +1,64 @@
+@startuml
+title Activity Diagram - Use Case: Quản lý sản phẩm
+
+|Admin|
+start
+:Nhấn vào mục "Quản lý sản phẩm" trên sidebar;
+
+|Hệ thống|
+:Truy vấn danh sách sản phẩm;
+:Hiển thị bảng danh sách \n(có phân trang & ô tìm kiếm);
+
+|Admin|
+switch (Thao tác?)
+case ( a. Tìm kiếm )
+  :Nhập Tên hoặc SKU;
+  |Hệ thống|
+  :Lọc và trả về danh sách phù hợp;
+case ( d. Ẩn/Xóa sản phẩm )
+  |Admin|
+  :Chọn sản phẩm & Nhấn "Ẩn/Xóa";
+  |Hệ thống|
+  :Cập nhật is_active = false;
+case ( e. Quản lý thuộc tính )
+  |Admin|
+  :Chuyển tab (Danh mục/Thương hiệu/Chất liệu);
+  :Thực hiện Thêm/Sửa/Xóa;
+  |Hệ thống|
+  :Cập nhật bảng categories / brands / materials;
+case ( b/c. Thêm hoặc Sửa sản phẩm )
+  |Admin|
+  :Điền thông tin chung (Tên, SKU, Mô tả, Giá, Thuộc tính);
+  :Thêm/Sửa biến thể (Size, Giá, Tồn kho);
+
+  if (Thêm hình ảnh bằng cách nào?) then (Tải file lên)
+    :Chọn file ảnh từ máy tính;
+  else (Nhập URL - A1)
+    :Nhập đường dẫn URL ảnh;
+  endif
+
+  :Nhấn "Lưu";
+
+  |Hệ thống|
+  :Kiểm tra Validation;
+  if (Thiếu trường bắt buộc?) then (Có - E2)
+    :Hiển thị thông báo lỗi tương ứng;
+    stop
+  else (Không)
+    :Kiểm tra tính duy nhất của SKU;
+    if (SKU trùng lặp?) then (Có - E1)
+      :Hiển thị "Mã SKU đã tồn tại";
+      stop
+    else (Không)
+      :Lưu thông tin vào bảng products;
+      :Lưu danh sách vào product_variants;
+      :Lưu hình ảnh vào product_images;
+      :Hiển thị thông báo thành công;
+    endif
+  endif
+endswitch
+
+|Hệ thống|
+:Tải lại danh sách;
+stop
+@enduml

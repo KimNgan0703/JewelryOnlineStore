@@ -1,0 +1,34 @@
+@startuml
+title Sequence Diagram - Phê duyệt đánh giá và Cập nhật chỉ số sản phẩm
+actor "Admin" as A
+participant "UI" as UI
+participant "AdminReviewController" as Ctrl
+participant "ReviewService" as Svc
+participant "ReviewRepository" as RevRepo
+participant "ProductRepository" as ProdRepo
+database "Database" as DB
+
+A -> UI: Chọn "Phê duyệt" tại đánh giá #505
+UI -> Ctrl: POST /admin/reviews/approve/505
+Ctrl -> Svc: updateStatus(505, APPROVED)
+
+Svc -> RevRepo: findById(505)
+RevRepo --> Svc: Review Entity (Product: #101)
+
+Svc -> RevRepo: save(Review with status APPROVED)
+RevRepo -> DB: UPDATE reviews SET status = 'APPROVED'
+
+== Quy trình cập nhật Rating sản phẩm ==
+Svc -> Svc: updateProductRatingStats(101)
+Svc -> RevRepo: countApprovedReviewsByProductId(101)
+RevRepo --> Svc: count = 11
+Svc -> RevRepo: averageRatingOfApprovedByProductId(101)
+RevRepo --> Svc: avg = 4.9
+
+Svc -> ProdRepo: updateStats(101, 4.9, 11)
+ProdRepo -> DB: UPDATE products SET average_rating = 4.9, review_count = 11
+
+Svc --> Ctrl: Thành công
+Ctrl --> UI: Redirect (/admin/reviews?success=true)
+UI --> A: Hiển thị thông báo "Đã duyệt và cập nhật chỉ số sản phẩm"
+@enduml

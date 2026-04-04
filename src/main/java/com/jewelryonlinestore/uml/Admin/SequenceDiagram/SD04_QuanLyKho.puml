@@ -1,0 +1,56 @@
+@startuml
+title Sequence Diagram - Use Case: Quản lý kho (Tải trang & Nhập kho)
+actor "Admin" as A
+participant "UI" as UI
+participant "AdminInventoryController" as Ctrl
+participant "InventoryService" as Svc
+participant "ProductVariantRepository" as VariantRepo
+participant "InventoryLogRepository" as LogRepo
+database "Database" as DB
+
+== Tải trang Quản lý kho ==
+A -> UI: Nhấn "Quản lý kho"
+UI -> Ctrl: GET /admin/inventory
+Ctrl -> Svc: getInventoryList()
+Svc -> VariantRepo: findAll()
+VariantRepo -> DB: SELECT * FROM product_variants
+DB --> VariantRepo: List<ProductVariant>
+VariantRepo --> Svc: variants
+
+Ctrl -> Svc: getLowStockAlerts()
+Svc -> VariantRepo: findLowStockVariants()
+VariantRepo -> DB: SELECT * WHERE stock <= threshold
+DB --> VariantRepo: List<LowStockVariants>
+VariantRepo --> Svc: alerts
+
+Svc --> Ctrl: Model (variants, alerts)
+Ctrl --> UI: Render View
+UI --> A: Hiển thị danh sách tồn kho & Cảnh báo
+
+== Thao tác Nhập kho ==
+A -> UI: Nhập form & Nhấn Xác nhận (Số lượng, Lý do...)
+UI -> Ctrl: POST /admin/inventory/adjust (InventoryAdjustRequest)
+
+alt Số lượng nhập <= 0 (E1)
+    Ctrl -> Ctrl: Validate Request
+    Ctrl --> UI: Trả về lỗi Validation
+    UI --> A: Hiển thị "Số lượng phải lớn hơn 0"
+else Dữ liệu hợp lệ (Main Flow)
+    Ctrl -> Svc: adjustStock(request, adminId)
+
+    Svc -> VariantRepo: findById(request.variantId)
+    VariantRepo --> Svc: ProductVariant Entity
+
+    Svc -> Svc: variant.stockQuantity += request.quantity
+    Svc -> VariantRepo: save(variant)
+    VariantRepo -> DB: UPDATE product_variants SET stock_quantity = ...
+
+    Svc -> Svc: Create new InventoryLog
+    Svc -> LogRepo: save(InventoryLog)
+    LogRepo -> DB: INSERT INTO inventory_log (qty, reason, note, user_id, variant_id)
+
+    Svc --> Ctrl: Thành công
+    Ctrl --> UI: Redirect (/admin/inventory?success=true)
+    UI --> A: Thông báo thành công & Tải lại dữ liệu mới
+end
+@enduml

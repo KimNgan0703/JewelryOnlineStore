@@ -1,0 +1,45 @@
+@startuml
+title Activity Diagram - Use Case: Quản lý đánh giá (Admin)
+
+|Admin|
+start
+:Nhấn "Quản lý đánh giá" trên sidebar;
+
+|Hệ thống|
+:Truy vấn danh sách đánh giá;
+if (Có đánh giá nào không?) then (Không - E1)
+  :Hiển thị "Không có đánh giá nào cần kiểm duyệt";
+  stop
+else (Có)
+  :Hiển thị danh sách kèm bộ lọc \n(Trạng thái, Số sao, Sản phẩm);
+endif
+
+|Admin|
+:Chọn xem chi tiết một đánh giá;
+:Xem nội dung, hình ảnh, thông tin khách hàng;
+
+|Admin|
+switch (Thao tác?)
+case ( Phê duyệt đánh giá )
+  :Chọn "Phê duyệt";
+  |Hệ thống|
+  :Cập nhật status = APPROVED;
+  :Tính toán lại average_rating và review_count \ncho sản phẩm (bảng products);
+case ( Ẩn đánh giá )
+  :Chọn "Ẩn";
+  |Hệ thống|
+  :Cập nhật status = HIDDEN;
+  :Tính toán lại các chỉ số rating của sản phẩm;
+case ( Phản hồi đánh giá )
+  :Nhập nội dung phản hồi;
+  |Hệ thống|
+  :Lưu nội dung phản hồi vào bảng reviews;
+endswitch
+
+|Hệ thống|
+:Cập nhật CSDL;
+:Hiển thị thông báo thành công;
+:Tải lại danh sách đánh giá;
+
+stop
+@enduml

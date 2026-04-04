@@ -1,0 +1,54 @@
+@startuml
+title Object Diagram - Chi tiết "Nhẫn Vàng 18K"
+
+object "p1 : Product" as product {
+  id = 101
+  sku = "RING-V18K-001"
+  name = "Nhẫn Vàng 18K Đính Đá"
+  basePrice = 5000000
+  isActive = true
+  averageRating = 5.0
+}
+
+object "img1 : ProductImage" as img1 {
+  imageUrl = "https://cloudinary.../ring1_main.jpg"
+  isPrimary = true
+  sortOrder = 1
+}
+
+object "img2 : ProductImage" as img2 {
+  imageUrl = "https://cloudinary.../ring1_side.jpg"
+  isPrimary = false
+  sortOrder = 2
+}
+
+object "varSize10 : ProductVariant" as var1 {
+  size = "10"
+  price = 5000000
+  stockQuantity = 5
+}
+
+object "varSize12 : ProductVariant" as var2 {
+  size = "12"
+  price = 5200000
+  stockQuantity = 2
+}
+
+object "rev1 : Review" as review {
+  rating = 5
+  comment = "Nhẫn rất đẹp và sáng!"
+  isApproved = true
+}
+
+object "cat : Category" as cat {
+  name = "Nhẫn"
+}
+
+img1 --> product : product_id = 101
+img2 --> product : product_id = 101
+var1 --> product : product_id = 101
+var2 --> product : product_id = 101
+review --> product : product_id = 101
+product --> cat : category_id
+
+@enduml

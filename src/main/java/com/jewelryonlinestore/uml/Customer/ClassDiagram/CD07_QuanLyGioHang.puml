@@ -1,0 +1,56 @@
+@startuml
+title Class Diagram - Use Case: Quản lý giỏ hàng
+skinparam classAttributeIconSize 0
+
+class CartController {
+  + viewCart(session: HttpSession): String
+  + addToCart(req: CartItemRequest, session: HttpSession): String
+  + updateQuantity(itemId: Long, qty: int): String
+  + removeItem(itemId: Long): String
+}
+
+class CartService {
+  + getOrCreateCart(userId: Long, sessionId: String): Cart
+  + addToCart(cartId: Long, variantId: Long, qty: int): CartItem
+  + updateItemQuantity(itemId: Long, newQty: int): CartItem
+  + removeCartItem(itemId: Long): void
+  + mergeSessionCartToUserCart(sessionId: String, userId: Long): void
+}
+
+class Cart {
+  - id: Long
+  - sessionId: String
+  - userId: Long
+  - createdAt: LocalDateTime
+  - updatedAt: LocalDateTime
+  + getTotalPrice(): BigDecimal
+}
+
+class CartItem {
+  - id: Long
+  - quantity: int
+  - addedAt: LocalDateTime
+  + getSubTotal(): BigDecimal
+}
+
+class ProductVariant {
+  - id: Long
+  - size: String
+  - price: BigDecimal
+  - stockQuantity: int
+  - isActive: boolean
+}
+
+class User {
+  - id: Long
+  - email: String
+}
+
+CartController --> CartService : uses
+CartService ..> Cart : manages
+CartService ..> CartItem : manages
+
+Cart "1" *-- "0..*" CartItem : contains
+Cart "0..1" -- "1" User : belongs to
+CartItem "N" -- "1" ProductVariant : links to
+@enduml

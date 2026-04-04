@@ -1,0 +1,48 @@
+@startuml
+title Object Diagram - Trạng thái Dữ liệu Dashboard (Tháng 4/2026)
+
+object "adminUser : User" as admin {
+  id = 1
+  email = "admin@shinyjewelry.com"
+  role = ROLE_ADMIN
+}
+
+object "response : DashboardResponse" as dto {
+  totalRevenue = 150000000
+  totalOrders = 125
+  newCustomers = 30
+}
+
+object "order_1 : Order (Mới nhất)" as o1 {
+  orderNumber = "ORD-04042026-001"
+  totalAmount = 5000000
+  orderStatus = PENDING
+}
+
+object "order_2 : Order (Mới nhì)" as o2 {
+  orderNumber = "ORD-04042026-002"
+  totalAmount = 12500000
+  orderStatus = PROCESSING
+}
+
+object "revenueChart : Map<String, BigDecimal>" as chart1 {
+  "01/04" = 10000000
+  "02/04" = 25000000
+  "03/04" = 5000000
+  "04/04" = 15000000
+}
+
+object "statusChart : Map<String, Long>" as chart2 {
+  "PENDING" = 15
+  "PROCESSING" = 20
+  "SHIPPING" = 50
+  "DELIVERED" = 35
+  "CANCELLED" = 5
+}
+
+dto --> o1 : recentOrders[0]
+dto --> o2 : recentOrders[1]
+dto --> chart1 : revenueChartData
+dto --> chart2 : statusChartData
+
+@enduml

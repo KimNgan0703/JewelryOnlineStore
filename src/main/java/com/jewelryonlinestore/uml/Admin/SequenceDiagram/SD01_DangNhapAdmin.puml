@@ -1,0 +1,54 @@
+@startuml
+title Sequence Diagram: Đăng nhập Admin
+
+actor Admin
+participant "Giao diện (Login Page)" as View
+participant "SecurityConfig\n(Spring Security)" as Security
+participant "UserDetailsServiceImpl" as UserService
+participant "BCryptPasswordEncoder" as Encoder
+participant "Database" as DB
+
+Admin -> View: Nhập Email và Mật khẩu
+Admin -> View: Nhấn nút "Đăng nhập"
+
+View -> Security: POST /login (email, password)
+activate Security
+
+Security -> UserService: loadUserByUsername(email)
+activate UserService
+
+UserService -> DB: Query User theo Email
+activate DB
+DB --> UserService: Trả về đối tượng User (kèm password băm & roles)
+deactivate DB
+
+alt User không tồn tại
+    UserService --> Security: Ném UsernameNotFoundException
+    Security --> View: Redirect /login?error (Thông báo lỗi)
+else User tồn tại
+    UserService --> Security: Trả về UserDetails object
+    deactivate UserService
+
+    Security -> Encoder: matches(rawPassword, encodedPassword)
+    activate Encoder
+    Encoder --> Security: Kết quả (true/false)
+    deactivate Encoder
+
+    alt Mật khẩu sai
+        Security --> View: Redirect /login?error
+    else Mật khẩu đúng
+        Security -> Security: Kiểm tra Quyền (Authorities)
+
+        alt Vai trò KHÔNG PHẢI ROLE_ADMIN
+            Security --> View: Redirect /login?accessDenied (Lỗi 403)
+        else Vai trò LÀ ROLE_ADMIN
+            Security -> Security: Khởi tạo Session & SecurityContext
+            Security --> View: Redirect tới /admin/dashboard
+            View --> Admin: Hiển thị giao diện Quản trị
+        end
+    end
+end
+
+deactivate Security
+
+@enduml

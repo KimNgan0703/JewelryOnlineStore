@@ -1,0 +1,77 @@
+@startuml
+title Class Diagram - Use Case: Quản lý sản phẩm
+skinparam classAttributeIconSize 0
+
+class AdminProductController {
+  + listProducts(page: int, search: String): String
+  + showAddForm(): String
+  + processAdd(req: AdminProductRequest): String
+  + showEditForm(id: Long): String
+  + processEdit(id: Long, req: AdminProductRequest): String
+  + toggleActive(id: Long): String
+}
+
+class ProductService {
+  + getProductsByAdmin(page: int, search: String): Page<Product>
+  + createProduct(req: AdminProductRequest): Product
+  + updateProduct(id: Long, req: AdminProductRequest): Product
+  + setProductStatus(id: Long, isActive: boolean): void
+  + isSkuExists(sku: String): boolean
+}
+
+class FileStorageService {
+  + uploadProductImage(file: MultipartFile): String
+}
+
+class Product {
+  - id: Long
+  - sku: String
+  - name: String
+  - description: String
+  - basePrice: BigDecimal
+  - comparePrice: BigDecimal
+  - gender: Gender
+  - weight: Double
+  - isActive: boolean
+}
+
+class ProductVariant {
+  - id: Long
+  - variantSku: String
+  - size: String
+  - price: BigDecimal
+  - stockQuantity: int
+}
+
+class ProductImage {
+  - id: Long
+  - imageUrl: String
+  - isPrimary: boolean
+}
+
+class Category {
+  - id: Long
+  - name: String
+}
+
+class Brand {
+  - id: Long
+  - name: String
+}
+
+class Material {
+  - id: Long
+  - name: String
+}
+
+AdminProductController --> ProductService : uses
+AdminProductController --> FileStorageService : uses
+ProductService ..> Product : manages
+
+Product "1" *-- "1..*" ProductVariant : has
+Product "1" *-- "0..*" ProductImage : has
+Product "N" -- "1" Category : belongs to
+Product "N" -- "1" Brand : belongs to
+Product "N" -- "1" Material : belongs to
+
+@enduml

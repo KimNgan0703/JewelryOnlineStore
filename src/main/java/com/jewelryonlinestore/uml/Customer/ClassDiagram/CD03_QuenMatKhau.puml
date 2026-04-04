@@ -1,0 +1,55 @@
+@startuml
+title Class Diagram - Use Case: Quên mật khẩu
+skinparam classAttributeIconSize 0
+
+class AuthController {
+  + showForgotPasswordForm(): String
+  + processForgotPassword(request: ForgotPasswordRequest): String
+  + showResetPasswordForm(token: String): String
+  + processResetPassword(request: ResetPasswordRequest): String
+}
+
+class AuthService {
+  + processForgotPassword(email: String): void
+  + validateResetToken(token: String): boolean
+  + resetPassword(token: String, newPassword: String): void
+}
+
+class EmailService {
+  + sendPasswordResetEmail(email: String, token: String): void
+}
+
+interface UserRepository {
+  + findByEmail(email: String): Optional<User>
+  + save(user: User): User
+}
+
+interface VerificationTokenRepository {
+  + findByToken(token: String): Optional<VerificationToken>
+  + save(token: VerificationToken): VerificationToken
+}
+
+class User {
+  - id: Long
+  - email: String
+  - passwordHash: String
+  + setPasswordHash(hash: String): void
+}
+
+class VerificationToken {
+  - id: Long
+  - token: String
+  - expiryDate: LocalDateTime
+  - isUsed: boolean
+  - user: User
+  + isValid(): boolean
+  + markAsUsed(): void
+}
+
+AuthController --> AuthService : uses
+AuthService --> EmailService : uses
+AuthService --> UserRepository : uses
+AuthService --> VerificationTokenRepository : uses
+
+VerificationToken "0..*" -- "1" User : maps to
+@enduml

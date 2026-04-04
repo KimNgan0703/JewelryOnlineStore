@@ -1,0 +1,52 @@
+@startuml
+title Class Diagram - Use Case: Quản lý đánh giá
+skinparam classAttributeIconSize 0
+
+class AdminReviewController {
+  + listReviews(filter: ReviewFilterRequest): String
+  + approveReview(reviewId: Long): String
+  + hideReview(reviewId: Long): String
+  + replyToReview(reviewId: Long, content: String): String
+}
+
+class ReviewService {
+  + getReviewsByFilter(filter: ReviewFilterRequest): Page<Review>
+  + updateStatus(id: Long, status: ReviewStatus): void
+  + addAdminReply(id: Long, content: String): void
+  - updateProductRatingStats(productId: Long): void
+}
+
+class Review {
+  - id: Long
+  - rating: int
+  - comment: String
+  - adminReply: String
+  - status: ReviewStatus
+  - createdAt: LocalDateTime
+}
+
+class ReviewImage {
+  - id: Long
+  - imageUrl: String
+}
+
+class Product {
+  - id: Long
+  - name: String
+  - averageRating: Double
+  - reviewCount: int
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+AdminReviewController --> ReviewService : uses
+ReviewService ..> Review : updates
+ReviewService ..> Product : updates stats
+Review "1" *-- "0..*" ReviewImage : contains
+Review "N" -- "1" Product : belongs to
+
+@enduml

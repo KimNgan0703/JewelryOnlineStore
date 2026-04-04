@@ -1,0 +1,28 @@
+@startuml
+title Object Diagram - Cập nhật trạng thái đơn hàng
+
+object "admin : User" as admin {
+    id = 1
+    email = "admin@jewelrystore.com"
+    role = "ADMIN"
+}
+
+object "order123 : Order" as o1 {
+    id = 101
+    orderNumber = "ORD-123"
+    orderStatus = PROCESSING
+    snapRecipientName = "Kim Ngan"
+}
+
+object "historyEntry : OrderStatusHistory" as h1 {
+    id = 501
+    oldStatus = PENDING
+    newStatus = PROCESSING
+    changedBy = "Admin"
+    note = "Đang chuẩn bị hàng"
+    createdAt = "2026-04-04 13:00"
+}
+
+o1 *-- h1
+h1 ..> admin : "changed by"
+@enduml

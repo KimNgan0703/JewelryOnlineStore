@@ -1,0 +1,59 @@
+@startuml
+title Object Diagram - Trạng thái Sản phẩm sau khi tạo
+
+object "admin : User" as u {
+  role = ROLE_ADMIN
+  email = "admin@shinyjewelry.com"
+}
+
+object "newProduct : Product" as p {
+  id = 205
+  sku = "RING-DIA-001"
+  name = "Nhẫn Kim Cương Nữ Hoàng"
+  basePrice = 25000000
+  isActive = true
+}
+
+object "cat : Category" as c {
+  id = 2
+  name = "Nhẫn"
+}
+
+object "mat : Material" as m {
+  id = 5
+  name = "Vàng Trắng 18K"
+}
+
+object "var1 : ProductVariant" as v1 {
+  variantSku = "RING-DIA-001-S10"
+  size = "10"
+  price = 25000000
+  stockQuantity = 5
+}
+
+object "var2 : ProductVariant" as v2 {
+  variantSku = "RING-DIA-001-S12"
+  size = "12"
+  price = 26000000
+  stockQuantity = 3
+}
+
+object "img1 : ProductImage" as img1 {
+  imageUrl = "https://res.cloudinary.com/dfnugby5d/image/upload/v1/ring_main.jpg"
+  isPrimary = true
+}
+
+object "img2 : ProductImage" as img2 {
+  imageUrl = "https://example.com/images/ring_side.jpg"
+  isPrimary = false
+}
+
+p --> c : category_id = 2
+p --> m : material_id = 5
+p *-- v1
+p *-- v2
+p *-- img1
+p *-- img2
+u ..> p : "Created by"
+
+@enduml

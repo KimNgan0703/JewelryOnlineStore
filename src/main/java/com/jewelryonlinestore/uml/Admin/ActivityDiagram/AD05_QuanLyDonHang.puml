@@ -1,0 +1,37 @@
+@startuml
+title Activity Diagram - Quản lý đơn hàng (Admin)
+
+|Admin|
+start
+:Chọn mục "Quản lý đơn hàng";
+
+|Hệ thống|
+:Truy vấn danh sách đơn hàng;
+:Hiển thị danh sách kèm bộ lọc (Trạng thái, Thời gian, Mã đơn);
+
+|Admin|
+:Chọn xem chi tiết một đơn hàng;
+
+|Hệ thống|
+:Hiển thị chi tiết đơn hàng (Sản phẩm, Thanh toán, Giao hàng);
+
+|Admin|
+:Chọn trạng thái mới và nhập ghi chú;
+:Nhấn "Cập nhật trạng thái";
+
+|Hệ thống|
+if (Trạng thái mới hợp lệ (không phải chuyển ngược)? [E1]) then (Không)
+  :Hiển thị lỗi "Không thể thay đổi trạng thái";
+  stop
+else (Có)
+  if (Trạng thái mới là CANCELLED?) then (Có)
+    :Yêu cầu nhập lý do hủy;
+  endif
+  :Cập nhật trạng thái trong bảng orders;
+  :Ghi log vào order_status_history;
+  :Gửi email thông báo trạng thái mới cho khách hàng;
+  :Hiển thị thông báo thành công;
+endif
+
+stop
+@enduml

@@ -1,0 +1,31 @@
+@startuml
+title Activity Diagram - Use Case: Dashboard và Báo cáo
+
+|Admin|
+start
+:Đăng nhập thành công / Chọn mục "Dashboard";
+
+|Hệ thống|
+:Truy vấn CSDL (orders, customers, order_items)\ntheo thời gian mặc định (ví dụ: tháng hiện tại);
+:Tính toán KPI (Tổng doanh thu, Tổng đơn, Khách mới);
+:Lấy 5 đơn hàng mới nhất;
+:Tổng hợp dữ liệu Biểu đồ (Doanh thu, Trạng thái đơn);
+:Hiển thị giao diện Dashboard tổng quan;
+
+|Admin|
+repeat
+  :Chọn bộ lọc thời gian (Ngày/Tháng/Năm) & Cập nhật;
+
+  |Hệ thống|
+  :Truy vấn CSDL theo bộ lọc mới;
+  if (Có dữ liệu trong khoảng thời gian này?) then (Không - E1)
+
+  else (Có)
+    :Tính toán lại KPI và Dữ liệu biểu đồ;
+    :Cập nhật giao diện Dashboard;
+  endif
+repeat while (Tiếp tục xem báo cáo khác?) is (Có)
+
+|Admin|
+stop
+@enduml
