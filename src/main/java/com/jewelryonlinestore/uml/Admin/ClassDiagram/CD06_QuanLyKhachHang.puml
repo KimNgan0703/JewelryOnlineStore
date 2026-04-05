@@ -1,0 +1,53 @@
+@startuml
+title Class Diagram - Quản lý khách hàng
+
+class AdminCustomerController {
+    - CustomerService customerService
+    + listCustomers(Model model, String keyword): String
+    + viewDetail(Long id, Model model): String
+    + toggleStatus(Long id): String
+}
+
+interface CustomerService {
+    + getAllCustomers(): List<Customer>
+    + searchCustomers(String keyword): List<Customer>
+    + getCustomerById(Long id): Optional<Customer>
+    + toggleUserStatus(Long userId): void
+}
+
+class User {
+    - Long id
+    - String email
+    - String password
+    - Status status
+    - Role role
+}
+
+class Customer {
+    - Long id
+    - String fullName
+    - String phone
+    - User user
+    - List<Address> addresses
+}
+
+class Address {
+    - Long id
+    - String streetAddress
+    - String city
+    - String province
+    - boolean isDefault
+}
+
+enum Status {
+    ACTIVE
+    LOCKED
+}
+
+AdminCustomerController --> CustomerService
+CustomerService ..> Customer
+CustomerService ..> User
+Customer "1" *-- "1" User
+Customer "1" o-- "*" Address
+User --> Status
+@enduml

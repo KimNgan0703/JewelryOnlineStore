@@ -1,29 +1,17 @@
 package com.jewelryonlinestore.dto.request;
 
-
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-/**
- * DTO điều chỉnh tồn kho (A04).
- * quantityChange > 0: nhập kho | quantityChange < 0: xuất kho
- */
 @Data
 public class InventoryAdjustRequest {
 
-    @NotNull(message = "Variant ID không được để trống")
+    @NotNull(message = "Thiếu ID phân loại sản phẩm")
     private Long variantId;
 
-    @NotNull(message = "Số lượng không được để trống")
-    @NotZero
-    private Integer quantityChange;
+    @NotNull(message = "Thiếu số lượng điều chỉnh")
+    private Integer quantityChange; // Bắt buộc phải tên là quantityChange
 
-    @NotBlank(message = "Lý do không được để trống")
-    @Size(max = 255)
-    private String reason; // Kiểm kê | Nhập hàng | Trả hàng | Bảo hành | Khác
-
+    private String reason;
     private String note;
-
-    // Custom annotation placeholder
-    @interface NotZero {}
 }

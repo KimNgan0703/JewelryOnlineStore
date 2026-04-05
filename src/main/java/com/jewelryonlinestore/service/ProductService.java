@@ -14,7 +14,6 @@ public interface ProductService {
     List<ProductCardResponse> getNewProducts(int limit);
     List<ProductCardResponse> getRelatedProducts(Long productId, Long categoryId, int limit);
     List<Brand>               getAllBrands();
-    List<Collection>          getAllCollections();
     List<Material>            getAllMaterials();
 
     // Admin
@@ -24,5 +23,18 @@ public interface ProductService {
     void                      updateProduct(Long id, AdminProductRequest req);
     boolean                   toggleActive(Long id);
     void                      deleteProduct(Long id);
+    // Bổ sung CRUD cho Brand & Material
+    void updateBrand(Long id, String name);
+    void deleteBrand(Long id);
+    void updateMaterial(Long id, String name);
+    void deleteMaterial(Long id);
     AdminProductRequest       getProductForEdit(Long id);
+
+    // API hỗ trợ thêm nhanh Brand & Material từ form Admin
+    Brand                     createBrand(String name);
+    Material                  createMaterial(String name);
+    // Thêm hàm này để lấy danh sách sản phẩm cho Dropdown Khuyến mãi
+    List<Product> getAllProducts();
+    // Hàm tự động sinh mã SKU theo thứ tự
+    String generateNextSku();
 }

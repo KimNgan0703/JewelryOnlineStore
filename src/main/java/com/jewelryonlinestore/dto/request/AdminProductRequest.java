@@ -2,8 +2,9 @@ package com.jewelryonlinestore.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -25,7 +26,6 @@ public class AdminProductRequest {
 
     private Long categoryId;
     private Long brandId;
-    private Long collectionId;
     private Long materialId;
 
     private String gender; // male | female | unisex
@@ -46,9 +46,21 @@ public class AdminProductRequest {
     private String metaTitle;
     private String metaDescription;
 
-    // Ảnh sản phẩm
-    private List<MultipartFile> images;
-    private Integer primaryImageIndex = 0; // index ảnh chính trong list
+    // Ảnh sản phẩm — URL từ Cloudinary Widget (upload thẳng từ browser)
+    // Dạng: "https://res.cloudinary.com/.../img1.jpg,https://res.cloudinary.com/.../img2.jpg"
+    private String imageUrls;
+
+    /**
+     * Tách chuỗi imageUrls thành List để dùng trong Service.
+     * Trả về empty list nếu chưa có ảnh nào.
+     */
+    public List<String> getImageUrlList() {
+        if (imageUrls == null || imageUrls.isBlank()) return Collections.emptyList();
+        return Arrays.stream(imageUrls.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
 
     // Biến thể (size + giá)
     @NotEmpty(message = "Phải có ít nhất 1 biến thể sản phẩm")
@@ -56,18 +68,21 @@ public class AdminProductRequest {
 
     @Data
     public static class VariantRequest {
+        private Long id;
         @NotBlank(message = "Size không được để trống")
         private String size;
 
         @NotNull(message = "Giá biến thể không được để trống")
-        @DecimalMin(value = "0", inclusive = false)
+        @DecimalMin(value = "0", inclusive = false, message = "Giá phải lớn hơn 0")
         private BigDecimal price;
 
-        @NotNull
-        @Min(0)
+        @NotNull(message = "Số lượng tồn kho không được để trống")
+        @Min(value = 0, message = "Số lượng không được âm")
         private Integer stockQuantity;
 
         @Min(1)
         private Integer lowStockThreshold = 5;
+
+        private String sku;
     }
 }

@@ -1,181 +1,327 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reviews Management - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
-        }
-        .page-shell {
-            padding: 30px;
-            background-color: #f8f9fa;
-        }
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        .summary-card {
-            background: white;
-            border-radius: 10px;
-            padding: 18px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            height: 100%;
-        }
-        .summary-label {
-            font-size: 0.85rem;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
-        .summary-value {
-            font-size: 1.7rem;
-            font-weight: 700;
-            color: var(--secondary-color);
-            margin-top: 6px;
-        }
-        .toolbar {
-            display: grid;
-            grid-template-columns: 1fr 180px 180px auto;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .table-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        .table thead {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        .rating-star {
-            color: #f4b400;
-            margin-right: 2px;
-            font-size: 0.85rem;
-        }
-        .review-snippet {
-            max-width: 260px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: inline-block;
-            vertical-align: middle;
-        }
-    </style>
 </head>
 <body>
-<div class="page-shell">
-    <div class="page-header">
-        <div>
-            <h1 class="mb-0" style="color: var(--secondary-color);">Reviews</h1>
-            <p class="text-muted mb-0">Moderate product reviews and protect brand quality.</p>
+<div id="admin-content">
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .page-shell { padding: 10px 0; background-color: #f4f6f9; min-height: 100vh;}
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .summary-card { background: white; border-radius: 10px; padding: 18px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); height: 100%; }
+        .summary-label { font-size: 0.85rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.8px; }
+        .summary-value { font-size: 1.7rem; font-weight: 700; color: var(--secondary-color); margin-top: 6px; }
+        .toolbar { display: grid; grid-template-columns: 1fr 180px 180px auto; gap: 10px; margin: 20px 0; }
+        .table-container { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .table thead { background-color: var(--secondary-color); color: white; }
+        .rating-star { color: #f4b400; margin-right: 2px; font-size: 0.85rem; }
+        .review-snippet { max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: middle; }
+
+        /* Chỉnh lại màu sắc Badge cho đẹp */
+        .badge.pending { background-color: #ffc107; color: #000; }
+        .badge.approved { background-color: #198754; color: #fff; }
+        .badge.rejected { background-color: #dc3545; color: #fff; }
+    </style>
+
+    <div class="page-shell">
+        <div class="page-header">
+            <div>
+                <h1 class="mb-0" style="color: var(--secondary-color);">Quản Lý Đánh Giá</h1>
+                <p class="text-muted mb-0">Kiểm duyệt và phản hồi đánh giá của khách hàng.</p>
+            </div>
         </div>
-        <button class="btn btn-outline-secondary">
-            <i class="fas fa-download me-1"></i> Export Report
-        </button>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="summary-card">
+                    <div class="summary-label">Tổng Đánh Giá</div>
+                    <div class="summary-value" th:text="${totalItems ?: 0}">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card">
+                    <div class="summary-label">Chờ Duyệt (Pending)</div>
+                    <div class="summary-value text-warning" th:text="${pendingCount ?: 0}">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card">
+                    <div class="summary-label">Điểm Trung Bình (Toàn sàn)</div>
+                    <div class="summary-value text-success">
+                        <i class="fas fa-star rating-star"></i> 4.8
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form id="filterForm" th:action="@{/admin/reviews}" method="get" class="toolbar">
+            <div>
+                <label for="reviewSearch" class="visually-hidden">Tìm kiếm</label>
+                <input id="reviewSearch" name="keyword" class="form-control" type="text"
+                       placeholder="Tìm theo khách hàng, sản phẩm..."
+                       th:value="${param.keyword}">
+            </div>
+            <div>
+                <label for="status" class="visually-hidden">Trạng thái</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="" th:selected="${activeStatus == null or activeStatus == ''}">Tất cả Trạng thái</option>
+                    <option value="pending" th:selected="${activeStatus == 'pending'}">Chờ Duyệt (Pending)</option>
+                    <option value="approved" th:selected="${activeStatus == 'approved'}">Đã Duyệt (Approved)</option>
+                    <option value="rejected" th:selected="${activeStatus == 'rejected'}">Đã Ẩn (Rejected)</option>
+                </select>
+            </div>
+            <div>
+                <label for="rating" class="visually-hidden">Số sao</label>
+                <select name="rating" id="rating" class="form-select">
+                    <option value="" th:selected="${param.rating == null}">Tất cả số sao</option>
+                    <option value="5" th:selected="${param.rating != null and param.rating[0] == '5'}">5 Sao</option>
+                    <option value="4" th:selected="${param.rating != null and param.rating[0] == '4'}">4 Sao</option>
+                    <option value="3" th:selected="${param.rating != null and param.rating[0] == '3'}">3 Sao</option>
+                    <option value="2" th:selected="${param.rating != null and param.rating[0] == '2'}">2 Sao</option>
+                    <option value="1" th:selected="${param.rating != null and param.rating[0] == '1'}">1 Sao</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-dark"><i class="fas fa-filter me-1"></i> Lọc</button>
+        </form>
+
+        <div class="table-container">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Khách Hàng</th>
+                    <th>Sản Phẩm</th>
+                    <th>Số Sao</th>
+                    <th>Nội Dung</th>
+                    <th>Trạng Thái</th>
+                    <th>Ngày Tạo</th>
+                    <th class="text-center">Thao Tác</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                <tr th:if="${reviews == null or reviews.isEmpty()}">
+                    <td colspan="8" class="text-center text-muted py-4">Không tìm thấy đánh giá nào.</td>
+                </tr>
+
+                <tr th:each="review : ${reviews}">
+                    <td th:text="${review.id}">1</td>
+                    <td class="fw-medium" th:text="${review.customerName}">Nguyễn Văn A</td>
+                    <td>
+                        <a th:href="@{/products/{id}(id=${review.productId})}" target="_blank" class="text-decoration-none text-dark fw-semibold" th:text="${review.productName}">
+                            Charm 1
+                        </a>
+                    </td>
+                    <td>
+                        <div class="text-warning">
+                            <i class="fas fa-star" th:each="i : ${#numbers.sequence(1, review.rating)}"></i>
+                            <i class="far fa-star" th:each="i : ${#numbers.sequence(review.rating + 1, 5)}" th:if="${review.rating < 5}"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="review-snippet" th:title="${review.comment}" th:text="${review.comment}">
+                            Chất lượng rất tốt...
+                        </span>
+
+                        <div th:if="${review.adminResponse != null}" class="small text-success mt-1">
+                            <i class="fas fa-reply"></i> Đã phản hồi
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge text-uppercase"
+                              th:classappend="${review.status}"
+                              th:text="${review.status}">
+                            PENDING
+                        </span>
+                    </td>
+                    <td th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">19/03/2026</td>
+
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
+                            <button th:if="${review.status != 'approved'}"
+                                    class="btn btn-sm btn-outline-success btn-approve"
+                                    th:attr="data-id=${review.id}" title="Duyệt hiện lên Web">
+                                <i class="fas fa-check"></i>
+                            </button>
+
+                            <button th:if="${review.status != 'rejected'}"
+                                    class="btn btn-sm btn-outline-danger btn-reject"
+                                    th:attr="data-id=${review.id}" title="Từ chối / Ẩn khỏi Web">
+                                <i class="fas fa-ban"></i>
+                            </button>
+
+                            <button class="btn btn-sm btn-outline-primary btn-reply"
+                                    th:attr="data-id=${review.id}, data-response=${review.adminResponse != null ? review.adminResponse : ''}"
+                                    title="Phản hồi khách">
+                                <i class="fas fa-comment-dots"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <nav th:if="${totalPages > 1}" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/reviews(page=${currentPage - 1}, status=${activeStatus}, rating=${param.rating})}">Trước</a>
+                </li>
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/admin/reviews(page=${i}, status=${activeStatus}, rating=${param.rating})}" th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                    <a class="page-link" th:href="@{/admin/reviews(page=${currentPage + 1}, status=${activeStatus}, rating=${param.rating})}">Sau</a>
+                </li>
+            </ul>
+        </nav>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-3">
-            <div class="summary-card">
-                <div class="summary-label">Total Reviews</div>
-                <div class="summary-value" th:text="${totalItems} ?: 1280">1,280</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card">
-                <div class="summary-label">Pending</div>
-                <div class="summary-value text-warning" th:text="${pendingCount} ?: 32">32</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card">
-                <div class="summary-label">Average Rating</div>
-                <div class="summary-value">4.6</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="summary-card">
-                <div class="summary-label">Reported</div>
-                <div class="summary-value text-danger">9</div>
+    <div class="modal fade" id="replyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Phản hồi khách hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="replyReviewId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nội dung phản hồi từ Shop:</label>
+                        <textarea class="form-control" id="replyContent" rows="4" placeholder="Cảm ơn bạn đã tin tưởng ủng hộ shop..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitReply">Gửi Phản Hồi</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="toolbar">
-        <div>
-            <label for="reviewSearch" class="visually-hidden">Search reviews</label>
-            <input id="reviewSearch" class="form-control" type="text" placeholder="Search by customer, product, keyword...">
-        </div>
-        <div>
-            <label for="reviewStatus" class="visually-hidden">Filter status</label>
-            <select id="reviewStatus" class="form-select" th:value="${activeStatus}">
-            <option value="">All Status</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            </select>
-        </div>
-        <div>
-            <label for="reviewRating" class="visually-hidden">Filter rating</label>
-            <select id="reviewRating" class="form-select">
-            <option>All Ratings</option>
-            <option>5 stars</option>
-            <option>4 stars</option>
-            <option>3 stars</option>
-            <option>2 stars</option>
-            <option>1 star</option>
-            </select>
-        </div>
-        <button class="btn btn-dark"><i class="fas fa-filter me-1"></i> Filter</button>
-    </div>
+    <script th:inline="javascript">
+        const csrfToken  = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
+        const csrfHeader = /*[[${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}]]*/ 'X-CSRF-TOKEN';
 
-    <div class="table-container">
-        <table class="table table-hover align-middle mb-0">
-            <thead>
-            <tr>
-                <th>Customer</th>
-                <th>Product</th>
-                <th>Rating</th>
-                <th>Review</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th class="text-center">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="review : ${reviews}">
-                <td th:text="${review.customerName} ?: 'Customer name'">Customer name</td>
-                <td th:text="${review.productName} ?: 'Product name'">Product name</td>
-                <td>
-                    <i class="fas fa-star rating-star"></i>
-                    <span th:text="${review.rating} ?: 5">5</span>/5
-                </td>
-                <td><span class="review-snippet" th:text="${review.comment} ?: 'Beautiful product and very fast shipping.'">Beautiful product and very fast shipping.</span></td>
-                <td>
-                        <span class="badge"
-                              th:classappend="${review.status == 'APPROVED' ? ' text-bg-success' : (review.status == 'REJECTED' ? ' text-bg-danger' : ' text-bg-warning')}"
-                              th:text="${review.status} ?: 'PENDING'">PENDING</span>
-                </td>
-                <td th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy')} ?: '19/03/2026'">19/03/2026</td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-success" title="Approve"><i class="fas fa-check"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" title="Reject"><i class="fas fa-ban"></i></button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
+        // 0. XỬ LÝ TÌM KIẾM
+        document.addEventListener('DOMContentLoaded', function() {
+            const reviewSearch = document.getElementById('reviewSearch');
+            const filterForm = document.getElementById('filterForm');
+
+            // Gửi form tự động khi nhập từ khóa tìm kiếm (debounce)
+            let searchTimeout;
+            reviewSearch.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterForm.submit();
+                }, 500); // Chờ 500ms sau khi người dùng dừng nhập
+            });
+
+            // Cũng cho phép Enter key để tìm kiếm ngay
+            reviewSearch.addEventListener('keypress', function(e) {
+                if(e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    filterForm.submit();
+                }
+            });
+        });
+
+        // 1. XỬ LÝ NÚT DUYỆT (APPROVE)
+        document.querySelectorAll('.btn-approve').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.getAttribute('data-id');
+                if(!confirm('Bạn có chắc muốn duyệt hiển thị đánh giá này lên website?')) return;
+
+                try {
+                    const res = await fetch(`/admin/reviews/${id}/approve`, {
+                        method: 'PATCH',
+                        headers: { [csrfHeader]: csrfToken }
+                    });
+                    const data = await res.json();
+                    if(res.ok) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                } catch(e) { alert('Lỗi kết nối máy chủ!'); }
+            });
+        });
+
+        // 2. XỬ LÝ NÚT TỪ CHỐI/ẨN (REJECT)
+        document.querySelectorAll('.btn-reject').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.getAttribute('data-id');
+                if(!confirm('Bạn có chắc muốn ẨN đánh giá này khỏi website?')) return;
+
+                try {
+                    const res = await fetch(`/admin/reviews/${id}/reject`, {
+                        method: 'PATCH',
+                        headers: { [csrfHeader]: csrfToken }
+                    });
+                    const data = await res.json();
+                    if(res.ok) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                } catch(e) { alert('Lỗi kết nối máy chủ!'); }
+            });
+        });
+
+        // 3. XỬ LÝ NÚT TRẢ LỜI KHÁCH HÀNG
+        let replyModal;
+
+        // Khởi tạo Bootstrap Modal
+        replyModal = new bootstrap.Modal(document.getElementById('replyModal'));
+
+                document.querySelectorAll('.btn-reply').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const existingReply = this.getAttribute('data-response');
+
+                    document.getElementById('replyReviewId').value = id;
+                    document.getElementById('replyContent').value = existingReply;
+
+                    replyModal.show();
+                });
+            });
+
+                // Gửi API phản hồi
+            document.getElementById('btnSubmitReply').addEventListener('click', async function() {
+                const id = document.getElementById('replyReviewId').value;
+                const content = document.getElementById('replyContent').value;
+
+                if(content.trim() === '') {
+                    alert('Vui lòng nhập nội dung phản hồi!');
+                    return;
+                }
+
+                const formData = new URLSearchParams();
+                formData.append('response', content);
+
+                try {
+                    const res = await fetch(`/admin/reviews/${id}/respond`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            [csrfHeader]: csrfToken
+                        },
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if(res.ok) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                } catch(e) { alert('Lỗi kết nối máy chủ!'); }
+            });
+        });
+    </script>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

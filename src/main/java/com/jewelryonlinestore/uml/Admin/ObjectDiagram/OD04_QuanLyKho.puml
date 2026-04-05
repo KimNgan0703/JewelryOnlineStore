@@ -1,0 +1,29 @@
+@startuml
+title Object Diagram - Trạng thái sau khi Nhập kho thành công
+
+object "admin : User" as u {
+  id = 1
+  email = "admin@shinyjewelry.com"
+  role = ROLE_ADMIN
+}
+
+object "variant_NhanVang : ProductVariant" as variant {
+  id = 88
+  variantSku = "RING-V18K-S12"
+  size = "12"
+  stockQuantity = 55 (Đã tăng từ 5 lên 55)
+  lowStockThreshold = 10
+}
+
+object "log_NhapKho : InventoryLog" as log {
+  id = 1050
+  quantityChange = 50
+  reason = "Nhập hàng từ nhà cung cấp"
+  note = "Lô hàng tháng 4/2026, chứng từ #1234"
+  createdAt = "2026-04-04 14:30:00"
+}
+
+log --> variant : product_variant_id = 88
+log --> u : user_id = 1 (Admin thực hiện)
+
+@enduml

@@ -25,4 +25,5 @@ public class OrderSummaryResponse {
     private String firstProductImage;
     private boolean canCancel;          // true nếu còn trong trạng thái pending/processing
     private boolean canReview;          // true nếu delivered và chưa review hết
+    private Boolean canRetryMomoPayment;
 }

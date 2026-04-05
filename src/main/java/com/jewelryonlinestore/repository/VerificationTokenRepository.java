@@ -1,6 +1,5 @@
 package com.jewelryonlinestore.repository;
 
-
 import com.jewelryonlinestore.entity.VerificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,7 +22,7 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     """)
     Optional<VerificationToken> findValidToken(
             @Param("token") String token,
-            @Param("type")  String type,
+            @Param("type")  VerificationToken.TokenType type, // Đổi String thành VerificationToken.TokenType
             @Param("now")   LocalDateTime now
     );
 
@@ -35,13 +34,7 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     """)
     int invalidateOldTokens(
             @Param("userId") Long userId,
-            @Param("type")   String type,
+            @Param("type")   VerificationToken.TokenType type, // Đổi String thành VerificationToken.TokenType
             @Param("now")    LocalDateTime now
     );
-
-    // Xóa token hết hạn (chạy scheduled cleanup)
-    @Modifying
-    @Query("DELETE FROM VerificationToken t WHERE t.expiresAt < :now")
-    int deleteExpiredTokens(@Param("now") LocalDateTime now);
 }
-

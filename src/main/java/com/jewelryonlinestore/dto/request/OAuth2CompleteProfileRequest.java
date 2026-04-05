@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -19,6 +20,7 @@ public class OAuth2CompleteProfileRequest {
 
     private String gender;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)  // ← thêm
     private LocalDate birthDate;
 
     @NotBlank(message = "Mật khẩu không được để trống")

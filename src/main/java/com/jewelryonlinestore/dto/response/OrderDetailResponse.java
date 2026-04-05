@@ -51,6 +51,7 @@ public class OrderDetailResponse {
 
     private boolean canCancel;
     private boolean canReview;
+    private Boolean canRetryMomoPayment;
 
     // ---- Inner classes ----
     @Data
@@ -65,6 +66,7 @@ public class OrderDetailResponse {
         private Integer quantity;
         private BigDecimal price;
         private BigDecimal total;
+        private String productSlug;
         private boolean reviewed;       // đã đánh giá chưa
         private Long reviewId;          // nếu đã review
     }

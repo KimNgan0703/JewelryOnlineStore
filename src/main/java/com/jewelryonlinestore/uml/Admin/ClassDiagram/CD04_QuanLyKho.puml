@@ -1,0 +1,58 @@
+@startuml
+title Class Diagram - Use Case: Quản lý kho
+skinparam classAttributeIconSize 0
+
+class AdminInventoryController {
+  + listInventory(page: int, keyword: String): String
+  + processAdjustStock(req: InventoryAdjustRequest): String
+  + viewHistory(variantId: Long): String
+}
+
+class InventoryService {
+  + getInventoryList(page: int, keyword: String): Page<ProductVariant>
+  + getLowStockAlerts(): List<ProductVariant>
+  + adjustStock(req: InventoryAdjustRequest, adminId: Long): void
+  + getInventoryHistory(variantId: Long): List<InventoryLog>
+}
+
+class ProductVariantRepository {
+  + findLowStockVariants(): List<ProductVariant>
+  + save(variant: ProductVariant): ProductVariant
+}
+
+class InventoryLogRepository {
+  + findByProductVariantIdOrderByCreatedAtDesc(id: Long): List<InventoryLog>
+  + save(log: InventoryLog): InventoryLog
+}
+
+class ProductVariant {
+  - id: Long
+  - variantSku: String
+  - size: String
+  - price: BigDecimal
+  - stockQuantity: int
+  - lowStockThreshold: int
+}
+
+class InventoryLog {
+  - id: Long
+  - quantityChange: int
+  - reason: String
+  - note: String
+  - createdAt: LocalDateTime
+}
+
+class User {
+  - id: Long
+  - email: String
+  - role: Role
+}
+
+AdminInventoryController --> InventoryService : uses
+InventoryService --> ProductVariantRepository : queries/updates
+InventoryService --> InventoryLogRepository : inserts/queries
+
+ProductVariant "1" *-- "0..*" InventoryLog : has
+InventoryLog "N" -- "1" User : performed by (Admin)
+
+@enduml

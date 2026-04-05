@@ -1,0 +1,58 @@
+@startuml
+title Class Diagram - Quản lý đơn hàng (Admin)
+skinparam classAttributeIconSize 0
+
+class AdminOrderController {
+    + listOrders(model: Model, filter: OrderFilterRequest): String
+    + viewOrderDetail(id: Long, model: Model): String
+    + updateOrderStatus(id: Long, request: UpdateOrderStatusRequest): String
+}
+
+interface OrderService {
+    + getOrdersByFilter(filter: OrderFilterRequest): Page<OrderSummaryResponse>
+    + getOrderDetail(id: Long): OrderDetailResponse
+    + updateOrderStatus(id: Long, request: UpdateOrderStatusRequest): void
+}
+
+class OrderServiceImpl {
+    - orderRepository: OrderRepository
+    - orderStatusHistoryRepository: OrderStatusHistoryRepository
+    - emailService: EmailService
+    + updateOrderStatus(id: Long, request: UpdateOrderStatusRequest): void
+}
+
+class Order {
+    - id: Long
+    - orderNumber: String
+    - snapRecipientName: String
+    - snapAddress: String
+    - snapPhone: String
+    - orderStatus: OrderStatus
+    - cancelledReason: String
+}
+
+class OrderItem {
+    - id: Long
+    - quantity: int
+    - price: BigDecimal
+}
+
+class OrderStatusHistory {
+    - id: Long
+    - oldStatus: OrderStatus
+    - newStatus: OrderStatus
+    - changedBy: String
+    - note: String
+    - createdAt: LocalDateTime
+}
+
+interface EmailService {
+    + sendOrderStatusEmail(order: Order): void
+}
+
+AdminOrderController --> OrderService : uses
+OrderServiceImpl ..|> OrderService
+OrderServiceImpl --> EmailService : uses
+Order "1" *-- "many" OrderItem : contains
+Order "1" *-- "many" OrderStatusHistory : tracks
+@enduml

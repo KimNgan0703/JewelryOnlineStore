@@ -43,20 +43,27 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // Admin: lọc review (A08)
     @Query("""
         SELECT r FROM Review r
-        JOIN FETCH r.customer c
-        JOIN FETCH r.product p
-        WHERE (:status    IS NULL OR r.status    = :status)
-          AND (:productId IS NULL OR p.id        = :productId)
-          AND (:rating    IS NULL OR r.rating    = :rating)
+        LEFT JOIN FETCH r.customer c
+        LEFT JOIN FETCH r.product p
+        WHERE (:status IS NULL OR r.status = :status)
+          AND (:productId IS NULL OR p.id = :productId)
+          AND (:rating IS NULL OR r.rating = :rating)
+          AND (:keyword IS NULL OR :keyword = ''
+               OR LOWER(COALESCE(c.fullName, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(COALESCE(p.name, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(COALESCE(r.comment, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))
         ORDER BY r.createdAt DESC
     """)
     Page<Review> filterReviews(
             @Param("status")    Review.ReviewStatus status,
             @Param("productId") Long productId,
             @Param("rating")    Integer rating,
+            @Param("keyword")   String keyword,
             Pageable pageable
     );
 
     // ✅ Đếm review theo enum (dashboard widget - A02)
     long countByStatus(Review.ReviewStatus status);
+    // Đếm tổng số đánh giá đã duyệt của một sản phẩm
+    long countByProductIdAndStatus(Long productId, Review.ReviewStatus status);
 }

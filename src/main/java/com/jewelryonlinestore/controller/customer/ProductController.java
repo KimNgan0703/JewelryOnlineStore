@@ -9,10 +9,11 @@ import com.jewelryonlinestore.service.ProductService;
 import com.jewelryonlinestore.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 /**
  * C03 — Tìm kiếm & lọc sản phẩm
  * C04 — Xem chi tiết sản phẩm
@@ -66,14 +67,25 @@ public class ProductController {
 
     // ── Chi tiết sản phẩm (C04) ──────────────────────────
     @GetMapping("/products/{slug}")
-    public String productDetail(@PathVariable String slug, Model model) {
-        ProductResponse product   = productService.getProductBySlug(slug);
+    public String productDetail(@PathVariable String slug,
+                                Authentication auth,
+                                Model model) {
+        ProductResponse product = productService.getProductBySlug(slug);
         ProductReviewSummary reviews = reviewService.getReviewSummary(product.getId(), 0, 5);
-        model.addAttribute("product",         product);
-        model.addAttribute("reviewSummary",   reviews);
-        model.addAttribute("relatedProducts", productService.getRelatedProducts(product.getId(),
-                product.getCategoryId(), 4));
-        model.addAttribute("pageTitle",       product.getName());
+
+        // ĐÃ SỬA: Loại trừ AnonymousAuthenticationToken của khách vãng lai
+        boolean isAuthenticated = auth != null
+                && auth.isAuthenticated()
+                && !(auth instanceof AnonymousAuthenticationToken);
+
+        model.addAttribute("isLoggedIn", isAuthenticated);
+
+        model.addAttribute("product", product);
+        model.addAttribute("reviewSummary", reviews);
+        model.addAttribute("relatedProducts", productService.getRelatedProducts(
+                product.getId(), product.getCategoryId(), 4));
+        model.addAttribute("pageTitle", product.getName());
         return "customer/product-detail";
     }
 }
+

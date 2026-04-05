@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     // ── Public URLs ────────────────────────────────────────
     private static final String[] PUBLIC_URLS = {
-            "/", "/products/**", "/categories/**", "/collections/**",
+            "/", "/products/**", "/categories/**",
             "/search", "/blog/**",
             "/auth/**",                   // đăng ký, đăng nhập, quên mật khẩu
             "/oauth2/**", "/login/oauth2/**",
@@ -98,6 +98,7 @@ public class SecurityConfig {
 
                 // ── CSRF (giữ nguyên cho form, disable cho REST endpoints) ──
                 .csrf(csrf -> csrf
+                        .csrfTokenRequestHandler(new org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler())
                         .ignoringRequestMatchers("/api/**", "/payment/callback/**")
                 );
 

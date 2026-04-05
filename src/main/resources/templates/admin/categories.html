@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
+<head>
+    <title>Quản Lý Thuộc Tính Sản Phẩm - Admin</title>
+</head>
+<body>
+<div id="admin-content">
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .attr-card { background: white; border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); border-radius: 12px; }
+        .nav-pills .nav-link { color: #495057; font-weight: 500; padding: 10px 24px; border-radius: 8px; margin-right: 8px;}
+        .nav-pills .nav-link.active { background-color: var(--secondary-color); color: white; }
+        .table thead th { background-color: #f8f9fa; border-top: none; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; color: #6c757d;}
+        .table td { vertical-align: middle; }
+        .btn-action { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; }
+        .cat-img-preview { width: 40px; height: 40px; object-fit: contain; border-radius: 4px; background: #f8f9fa; border: 1px solid #dee2e6; }
+    </style>
+
+    <div class="container-fluid p-4">
+        <h1 class="h3 fw-bold mb-4" style="color: var(--secondary-color);">Cấu Hình Thuộc Tính Sản Phẩm</h1>
+
+        <div class="card attr-card">
+            <div class="card-body p-4">
+                <ul class="nav nav-pills mb-4" id="attrTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-categories">
+                            <i class="fas fa-folder-open me-2"></i>Danh Mục
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-brands">
+                            <i class="fas fa-tags me-2"></i>Thương Hiệu
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-materials">
+                            <i class="fas fa-gem me-2"></i>Chất Liệu
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="pills-tabContent">
+                    <div class="tab-pane fade show active" id="tab-categories">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Danh mục</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Danh Mục', 'categories', null, null)">
+                                <i class="fas fa-plus me-1"></i> Thêm Danh Mục
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Hình Ảnh</th><th>Tên Danh Mục</th><th>Slug</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="cat : ${categories}">
+                                    <td th:text="${cat.id}"></td>
+                                    <td>
+                                        <img th:if="${cat.imageUrl != null and !cat.imageUrl.isEmpty()}" th:src="${cat.imageUrl}" class="cat-img-preview" alt="img">
+                                        <div th:unless="${cat.imageUrl != null and !cat.imageUrl.isEmpty()}" class="cat-img-preview d-flex align-items-center justify-content-center text-muted"><i class="fas fa-image"></i></div>
+                                    </td>
+                                    <td th:id="'name-categories-' + ${cat.id}" th:text="${cat.name}" class="fw-bold text-dark"></td>
+                                    <td class="text-muted" th:text="${cat.slug}"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1"
+                                                th:onclick="'openModal(\'Sửa Danh Mục\', \'categories\', \'' + ${cat.id} + '\', this)'"
+                                                th:data-image="${cat.imageUrl}" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${cat.id} + '\', \'categories\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-brands">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Thương hiệu</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Thương Hiệu', 'brands', null, null)">
+                                <i class="fas fa-plus me-1"></i> Thêm Thương Hiệu
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Tên Thương Hiệu</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="b : ${brands}">
+                                    <td th:text="${b.id}"></td>
+                                    <td th:id="'name-brands-' + ${b.id}" th:text="${b.name}" class="fw-medium"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1" th:onclick="'openModal(\'Sửa Thương Hiệu\', \'brands\', \'' + ${b.id} + '\', null)'" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${b.id} + '\', \'brands\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="tab-materials">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Danh sách Chất liệu</h5>
+                            <button class="btn btn-primary btn-sm px-3" onclick="openModal('Thêm Chất Liệu', 'materials', null, null)">
+                                <i class="fas fa-plus me-1"></i> Thêm Chất Liệu
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead><tr><th>ID</th><th>Tên Chất Liệu</th><th class="text-end">Hành động</th></tr></thead>
+                                <tbody>
+                                <tr th:each="m : ${materials}">
+                                    <td th:text="${m.id}"></td>
+                                    <td th:id="'name-materials-' + ${m.id}" th:text="${m.name}" class="fw-medium"></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-action btn-outline-primary me-1" th:onclick="'openModal(\'Sửa Chất Liệu\', \'materials\', \'' + ${m.id} + '\', null)'" title="Sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-action btn-outline-danger" th:onclick="'handleDelete(\'' + ${m.id} + '\', \'materials\')'" title="Xóa">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="attrModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="attrModalTitle">Tiêu đề</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="modalType">
+                    <input type="hidden" id="modalId">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Tên hiển thị <span class="text-danger">*</span></label>
+                        <input type="text" id="modalNameInput" class="form-control form-control-lg" placeholder="Nhập tên tại đây...">
+                        <div class="invalid-feedback">Vui lòng nhập tên!</div>
+                    </div>
+
+                    <div class="mb-3" id="imageInputContainer" style="display: none;">
+                        <label class="form-label fw-bold text-muted">Hình ảnh đại diện</label>
+                        <input type="file" id="modalImageInput" class="form-control" accept="image/png, image/jpeg, image/webp">
+                        <div class="mt-2 text-center" id="imagePreviewContainer" style="display: none;">
+                            <img id="imagePreview" src="" alt="Preview" style="max-width: 100px; max-height: 100px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd; padding: 5px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" id="saveBtn" class="btn btn-primary px-4" onclick="saveAttribute()">Lưu Lại</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const tokenEl = document.getElementById('csrfToken');
+        const headerEl = document.getElementById('csrfHeader');
+        const token = tokenEl ? tokenEl.value : '';
+        const header = headerEl ? headerEl.value : 'X-CSRF-TOKEN';
+        let attrModal;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            attrModal = new bootstrap.Modal(document.getElementById('attrModal'));
+
+            // Bắt sự kiện người dùng chọn file ảnh để xem trước (Preview)
+            document.getElementById('modalImageInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                const previewImg = document.getElementById('imagePreview');
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                if (file) {
+                    previewImg.src = URL.createObjectURL(file);
+                    previewContainer.style.display = 'block';
+                }
+            });
+        });
+
+        // 1. Hàm Xóa
+        function handleDelete(id, type) {
+            if(!confirm("Bạn có chắc chắn muốn xóa dữ liệu này không?")) return;
+
+            fetch(`/admin/products/${type}/${id}`, {
+                method: 'DELETE',
+                headers: { [header]: token }
+            }).then(async res => {
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || "Không thể xóa! Dữ liệu đang được liên kết với sản phẩm.");
+                }
+            }).catch(err => alert("Lỗi kết nối đến máy chủ!"));
+        }
+
+        // 2. Hàm mở Modal (Đã cập nhật để nhận thêm dữ liệu ảnh)
+        function openModal(title, type, id, btnElement) {
+            document.getElementById('attrModalTitle').innerText = title;
+            document.getElementById('modalType').value = type;
+            document.getElementById('modalId').value = id || '';
+            const inputEl = document.getElementById('modalNameInput');
+            inputEl.classList.remove('is-invalid');
+
+            // Xử lý ẩn/hiện ô input ảnh
+            const imgContainer = document.getElementById('imageInputContainer');
+            const imgInput = document.getElementById('modalImageInput');
+            const imgPreview = document.getElementById('imagePreview');
+            const imgPreviewContainer = document.getElementById('imagePreviewContainer');
+
+            imgInput.value = ''; // Xóa file cũ đang chọn (nếu có)
+            imgPreviewContainer.style.display = 'none';
+
+            if (type === 'categories') {
+                imgContainer.style.display = 'block';
+            } else {
+                imgContainer.style.display = 'none';
+            }
+
+            if (id && id !== '') {
+                // Sửa
+                const nameTd = document.getElementById(`name-${type}-${id}`);
+                inputEl.value = nameTd ? nameTd.innerText : '';
+
+                // Nếu là danh mục, lấy link ảnh cũ gán vào Preview
+                if (type === 'categories' && btnElement) {
+                    const currentImg = btnElement.getAttribute('data-image');
+                    if (currentImg && currentImg !== 'null' && currentImg !== '') {
+                        imgPreview.src = currentImg;
+                        imgPreviewContainer.style.display = 'block';
+                    }
+                }
+            } else {
+                // Thêm mới
+                inputEl.value = '';
+            }
+            attrModal.show();
+        }
+
+        // 3. Hàm Lưu (Sửa thành FormData để gửi được File)
+        function saveAttribute() {
+            const type = document.getElementById('modalType').value;
+            const id = document.getElementById('modalId').value;
+            const nameInput = document.getElementById('modalNameInput');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                nameInput.classList.add('is-invalid');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.innerHTML = 'Đang lưu...';
+            btn.disabled = true;
+
+            const isEdit = (id !== '');
+            const method = isEdit ? 'PUT' : 'POST';
+            let url = '';
+
+            if (isEdit) {
+                url = `/admin/products/${type}/${id}`;
+            } else {
+                let endpointType = type;
+                if (type === 'categories') endpointType = 'category';
+                if (type === 'brands') endpointType = 'brand';
+                if (type === 'materials') endpointType = 'material';
+                url = `/admin/products/quick-add/${endpointType}`;
+            }
+
+            // Dùng FormData thay vì URLSearchParams
+            const formData = new FormData();
+            formData.append('name', name);
+
+            // Nếu là form danh mục, đính kèm thêm file ảnh (nếu có chọn)
+            if (type === 'categories') {
+                const imageFile = document.getElementById('modalImageInput').files[0];
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+            }
+
+            fetch(url, {
+                method: method,
+                // LƯU Ý: Tuyệt đối KHÔNG set Content-Type ở đây khi dùng FormData
+                // Trình duyệt sẽ tự động set thành multipart/form-data cùng với chuỗi boundary
+                headers: {
+                    [header]: token
+                },
+                body: formData
+            }).then(async res => {
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.message || "Có lỗi xảy ra khi lưu!");
+                    btn.innerHTML = 'Lưu Lại';
+                    btn.disabled = false;
+                }
+            }).catch(err => {
+                alert("Lỗi hệ thống: " + err.message);
+                btn.innerHTML = 'Lưu Lại';
+                btn.disabled = false;
+            });
+        }
+    </script>
+</div>
+</body>
+</html>

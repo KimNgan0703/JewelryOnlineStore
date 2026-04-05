@@ -1,172 +1,714 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Form - Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #d4af37;
-            --secondary-color: #2c3e50;
-        }
-        .page-shell {
-            padding: 30px;
-            background: #f8f9fa;
-        }
-        .form-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .form-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--secondary-color);
-            margin-bottom: 14px;
-        }
-        .upload-box {
-            border: 2px dashed #ced4da;
-            border-radius: 8px;
-            min-height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6c757d;
-            background: #fcfcfc;
-        }
-    </style>
+    <title th:text="${pageTitle}">Product Form - Admin</title>
 </head>
 <body>
-<div class="page-shell">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="mb-0" style="color: var(--secondary-color);">Product Form</h1>
-            <p class="text-muted mb-0">Create or update product details for the storefront.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary">Cancel</button>
-            <button class="btn btn-dark"><i class="fas fa-floppy-disk me-1"></i> Save Product</button>
+<div id="admin-content">
+
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .page-shell { padding: 10px 0; background: #f4f6f9; }
+        .form-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; margin-bottom: 20px; }
+        .form-title { font-size: 1.05rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 14px; }
+        .error-message { color: #dc3545; font-size: 0.875em; margin-top: 0.25rem; }
+        .upload-zone { border: 2px dashed #a8d8ea; border-radius: 14px; padding: 22px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f7fcff; }
+        .upload-zone.dragover { border-color: #5ba4cf; background: #eaf6fd; transform: scale(1.01); }
+        .upload-zone:hover { border-color: #5ba4cf; background: #edf7fd; }
+        .upload-icon-wrap { width: 46px; height: 46px; background: linear-gradient(135deg, #5ba4cf, #a8d8ea); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: 0 4px 12px rgba(91,164,207,0.25); }
+        .upload-icon-wrap i { font-size: 1.15rem; color: white; }
+        .upload-title { font-size: 0.85rem; font-weight: 600; color: #2d4a6b; margin-bottom: 2px; }
+        .upload-sub { font-size: 0.73rem; color: #7bafc8; margin: 0; }
+        .upload-cta { display: inline-flex; align-items: center; gap: 5px; margin-top: 11px; padding: 5px 16px; background: #5ba4cf; color: white; border-radius: 20px; font-size: 0.77rem; font-weight: 500; box-shadow: 0 2px 8px rgba(91,164,207,0.3); cursor: pointer; }
+        .upload-zone:hover .upload-cta { background: #4a93be; }
+        .url-input-wrap { }
+        .url-addon { background: #eaf6fd; border-color: #a8d8ea; color: #5ba4cf; }
+        .url-input { border-color: #a8d8ea; font-size: 0.78rem; }
+        .url-input:focus { border-color: #5ba4cf; box-shadow: 0 0 0 0.15rem rgba(91,164,207,0.2); }
+        .btn-url { background: #5ba4cf; color: white; border-color: #5ba4cf; font-size: 0.78rem; font-weight: 500; padding: 0 14px; }
+        .btn-url:hover { background: #4a93be; border-color: #4a93be; color: white; }
+        #uploadQueue { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .queue-item { display: flex; align-items: center; gap: 9px; background: #f0f8ff; border-radius: 10px; padding: 7px 10px; border: 1px solid #d0eaf7; }
+        .queue-thumb { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; border: 1px solid #c5e3f5; flex-shrink: 0; }
+        .queue-info { flex: 1; min-width: 0; }
+        .queue-name { font-size: 0.76rem; font-weight: 500; color: #2d4a6b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .queue-progress-wrap { height: 3px; background: #d0eaf7; border-radius: 3px; margin-top: 4px; }
+        .queue-progress-bar { height: 3px; border-radius: 3px; background: linear-gradient(90deg,#5ba4cf,#57c4a7); transition: width 0.3s; width: 0%; }
+        .queue-status { font-size: 0.68rem; margin-top: 2px; color: #7bafc8; }
+        .queue-status.done { color: #57c4a7; font-weight: 600; }
+        .queue-status.err  { color: #f87171; }
+        .queue-size { font-size: 0.68rem; color: #9cc5db; flex-shrink: 0; }
+        #imagePreviewGrid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .preview-item { position: relative; width: 74px; height: 74px; border-radius: 10px; overflow: hidden; border: 2px solid #d0eaf7; box-shadow: 0 2px 8px rgba(91,164,207,0.1); flex-shrink: 0; transition: border-color 0.15s, transform 0.15s; }
+        .preview-item:first-child { border-color: #5ba4cf; }
+        .preview-item:hover { border-color: #5ba4cf; transform: scale(1.04); }
+        .preview-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .preview-item .remove-btn { position: absolute; top: 3px; right: 3px; width: 17px; height: 17px; border-radius: 50%; background: rgba(248,113,113,0.92); color: white; border: none; font-size: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+        .preview-item:hover .remove-btn { opacity: 1; }
+        .preview-item .img-num { position: absolute; bottom: 0; left: 0; right: 0; font-size: 9px; text-align: center; padding: 2px 0; color: #fff; background: rgba(45,74,107,0.55); }
+        .preview-item:first-child .img-num { background: rgba(91,164,207,0.8); font-weight: 600; }
+
+        /* ===== VARIANTS ===== */
+        .variant-table-wrap { overflow-x: auto; }
+        .variant-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; }
+        .variant-table thead th { background: #f0f4f8; color: #4a5568; font-weight: 600; padding: 8px 10px; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .variant-table thead th:first-child { border-radius: 8px 0 0 0; }
+        .variant-table thead th:last-child  { border-radius: 0 8px 0 0; }
+        .variant-row td { padding: 7px 8px; border-bottom: 1px solid #f0f4f8; vertical-align: middle; }
+        .variant-row:last-child td { border-bottom: none; }
+        .variant-row:hover td { background: #fafcff; }
+        .variant-row td input.form-control { font-size: 0.8rem; padding: 5px 9px; height: 34px; }
+        .variant-row td input.form-control:focus { border-color: #5ba4cf; box-shadow: 0 0 0 0.15rem rgba(91,164,207,0.2); }
+        .variant-idx { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg,#5ba4cf,#a8d8ea); color: #fff; font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: auto; flex-shrink: 0; }
+        .btn-del-variant { width: 28px; height: 28px; border-radius: 6px; background: #fff0f0; color: #e53e3e; border: 1px solid #fed7d7; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; font-size: 0.78rem; }
+        .btn-del-variant:hover { background: #e53e3e; color: #fff; border-color: #e53e3e; }
+        .btn-add-variant { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; background: linear-gradient(135deg,#5ba4cf,#4a93be); color: #fff; border: none; border-radius: 20px; font-size: 0.8rem; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(91,164,207,0.3); transition: all 0.2s; }
+        .btn-add-variant:hover { background: linear-gradient(135deg,#4a93be,#3a82ad); box-shadow: 0 4px 12px rgba(91,164,207,0.4); transform: translateY(-1px); }
+        .variant-empty { text-align: center; padding: 20px; color: #a0aec0; font-size: 0.82rem; }
+        .variant-count-badge { display: inline-flex; align-items: center; gap: 4px; background: #e8f4fd; color: #2d6a9f; border-radius: 12px; padding: 2px 10px; font-size: 0.75rem; font-weight: 600; }
+    </style>
+
+    <div id="cld-cfg"
+         th:data-cloud-name="${cloudinaryCloudName ?: 'dfnugby5d'}"
+         th:data-upload-preset="${cloudinaryUploadPreset ?: 'JewelryOnlineStore'}"
+         style="display:none"></div>
+
+    <div class="page-shell">
+        <form th:action="${isEdit} ? @{'/admin/products/' + ${product.id}} : @{/admin/products}"
+              th:object="${productRequest}"
+              method="POST"
+              id="productForm">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-0" style="color: var(--secondary-color);" th:text="${pageTitle}">Product Form</h1>
+                    <p class="text-muted mb-0">Điền thông tin chi tiết để quản lý sản phẩm trên cửa hàng.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/admin/products}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-dark" id="submitBtn">
+                        <i class="fas fa-floppy-disk me-1"></i> Lưu Sản Phẩm
+                    </button>
+                </div>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${toast_success}" class="alert alert-success" th:text="${toast_success}"></div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="form-card">
+                        <div class="form-title">Thông tin cơ bản</div>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Tên sản phẩm *</label>
+                                <input type="text" class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" placeholder="VD: Nhẫn vàng 18K Aurora">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">SKU *</label>
+                                <input type="text" class="form-control" th:field="*{sku}" th:classappend="${#fields.hasErrors('sku')} ? 'is-invalid'" placeholder="SKU-001">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('sku')}" th:errors="*{sku}"></div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Danh mục (Category) *</label>
+                                <div class="input-group">
+                                    <select class="form-select" th:field="*{categoryId}" id="categoryId">
+                                        <option value="">-- Chọn Danh mục --</option>
+                                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddCategory" title="Thêm nhanh">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Thương hiệu (Brand)</label>
+                                <div class="input-group">
+                                    <select class="form-select" th:field="*{brandId}" id="brandId">
+                                        <option value="">-- Chọn Thương hiệu --</option>
+                                        <option th:each="brand : ${brands}" th:value="${brand.id}" th:text="${brand.name}"></option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddBrand" title="Thêm nhanh">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Chất liệu (Material)</label>
+                                <div class="input-group">
+                                    <select class="form-select" th:field="*{materialId}" id="materialId">
+                                        <option value="">-- Chọn Chất liệu --</option>
+                                        <option th:each="mat : ${materials}" th:value="${mat.id}" th:text="${mat.name}"></option>
+                                    </select>
+                                    <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#modalQuickAddMaterial" title="Thêm nhanh">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Giới tính</label>
+                                <select class="form-select" th:field="*{gender}">
+                                    <option value="">Unisex</option>
+                                    <option value="male">Nam</option>
+                                    <option value="female">Nữ</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label">Trọng lượng (Gram)</label>
+                                <input type="number" step="0.01" class="form-control" th:field="*{weightGram}" placeholder="4.5">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả ngắn</label>
+                                <textarea class="form-control" rows="2" th:field="*{shortDescription}"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả chi tiết</label>
+                                <textarea class="form-control" rows="5" th:field="*{description}" placeholder="Mô tả chất liệu, kiểu dáng..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="form-title mb-0">Giá & Biến thể</div>
+                                <span class="variant-count-badge" id="variantCountBadge">
+                                    <i class="fas fa-layer-group"></i>
+                                    <span id="variantCountText">0 biến thể</span>
+                                </span>
+                            </div>
+                            <button type="button" class="btn-add-variant" id="btnAddVariant">
+                                <i class="fas fa-plus"></i> Thêm biến thể
+                            </button>
+                        </div>
+
+                        <div class="error-message mb-2" th:if="${#fields.hasErrors('variants')}" th:errors="*{variants}"></div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Giá cơ sở (Base Price) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:#f0f4f8;border-color:#d1dde8;font-size:0.8rem;">₫</span>
+                                    <input type="number" class="form-control" th:field="*{basePrice}" th:classappend="${#fields.hasErrors('basePrice')} ? 'is-invalid'" placeholder="0">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('basePrice')}" th:errors="*{basePrice}"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giá so sánh (Compare Price)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:#f0f4f8;border-color:#d1dde8;font-size:0.8rem;">₫</span>
+                                    <input type="number" class="form-control" th:field="*{comparePrice}" placeholder="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr style="border-color:#e8eef4; margin: 0 0 14px;">
+
+                        <div class="variant-table-wrap">
+                            <table class="variant-table" id="variantTable">
+                                <thead>
+                                <tr>
+                                    <th style="width:36px;">#</th>
+                                    <th style="min-width:110px;">Kích thước <span class="text-danger">*</span></th>
+                                    <th style="min-width:130px;">Giá biến thể <span class="text-danger">*</span></th>
+                                    <th style="min-width:110px;">Tồn kho <span class="text-danger">*</span></th>
+                                    <th style="min-width:110px;">Cảnh báo sắp hết</th>
+                                    <th style="min-width:100px;">SKU biến thể</th>
+                                    <th style="width:40px;"></th>
+                                </tr>
+                                </thead>
+                                <tbody id="variantTbody">
+                                <!-- JS rendered -->
+                                </tbody>
+                            </table>
+                            <div class="variant-empty" id="variantEmpty" style="display:none;">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block" style="color:#cbd5e0;"></i>
+                                Chưa có biến thể nào. Nhấn <strong>Thêm biến thể</strong> để bắt đầu.
+                            </div>
+                        </div>
+
+                        <!-- Hidden inputs for Thymeleaf existing variants -->
+                        <div id="existingVariants" th:if="${isEdit}">
+                            <th:block th:each="v,iStat : ${productRequest.variants}">
+                                <input type="hidden" class="ev-id"   th:value="${v.id}">
+                                <input type="hidden" class="ev-size"  th:value="${v.size}">
+                                <input type="hidden" class="ev-price" th:value="${v.price}">
+                                <input type="hidden" class="ev-stock" th:value="${v.stockQuantity}">
+                                <input type="hidden" class="ev-low"   th:value="${v.lowStockThreshold}">
+                                <input type="hidden" class="ev-sku"   th:value="${v.sku}">
+                            </th:block>
+                        </div>
+                        <!-- Validation data for new product (variants[0]) kept for server fallback -->
+                        <input type="hidden" id="variantsFallback" style="display:none">
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="form-card">
+                        <div class="form-title">Trạng thái</div>
+                        <select class="form-select mb-3" th:field="*{active}">
+                            <option th:value="true">Hiển thị (Active)</option>
+                            <option th:value="false">Ẩn / Bản nháp (Draft)</option>
+                        </select>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" th:field="*{new}">
+                            <label class="form-check-label">Sản phẩm Mới (New Arrival)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{bestSeller}">
+                            <label class="form-check-label">Bán chạy (Best Seller)</label>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="form-title">Hình ảnh Sản phẩm</div>
+                        <input type="hidden" name="imageUrls" id="imageUrlsInput" th:value="${productRequest.imageUrls}">
+
+                        <div class="upload-zone" id="uploadZone">
+                            <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none">
+                            <div class="upload-icon-wrap"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <p class="upload-title">Kéo & thả ảnh vào đây</p>
+                            <p class="upload-sub">JPG, PNG, WEBP · tối đa 10MB/ảnh</p>
+                            <span class="upload-cta" id="browseBtn"><i class="fas fa-folder-open me-1"></i>Chọn từ máy tính</span>
+                        </div>
+
+                        <div class="url-input-wrap mt-2">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text url-addon"><i class="fas fa-link"></i></span>
+                                <input type="text" class="form-control url-input" id="urlInput" placeholder="Hoặc dán link ảnh từ web...">
+                                <button class="btn btn-url" type="button" id="urlUploadBtn">Tải lên</button>
+                            </div>
+                            <div id="urlError" class="text-danger mt-1" style="font-size:0.72rem;display:none;"></div>
+                        </div>
+
+                        <div id="uploadQueue"></div>
+
+                        <div id="imagePreviewGrid"></div>
+                        <div id="previewCount" class="mt-1" style="font-size:0.78rem;"></div>
+                        <p class="mt-1 mb-0 text-muted" th:if="${isEdit}" style="font-size:0.75rem;">
+                            <i class="fas fa-info-circle me-1 text-primary"></i>
+                            Ảnh hiện tại đã được load — bạn có thể xóa bớt hoặc thêm ảnh mới.
+                        </p>
+                    </div>
+
+                    <div class="form-card mb-0">
+                        <div class="form-title">SEO (Tối ưu tìm kiếm)</div>
+                        <div class="mb-3">
+                            <label class="form-label">Tiêu đề (Meta Title)</label>
+                            <input type="text" class="form-control" th:field="*{metaTitle}" placeholder="Luxury 18K Gold Ring">
+                        </div>
+                        <div>
+                            <label class="form-label">Mô tả SEO (Meta Description)</label>
+                            <textarea class="form-control" rows="4" th:field="*{metaDescription}" placeholder="Mô tả tóm tắt cho Google..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal fade" id="modalQuickAddCategory" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm Danh Mục Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="newCategoryName" class="form-control" placeholder="Nhập tên danh mục (VD: Nhẫn cưới)">
+                    <div id="errorCategory" class="text-danger mt-2" style="display: none; font-size: 0.85rem;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="quickAdd('category', 'categoryId', 'newCategoryName', 'errorCategory')">Lưu & Chọn</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <form>
-        <div class="row g-4">
-            <div class="col-lg-8">
-                <div class="form-card">
-                    <div class="form-title">Basic Information</div>
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label class="form-label">Product Name</label>
-                            <input type="text" class="form-control" placeholder="e.g. 18K Gold Ring Aurora">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">SKU</label>
-                            <input type="text" class="form-control" placeholder="SKU-001">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Category</label>
-                            <select class="form-select">
-                                <option>Ring</option>
-                                <option>Necklace</option>
-                                <option>Bracelet</option>
-                                <option>Earring</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Brand</label>
-                            <select class="form-select">
-                                <option>Luxe Signature</option>
-                                <option>Classic Gold</option>
-                                <option>Modern Pearl</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" rows="5" placeholder="Describe materials, stone size, style, and care instructions..."></textarea>
-                        </div>
-                    </div>
+    <div class="modal fade" id="modalQuickAddBrand" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm Thương Hiệu Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-
-                <div class="form-card">
-                    <div class="form-title">Pricing & Inventory</div>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Price</label>
-                            <input type="number" class="form-control" placeholder="420">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Compare At Price</label>
-                            <input type="number" class="form-control" placeholder="480">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Cost</label>
-                            <input type="number" class="form-control" placeholder="260">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Stock Quantity</label>
-                            <input type="number" class="form-control" placeholder="120">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Reorder Level</label>
-                            <input type="number" class="form-control" placeholder="15">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Weight (gram)</label>
-                            <input type="number" class="form-control" placeholder="4.5">
-                        </div>
-                    </div>
+                <div class="modal-body">
+                    <input type="text" id="newBrandName" class="form-control" placeholder="Nhập tên thương hiệu (VD: PNJ)">
+                    <div id="errorBrand" class="text-danger mt-2" style="display: none; font-size: 0.85rem;"></div>
                 </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="form-card">
-                    <div class="form-title">Status</div>
-                    <select class="form-select mb-3">
-                        <option>Draft</option>
-                        <option>Active</option>
-                        <option>Archived</option>
-                    </select>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="featuredProduct">
-                        <label class="form-check-label" for="featuredProduct">Feature on homepage</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="allowBackorder" checked>
-                        <label class="form-check-label" for="allowBackorder">Allow backorder</label>
-                    </div>
-                </div>
-
-                <div class="form-card">
-                    <div class="form-title">Media</div>
-                    <div class="upload-box mb-3">
-                        <div class="text-center">
-                            <i class="fas fa-cloud-arrow-up mb-2" style="font-size: 1.4rem;"></i>
-                            <div>Drag and drop images here</div>
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-outline-secondary w-100">Choose Files</button>
-                </div>
-
-                <div class="form-card mb-0">
-                    <div class="form-title">SEO</div>
-                    <div class="mb-3">
-                        <label class="form-label">Meta Title</label>
-                        <input type="text" class="form-control" placeholder="Luxury 18K Gold Ring">
-                    </div>
-                    <div>
-                        <label class="form-label">Meta Description</label>
-                        <textarea class="form-control" rows="3" placeholder="Elegant 18K gold ring with premium craftsmanship."></textarea>
-                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="quickAdd('brand', 'brandId', 'newBrandName', 'errorBrand')">Lưu & Chọn</button>
                 </div>
             </div>
         </div>
-    </form>
-</div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="modalQuickAddMaterial" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Thêm Chất Liệu Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="newMaterialName" class="form-control" placeholder="Nhập tên chất liệu (VD: Vàng 18K)">
+                    <div id="errorMaterial" class="text-danger mt-2" style="display: none; font-size: 0.85rem;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" onclick="quickAdd('material', 'materialId', 'newMaterialName', 'errorMaterial')">Lưu & Chọn</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function quickAdd(type, selectId, inputId, errorId) {
+            const nameVal = document.getElementById(inputId).value.trim();
+            const errorDiv = document.getElementById(errorId);
+
+            const csrfTokenElement = document.getElementById('csrfToken');
+            const csrfHeaderElement = document.getElementById('csrfHeader');
+            const csrfToken = csrfTokenElement ? csrfTokenElement.value : '';
+            const csrfHeader = csrfHeaderElement ? csrfHeaderElement.value : '';
+
+            if (!nameVal) {
+                errorDiv.innerText = "Vui lòng nhập tên!";
+                errorDiv.style.display = 'block';
+                return;
+            }
+            errorDiv.style.display = 'none';
+
+            let headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            if (csrfHeader && csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch(`/admin/products/quick-add/${type}`, {
+                method: 'POST',
+                headers: headers,
+                body: new URLSearchParams({ name: nameVal })
+            })
+                .then(async res => {
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.message || 'Lỗi hệ thống');
+                    return data;
+                })
+                .then(data => {
+                    const select = document.getElementById(selectId);
+                    const option = new Option(data.name, data.id, true, true);
+                    select.add(option);
+
+                    document.getElementById(inputId).value = '';
+                    const modalId = 'modalQuickAdd' + type.charAt(0).toUpperCase() + type.slice(1);
+                    const modalEl = document.getElementById(modalId);
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if(modal) modal.hide();
+
+                    alert("Đã thêm thành công: " + data.name);
+                })
+                .catch(err => {
+                    errorDiv.innerText = err.message;
+                    errorDiv.style.display = 'block';
+                });
+        }
+    </script>
+
+    <script>
+        (function() {
+            'use strict';
+            // ===== VARIANT MANAGER =====
+            var variants = [];
+            var variantIdCounter = 0;
+
+            var tbody        = document.getElementById('variantTbody');
+            var emptyMsg     = document.getElementById('variantEmpty');
+            var countText    = document.getElementById('variantCountText');
+            var btnAdd       = document.getElementById('btnAddVariant');
+
+            // Load existing variants from hidden Thymeleaf inputs (edit mode)
+            var existingContainer = document.getElementById('existingVariants');
+            if (existingContainer) {
+                var ids    = existingContainer.querySelectorAll('.ev-id');
+                var sizes  = existingContainer.querySelectorAll('.ev-size');
+                var prices = existingContainer.querySelectorAll('.ev-price');
+                var stocks = existingContainer.querySelectorAll('.ev-stock');
+                var lows   = existingContainer.querySelectorAll('.ev-low');
+                var skus   = existingContainer.querySelectorAll('.ev-sku');
+                for (var i = 0; i < sizes.length; i++) {
+                    variants.push({
+                        _id: ++variantIdCounter,
+                        id: ids[i] ? ids[i].value : '',
+                        size: sizes[i] ? sizes[i].value : '',
+                        price: prices[i] ? prices[i].value : '',
+                        stockQuantity: stocks[i] ? stocks[i].value : '',
+                        lowStockThreshold: lows[i] ? lows[i].value : '',
+                        sku: skus[i] ? skus[i].value : ''
+                    });
+                }
+            } else {
+                // New product: 1 default variant
+                variants.push({ _id: ++variantIdCounter, id: '', size: 'Freesize', price: '', stockQuantity: '', lowStockThreshold: '5', sku: '' });
+            }
+
+            function renderVariants() {
+                tbody.innerHTML = '';
+                var count = variants.length;
+                countText.textContent = count + ' biến thể';
+                emptyMsg.style.display = count === 0 ? 'block' : 'none';
+
+                variants.forEach(function(v, idx) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'variant-row';
+                    tr.dataset.vid = v._id;
+                    tr.innerHTML =
+                        '<td><div class="variant-idx">' + (idx + 1) + '</div></td>' +
+                        '<td><input type="text"   class="form-control" name="variants[' + idx + '].size"              value="' + esc(v.size)              + '" placeholder="VD: 16, 17, FS" required></td>' +
+                        '<td><input type="number" class="form-control" name="variants[' + idx + '].price"             value="' + esc(v.price)             + '" placeholder="0" min="0" required></td>' +
+                        '<td><input type="number" class="form-control" name="variants[' + idx + '].stockQuantity"     value="' + esc(v.stockQuantity)     + '" placeholder="0" min="0" required></td>' +
+                        '<td><input type="number" class="form-control" name="variants[' + idx + '].lowStockThreshold" value="' + esc(v.lowStockThreshold) + '" placeholder="5"  min="0"></td>' +
+                        '<td><input type="text"   class="form-control" name="variants[' + idx + '].sku"              value="' + esc(v.sku)               + '" placeholder="(tuỳ chọn)"></td>' +
+                        (v.id ? '<input type="hidden" name="variants[' + idx + '].id" value="' + esc(v.id) + '">' : '') +
+                        '<td><button type="button" class="btn-del-variant" title="Xóa biến thể này"><i class="fas fa-trash-alt"></i></button></td>';
+
+                    tr.querySelectorAll('input[name]').forEach(function(inp) {
+                        inp.addEventListener('input', function() {
+                            var m = inp.name.match(/variants\[\d+\]\.(.+)/);
+                            if (m) v[m[1]] = inp.value;
+                        });
+                    });
+
+                    tr.querySelector('.btn-del-variant').addEventListener('click', function() {
+                        if (variants.length <= 1) {
+                            alert('Sản phẩm phải có ít nhất 1 biến thể!');
+                            return;
+                        }
+                        variants.splice(idx, 1);
+                        renderVariants();
+                    });
+
+                    tbody.appendChild(tr);
+                });
+            }
+
+            btnAdd.addEventListener('click', function() {
+                variants.push({ _id: ++variantIdCounter, id: '', size: '', price: '', stockQuantity: '', lowStockThreshold: '5', sku: '' });
+                renderVariants();
+                var rows = tbody.querySelectorAll('.variant-row');
+                if (rows.length) {
+                    var lastRow = rows[rows.length - 1];
+                    var first = lastRow.querySelector('input');
+                    if (first) { first.focus(); lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+                }
+            });
+
+            function esc(val) { return (val || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+            document.getElementById('productForm').addEventListener('submit', function(e) {
+                if (variants.length === 0) {
+                    e.preventDefault();
+                    alert('Vui lòng thêm ít nhất 1 biến thể cho sản phẩm!');
+                    return;
+                }
+                var hasError = variants.some(function(v) { return !v.size || !v.price || v.stockQuantity === ''; });
+                if (hasError) {
+                    e.preventDefault();
+                    alert('Vui lòng điền đầy đủ Kích thước, Giá và Tồn kho cho tất cả biến thể!');
+                }
+            }, true);
+
+            renderVariants();
+        })();
+    </script>
+
+    <script>
+        (function () {
+            'use strict';
+            const cfg          = document.getElementById('cld-cfg');
+            const CLOUD_NAME   = cfg.dataset.cloudName;
+            const UPLOAD_PRESET= cfg.dataset.uploadPreset;
+            const UPLOAD_URL   = 'https://api.cloudinary.com/v1_1/' + CLOUD_NAME + '/image/upload';
+
+            const fileInput    = document.getElementById('fileInput');
+            const uploadZone   = document.getElementById('uploadZone');
+            const browseBtn    = document.getElementById('browseBtn');
+            const uploadQueue  = document.getElementById('uploadQueue');
+            const grid         = document.getElementById('imagePreviewGrid');
+            const countLabel   = document.getElementById('previewCount');
+            const urlsInput    = document.getElementById('imageUrlsInput');
+            const submitBtn    = document.getElementById('submitBtn');
+            const urlInput     = document.getElementById('urlInput');
+            const urlUploadBtn = document.getElementById('urlUploadBtn');
+            const urlError     = document.getElementById('urlError');
+
+            const uploadedUrls = (urlsInput.value || '').split(',').filter(Boolean);
+
+            function renderPreviews() {
+                grid.innerHTML = '';
+                uploadedUrls.forEach(function(url, idx) {
+                    var item = document.createElement('div');
+                    item.className = 'preview-item';
+                    item.innerHTML =
+                        '<img src="' + url + '" alt="Anh ' + (idx+1) + '">' +
+                        '<button type="button" class="remove-btn" title="Xoa"><i class="fas fa-times"></i></button>' +
+                        '<span class="img-num">' + (idx === 0 ? 'Chinh' : 'Anh ' + (idx+1)) + '</span>';
+                    item.querySelector('.remove-btn').addEventListener('click', function() {
+                        uploadedUrls.splice(idx, 1);
+                        urlsInput.value = uploadedUrls.join(',');
+                        renderPreviews();
+                    });
+                    grid.appendChild(item);
+                });
+                countLabel.innerHTML = uploadedUrls.length > 0
+                    ? '<span style="color:#57c4a7"><i class="fas fa-check-circle me-1"></i>' + uploadedUrls.length + ' ảnh da tai len</span>'
+                    : '';
+            }
+
+            function uploadFile(file) {
+                var allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+                if (allowed.indexOf(file.type) === -1) {
+                    alert('Chỉ hỗ trợ JPG, PNG, WEBP. File "' + file.name + '" không được hỗ trợ.');
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File "' + file.name + '" vượt quá 10MB.');
+                    return;
+                }
+
+                var queueId = 'q' + Date.now();
+                var thumbUrl = URL.createObjectURL(file);
+                var qItem = document.createElement('div');
+                qItem.className = 'queue-item';
+                qItem.id = queueId;
+                qItem.innerHTML =
+                    '<img class="queue-thumb" src="' + thumbUrl + '" alt="">' +
+                    '<div class="queue-info">' +
+                    '<div class="queue-name">' + file.name + '</div>' +
+                    '<div class="queue-progress-wrap"><div class="queue-progress-bar" id="bar' + queueId + '"></div></div>' +
+                    '<div class="queue-status" id="st' + queueId + '">Đang tải lên...</div>' +
+                    '</div>' +
+                    '<span class="queue-size">' + formatSize(file.size) + '</span>';
+                uploadQueue.appendChild(qItem);
+
+                var bar    = document.getElementById('bar' + queueId);
+                var status = document.getElementById('st' + queueId);
+
+                var fd = new FormData();
+                fd.append('file', file);
+                fd.append('upload_preset', UPLOAD_PRESET);
+                fd.append('folder', 'jewelry/products');
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', UPLOAD_URL, true);
+
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        var pct = Math.round((e.loaded / e.total) * 100);
+                        bar.style.width = pct + '%';
+                        status.textContent = 'Đang tải... ' + pct + '%';
+                    }
+                };
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        var res = JSON.parse(xhr.responseText);
+                        if (res.secure_url) {
+                            uploadedUrls.push(res.secure_url);
+                            urlsInput.value = uploadedUrls.join(',');
+                            bar.style.width = '100%';
+                            status.textContent = 'Hoàn thành ✓';
+                            status.className = 'queue-status done';
+                            renderPreviews();
+                            setTimeout(function() {
+                                qItem.style.transition = 'opacity 0.4s';
+                                qItem.style.opacity = '0';
+                                setTimeout(function() { qItem.remove(); }, 400);
+                            }, 2000);
+                        } else {
+                            status.textContent = 'Lỗi: ' + (res.error && res.error.message ? res.error.message : 'Upload thất bại');
+                            status.className = 'queue-status err';
+                        }
+                    } else {
+                        status.textContent = 'Lỗi HTTP ' + xhr.status;
+                        status.className = 'queue-status err';
+                    }
+                };
+                xhr.onerror = function() { status.textContent = 'Lỗi kết nối'; status.className = 'queue-status err'; };
+                xhr.send(fd);
+            }
+
+            function uploadFromUrl(url) {
+                urlError.style.display = 'none';
+                if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+                    urlError.textContent = 'URL không hợp lệ, phải bắt đầu bằng http:// hoặc https://';
+                    urlError.style.display = 'block';
+                    return;
+                }
+
+                var queueId = 'qu' + Date.now();
+                var qItem = document.createElement('div');
+                qItem.className = 'queue-item';
+                qItem.id = queueId;
+                qItem.innerHTML =
+                    '<div style="width:34px;height:34px;border-radius:6px;background:#d0eaf7;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-link" style="color:#5ba4cf;font-size:0.8rem;"></i></div>' +
+                    '<div class="queue-info"><div class="queue-name">' + url.substring(0, 40) + '...</div><div class="queue-progress-wrap"><div class="queue-progress-bar" id="bar' + queueId + '" style="width:40%"></div></div><div class="queue-status" id="st' + queueId + '">Đang tải từ URL...</div></div>';
+                uploadQueue.appendChild(qItem);
+
+                var status = document.getElementById('st' + queueId);
+                var bar    = document.getElementById('bar' + queueId);
+
+                var fd = new FormData();
+                fd.append('file', url);
+                fd.append('upload_preset', UPLOAD_PRESET);
+                fd.append('folder', 'jewelry/products');
+
+                fetch(UPLOAD_URL, { method: 'POST', body: fd })
+                    .then(function(r) { return r.json(); })
+                    .then(function(res) {
+                        if (res.secure_url) {
+                            uploadedUrls.push(res.secure_url);
+                            urlsInput.value = uploadedUrls.join(',');
+                            bar.style.width = '100%';
+                            status.textContent = 'Hoàn thành ✓';
+                            status.className = 'queue-status done';
+                            renderPreviews();
+                            urlInput.value = '';
+                            setTimeout(function() {
+                                qItem.style.transition = 'opacity 0.4s';
+                                qItem.style.opacity = '0';
+                                setTimeout(function() { qItem.remove(); }, 400);
+                            }, 2000);
+                        } else { throw new Error(res.error && res.error.message ? res.error.message : 'Upload thất bại'); }
+                    })
+                    .catch(function(err) { status.textContent = 'Lỗi: ' + err.message; status.className = 'queue-status err'; });
+            }
+
+            browseBtn.addEventListener('click', function(e) { e.stopPropagation(); fileInput.click(); });
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) { Array.from(fileInput.files).forEach(function(f) { uploadFile(f); }); fileInput.value = ''; }
+            });
+            uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); e.stopPropagation(); uploadZone.classList.add('dragover'); });
+            uploadZone.addEventListener('dragleave', function(e) { e.preventDefault(); uploadZone.classList.remove('dragover'); });
+            uploadZone.addEventListener('drop', function(e) { e.preventDefault(); e.stopPropagation(); uploadZone.classList.remove('dragover'); var files = e.dataTransfer.files; if (files.length > 0) { Array.from(files).forEach(function(f) { uploadFile(f); }); } });
+            urlUploadBtn.addEventListener('click', function() { uploadFromUrl(urlInput.value.trim()); });
+            urlInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); uploadFromUrl(urlInput.value.trim()); } });
+            document.getElementById('productForm').addEventListener('submit', function() { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang lưu...'; });
+            function formatSize(b) { if (b < 1024) return b + 'B'; if (b < 1024 * 1024) return Math.round(b / 1024) + 'KB'; return (b / (1024 * 1024)).toFixed(1) + 'MB'; }
+
+            renderPreviews();
+        })();
+    </script>
+</div>
 </body>
 </html>

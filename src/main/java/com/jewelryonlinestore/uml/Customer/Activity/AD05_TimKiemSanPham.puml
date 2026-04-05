@@ -1,0 +1,43 @@
+@startuml
+title Activity Diagram - Use Case: Khám phá và tìm kiếm sản phẩm
+
+|Khách hàng|
+start
+:Truy cập Website;
+
+|Hệ thống|
+:Lấy danh sách Banner, Category, Sản phẩm bán chạy/mới;
+:Hiển thị Trang chủ;
+
+|Khách hàng|
+if (Hành động?) then (Nhập từ khóa tìm kiếm)
+  :Nhập từ khóa và nhấn Enter;
+  |Hệ thống|
+  if (Ô tìm kiếm trống? (A1)) then (Có)
+    :Lấy toàn bộ sản phẩm is_active = true;
+  else (Không)
+    :Truy vấn sản phẩm theo Tên/Mô tả chứa từ khóa;
+  endif
+else (Khám phá qua Danh mục/Banner)
+  :Chọn Danh mục hoặc Banner;
+  |Hệ thống|
+  :Lấy danh sách sản phẩm tương ứng;
+endif
+
+|Khách hàng|
+repeat
+  :Chọn bộ lọc (Danh mục, Thương hiệu, Chất liệu, Khoảng giá, Giới tính);
+  |Hệ thống|
+  :Xây dựng truy vấn động (Specification);
+  :Truy vấn CSDL kèm phân trang;
+  if (Có sản phẩm phù hợp?) then (Không - E1)
+    :Hiển thị "Không tìm thấy sản phẩm phù hợp";
+  else (Có)
+    :Hiển thị danh sách sản phẩm;
+  endif
+|Khách hàng|
+backward:Thay đổi tiêu chí lọc;
+repeat while (Tiếp tục tìm kiếm?) is (Có)
+
+stop
+@enduml

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Cập nhật trạng thái đơn hàng</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px; color: #2d2d2d; }
+        .container { max-width: 600px; background: #fff; padding: 30px; border-radius: 0; margin: auto; border: 1px solid #eee; }
+        .header { text-align: center; border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .header h2 { color: #2d2d2d; margin: 0; font-weight: 600; letter-spacing: 0.6px; }
+        .status-box { background: #f7dada; padding: 20px; border-left: 4px solid #d4af37; margin: 25px 0; }
+        .status-badge { display: inline-block; padding: 5px 12px; background-color: #2d2d2d; color: #fff; border-radius: 0; font-weight: bold; font-size: 0.85rem; }
+        .footer { margin-top: 30px; font-size: 0.85rem; color: #717171; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        .details-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .details-table td { padding: 8px 0; border-bottom: 1px dashed #eee; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h2>Jewelry Online Store</h2>
+    </div>
+
+    <p>Xin chào <strong th:text="${order.snapRecipientName}">Khách hàng</strong>,</p>
+    <p th:if="${order.orderStatus.name() != 'CANCELLED'}">Đơn hàng <strong>#<span th:text="${order.orderNumber}"></span></strong> của bạn vừa được hệ thống cập nhật trạng thái mới.</p>
+    <p th:if="${order.orderStatus.name() == 'CANCELLED'}">Đơn hàng <strong>#<span th:text="${order.orderNumber}"></span></strong> của bạn đã được cập nhật sang trạng thái <strong>Đã hủy</strong>.</p>
+
+    <div class="status-box">
+        <h3 style="margin-top: 0; color: #2c3e50;">Trạng thái hiện tại: <span class="status-badge" th:text="${order.orderStatus.label}">Đang giao hàng</span></h3>
+
+        <p style="margin-bottom: 0;" th:if="${order.orderStatus.name() == 'PROCESSING'}">Shop đã nhận được đơn hàng và đang tiến hành xử lý.</p>
+        <p style="margin-bottom: 0;" th:if="${order.orderStatus.name() == 'SHIPPING'}">Đơn hàng của bạn đang được giao đến địa chỉ: <strong th:text="${order.snapAddress}"></strong>. Vui lòng chú ý điện thoại từ Shipper nhé!</p>
+        <p style="margin-bottom: 0;" th:if="${order.orderStatus.name() == 'DELIVERED'}">Đơn hàng đã được giao thành công. Cảm ơn bạn đã tin tưởng và mua sắm tại Jewelry Store!</p>
+        <p style="margin-bottom: 0; color: #dc3545;" th:if="${order.orderStatus.name() == 'CANCELLED'}">Đơn hàng đã bị hủy. <br>Lý do: <strong th:text="${order.cancelledReason != null and !#strings.isEmpty(order.cancelledReason) ? order.cancelledReason : 'Khách hàng hủy đơn'}"></strong>.</p>
+        <p style="margin-bottom: 0; color: #0b7285;" th:if="${order.orderStatus.name() == 'CANCELLED' and order.paymentStatus.name() == 'REFUNDED'}">Đơn hàng đã hủy và đã hoàn tiền. Khoản thanh toán MoMo sẽ về ví trong vòng 1-3 ngày làm việc.</p>
+    </div>
+
+    <p><strong>Tóm tắt thanh toán:</strong></p>
+    <table class="details-table">
+        <tr>
+            <td>Phương thức thanh toán:</td>
+            <td><strong th:text="${order.paymentMethod.name()}">COD</strong></td>
+        </tr>
+        <tr>
+            <td>Trạng thái thanh toán:</td>
+            <td><strong th:text="${order.paymentStatus.name() == 'PAID' ? 'Đã thanh toán' : (order.paymentStatus.name() == 'REFUNDED' ? 'Đã hoàn tiền' : 'Chưa thanh toán')}">Chưa thanh toán</strong></td>
+        </tr>
+        <tr>
+            <td>Tổng tiền:</td>
+            <td><strong style="color: #d4af37; font-size: 1.1rem;" th:text="${#numbers.formatDecimal(order.total, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</strong></td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <p>Để xem chi tiết hành trình đơn hàng, vui lòng đăng nhập vào website của chúng tôi.</p>
+        <p>Nếu bạn có bất kỳ thắc mắc nào, vui lòng liên hệ hotline: <strong>1900 1234</strong>.</p>
+        <p>&copy; 2026 Jewelry Online Store. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

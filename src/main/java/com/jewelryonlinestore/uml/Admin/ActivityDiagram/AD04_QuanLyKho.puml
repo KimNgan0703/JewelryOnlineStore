@@ -1,0 +1,44 @@
+@startuml
+title Activity Diagram - Use Case: Quản lý kho
+
+|Admin|
+start
+:Nhấn vào mục "Quản lý kho" trên sidebar;
+
+|Hệ thống|
+:Truy vấn danh sách Product Variants;
+:Kiểm tra biến thể có stock_quantity <= low_stock_threshold;
+:Hiển thị danh sách tồn kho \n(Kèm cảnh báo hàng sắp hết);
+
+|Admin|
+switch (Thao tác?)
+case ( Xem lịch sử nhập/xuất )
+  :Chọn biến thể & Nhấn "Xem lịch sử";
+  |Hệ thống|
+  :Truy vấn bảng inventory_log theo variant_id;
+  :Hiển thị danh sách lịch sử thay đổi;
+case ( Nhập kho )
+  |Admin|
+  :Chọn biến thể & Nhấn "Nhập kho";
+  |Hệ thống|
+  :Hiển thị Form nhập kho (Số lượng, Lý do, Ghi chú);
+
+  |Admin|
+  :Điền thông tin và Xác nhận;
+
+  |Hệ thống|
+  :Kiểm tra Số lượng thay đổi;
+  if (Số lượng <= 0?) then (Có - E1)
+    :Hiển thị lỗi "Số lượng phải lớn hơn 0";
+    stop
+  else (Không)
+    :Cộng dồn số lượng vào stock_quantity \ntrong bảng product_variants;
+    :Tạo bản ghi mới trong bảng inventory_log \n(lưu quantity_change, reason, note, user_id);
+    :Hiển thị thông báo "Cập nhật thành công";
+  endif
+endswitch
+
+|Hệ thống|
+:Tải lại danh sách Quản lý kho;
+stop
+@enduml

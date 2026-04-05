@@ -1,0 +1,26 @@
+@startuml
+title Object Diagram - Trạng thái Đánh giá đang kiểm duyệt
+
+object "newReview : Review" as r1 {
+  id = 505
+  rating = 5
+  comment = "Nhẫn rất sáng, giao hàng nhanh!"
+  status = PENDING
+  adminReply = null
+}
+
+object "nhanKimCuong : Product" as p1 {
+  id = 101
+  name = "Nhẫn Kim Cương Hope"
+  averageRating = 4.8
+  reviewCount = 10
+}
+
+object "reviewImg : ReviewImage" as i1 {
+  id = 901
+  imageUrl = "https://cloudinary.../review_505.jpg"
+}
+
+r1 --> p1 : product_id = 101
+r1 *-- i1
+@enduml

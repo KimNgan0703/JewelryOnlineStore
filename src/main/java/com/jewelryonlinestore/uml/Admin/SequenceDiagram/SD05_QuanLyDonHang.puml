@@ -1,0 +1,40 @@
+@startuml
+title Sequence Diagram - Cập nhật trạng thái đơn hàng
+
+actor Admin
+participant "AdminOrderController" as Ctrl
+participant "OrderService" as Svc
+participant "OrderRepository" as Repo
+participant "HistoryRepository" as HistRepo
+participant "EmailService" as Mail
+
+Admin -> Ctrl: POST /admin/orders/{id}/status (request)
+activate Ctrl
+
+Ctrl -> Svc: updateOrderStatus(id, request)
+activate Svc
+
+Svc -> Repo: findById(id)
+activate Repo
+Repo --> Svc: order
+deactivate Repo
+
+alt Trạng thái chuyển đổi không hợp lệ [E1]
+    Svc --> Ctrl: throw IllegalStateException
+    Ctrl --> Admin: Hiển thị thông báo lỗi
+else Trạng thái hợp lệ
+    Svc -> Svc: Cập nhật order.status
+    Svc -> Repo: save(order)
+
+    Svc -> HistRepo: save(new OrderStatusHistory)
+
+    Svc -> Mail: sendOrderStatusEmail(order)
+
+    Svc --> Ctrl: void
+    deactivate Svc
+
+    Ctrl --> Admin: Redirect to Order Detail (Success)
+end
+
+deactivate Ctrl
+@enduml

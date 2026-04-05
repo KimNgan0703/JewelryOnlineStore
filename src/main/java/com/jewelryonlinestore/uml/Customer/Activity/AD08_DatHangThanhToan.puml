@@ -1,0 +1,66 @@
+@startuml
+title Activity Diagram - Use Case: Đặt hàng và Thanh toán
+
+|Khách hàng (Đã đăng nhập)|
+start
+:Nhấn nút "Thanh toán" từ Giỏ hàng;
+
+|Hệ thống|
+:Hiển thị trang Đặt hàng \n(Sản phẩm, Subtotal, Discount, Total);
+
+|Khách hàng (Đã đăng nhập)|
+:Chọn hoặc Thêm địa chỉ giao hàng mới;
+:Nhập ghi chú đơn hàng (tùy chọn);
+
+if (Có mã khuyến mãi?) then (Có)
+  :Nhập mã khuyến mãi & Áp dụng;
+  |Hệ thống|
+  :Kiểm tra bảng promotions & conditions;
+  if (Mã hợp lệ?) then (Có - A1)
+    :Áp dụng giảm giá & Cập nhật tổng tiền;
+  else (Không)
+    :Thông báo lỗi mã không hợp lệ;
+  endif
+else (Không)
+endif
+
+|Khách hàng (Đã đăng nhập)|
+:Chọn phương thức thanh toán (COD / Momo);
+:Nhấn "Xác nhận đặt hàng";
+
+|Hệ thống|
+:Kiểm tra tồn kho (stock_quantity);
+if (Còn hàng không?) then (Không - E1)
+  :Thông báo lỗi "Sản phẩm hết hàng";
+  :Yêu cầu cập nhật giỏ hàng;
+  stop
+else (Có)
+  :Tạo bản ghi Order (PENDING);
+  :Tạo các bản ghi OrderItem;
+  :Trừ tồn kho trong bảng product_variants;
+  :Ghi nhận lịch sử vào order_status_history;
+  :Xóa giỏ hàng (cart_items);
+  :Gửi Email xác nhận đặt hàng;
+
+  if (Phương thức thanh toán?) then (COD)
+    :Hiển thị trang "Đặt hàng thành công";
+    stop
+  else (Thanh toán Momo)
+    :Tạo Request & Chuyển hướng \nđến cổng thanh toán Momo;
+
+    |Khách hàng (Đã đăng nhập)|
+    :Thực hiện thanh toán trên Momo;
+
+    |Hệ thống|
+    :Nhận Callback / IPN từ Momo;
+    if (Thanh toán thành công?) then (Có)
+      :Cập nhật payment_status = PAID;
+      :Hiển thị trang "Đặt hàng thành công";
+    else (Không - E2)
+      :Cập nhật payment_status = FAILED;
+      :Thông báo lỗi & Hướng dẫn thử lại;
+    endif
+    stop
+  endif
+endif
+@enduml

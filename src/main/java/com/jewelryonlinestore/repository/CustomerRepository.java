@@ -1,12 +1,15 @@
 package com.jewelryonlinestore.repository;
 
 import com.jewelryonlinestore.entity.Customer;
+import com.jewelryonlinestore.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -33,7 +36,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     """)
     Page<Customer> searchCustomers(
             @Param("keyword") String keyword,
-            @Param("status")  String status,
+            @Param("status")  User.Status status, // Đã sửa String thành User.Status
             Pageable pageable
     );
 
@@ -43,4 +46,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         WHERE MONTH(c.createdAt) = :month AND YEAR(c.createdAt) = :year
     """)
     Long countNewCustomersInMonth(@Param("month") int month, @Param("year") int year);
+
+    boolean existsByPhone(String phone);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

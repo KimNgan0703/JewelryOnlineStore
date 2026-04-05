@@ -15,7 +15,7 @@ public class OAuth2Config {
     /**
      * Thread pool cho @Async — gửi email, resize ảnh không block request thread.
      */
-    @Bean(name = "asyncExecutor")
+    @Bean(name = "taskExecutor")
     public Executor asyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(2);

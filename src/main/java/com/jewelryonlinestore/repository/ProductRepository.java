@@ -12,10 +12,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Extends JpaSpecificationExecutor để hỗ trợ dynamic filter (C03).
- * ProductSpecification sẽ build Specification từ ProductFilterRequest.
- */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long>,
         JpaSpecificationExecutor<Product> {
@@ -29,12 +25,33 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     // Kiểm tra slug trùng
     boolean existsBySlugAndIdNot(String slug, Long id);
 
-    // Sản phẩm bán chạy cho trang chủ (C02)
-    List<Product> findTop8ByIsActiveTrueAndIsBestSellerTrueOrderByCreatedAtDesc();
+    // Sản phẩm bán chạy cho trang chủ (C02) — xếp theo doanh số thực tế (số lượng đã bán từ đơn DELIVERED)
+    @Query("""
+        SELECT p FROM Product p
+        WHERE p.isActive = true
+          AND EXISTS (
+              SELECT v FROM ProductVariant v
+              WHERE v.product = p AND v.isActive = true AND v.stockQuantity > 0
+          )
+        ORDER BY (
+            SELECT COALESCE(SUM(oi.quantity), 0)
+            FROM OrderItem oi
+            JOIN oi.order o
+            JOIN oi.variant v2
+            WHERE v2.product = p AND o.orderStatus = 'DELIVERED'
+        ) DESC, p.createdAt DESC
+    """)
+    List<Product> findBestSellersByRevenue(Pageable pageable);
 
     // Sản phẩm mới cho trang chủ (C02)
     List<Product> findTop8ByIsActiveTrueAndIsNewTrueOrderByCreatedAtDesc();
 
+    List<Product> findByIsActiveTrue();
+    boolean existsByBrandId(Long brandId);
+
+    boolean existsByMaterialId(Long materialId);
+
+    boolean existsByCategoryId(Long categoryId);
     // Sản phẩm cùng danh mục (gợi ý liên quan - C04)
     @Query("""
         SELECT p FROM Product p
@@ -49,7 +66,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
             Pageable pageable
     );
 
-    // Full-text search (C03) - dùng MySQL MATCH AGAINST
+    // Full-text search (C03)
     @Query(value = """
         SELECT * FROM products
         WHERE MATCH(name, short_description, description) AGAINST (:keyword IN BOOLEAN MODE)
@@ -57,24 +74,35 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
     """, nativeQuery = true)
     List<Product> fullTextSearch(@Param("keyword") String keyword, Pageable pageable);
 
-    // Lọc theo danh mục + khoảng giá (C03)
+    // Lọc sản phẩm đầy đủ (C03) — keyword, category, brand, material, price, inStock
     @Query("""
         SELECT DISTINCT p FROM Product p
-        JOIN p.variants v
+        LEFT JOIN p.variants v
+        LEFT JOIN p.material m
         WHERE p.isActive = true
+          AND (:keyword IS NULL OR :keyword = ''
+               OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(p.shortDescription) LIKE LOWER(CONCAT('%', :keyword, '%')))
           AND (:categoryId IS NULL OR p.category.id = :categoryId)
           AND (:brandId IS NULL OR p.brand.id = :brandId)
-          AND (:minPrice IS NULL OR v.price >= :minPrice)
-          AND (:maxPrice IS NULL OR v.price <= :maxPrice)
-          AND (:gender IS NULL OR p.gender = :gender)
-          AND v.isActive = true
+          AND (:materialId IS NULL OR m.id = :materialId)
+          AND (:minPrice IS NULL OR p.basePrice >= :minPrice)
+          AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice)
+          AND (:inStockOnly = false OR EXISTS (
+                SELECT v2 FROM ProductVariant v2
+                WHERE v2.product = p
+                  AND v2.isActive = true
+                  AND v2.stockQuantity > 0
+              ))
     """)
     Page<Product> filterProducts(
-            @Param("categoryId") Long categoryId,
-            @Param("brandId")    Long brandId,
-            @Param("minPrice")   BigDecimal minPrice,
-            @Param("maxPrice")   BigDecimal maxPrice,
-            @Param("gender")     String gender,
+            @Param("keyword")     String keyword,
+            @Param("categoryId")  Long categoryId,
+            @Param("brandId")     Long brandId,
+            @Param("materialId")  Long materialId,
+            @Param("minPrice")    BigDecimal minPrice,
+            @Param("maxPrice")    BigDecimal maxPrice,
+            @Param("inStockOnly") boolean inStockOnly,
             Pageable pageable
     );
 
@@ -90,5 +118,20 @@ public interface ProductRepository extends JpaRepository<Product, Long>,
         ORDER BY sold DESC
     """)
     List<Object[]> findTopSellingProducts(Pageable pageable);
+    // Admin: Lọc và tìm kiếm sản phẩm
+    @Query("""
+        SELECT p FROM Product p
+        WHERE (:keyword IS NULL OR :keyword = ''
+               OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:categoryId IS NULL OR p.category.id = :categoryId)
+          AND (:isActive IS NULL OR p.isActive = :isActive)
+        ORDER BY p.createdAt DESC
+    """)
+    Page<Product> adminSearchProducts(
+            @Param("keyword") String keyword,
+            @Param("categoryId") Long categoryId,
+            @Param("isActive") Boolean isActive,
+            Pageable pageable
+    );
 }
-

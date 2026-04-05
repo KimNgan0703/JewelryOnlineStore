@@ -1,0 +1,59 @@
+@startuml
+title Sequence Diagram - Use Case: Quản lý giỏ hàng
+actor "Khách hàng" as C
+participant "UI" as UI
+participant "CartController" as Ctrl
+participant "CartService" as Svc
+participant "VariantRepository" as VarRepo
+participant "CartRepository" as CartRepo
+participant "CartItemRepository" as ItemRepo
+database "Database" as DB
+
+== Thêm vào giỏ hàng ==
+C -> UI: Nhấn "Thêm vào giỏ hàng" (variantId, qty=1)
+UI -> Ctrl: POST /cart/add (variantId, qty)
+Ctrl -> Svc: addToCart(userId/sessionId, variantId, qty)
+
+Svc -> VarRepo: findById(variantId)
+VarRepo --> Svc: ProductVariant
+
+alt stockQuantity == 0 (E1)
+    Svc --> Ctrl: throw Exception("Hết hàng")
+    Ctrl --> UI: Hiển thị lỗi E1
+else stockQuantity > 0
+    Svc -> CartRepo: findByUserIdOrSessionId()
+    alt Chưa có Cart
+        Svc -> CartRepo: save(new Cart)
+    end
+    CartRepo --> Svc: Cart Entity
+
+    Svc -> ItemRepo: findByCartIdAndVariantId()
+    alt Chưa có trong giỏ (Main Flow 4a)
+        Svc -> ItemRepo: save(new CartItem(qty=1))
+    else Đã có trong giỏ (Main Flow 4b)
+        Svc -> ItemRepo: update(quantity += 1)
+    end
+    Svc --> Ctrl: CartResponse
+    Ctrl --> UI: Thông báo "Thêm thành công"
+end
+
+== Cập nhật số lượng ==
+C -> UI: Nhập số lượng mới trên UI
+UI -> Ctrl: PUT /cart/update (itemId, newQty)
+Ctrl -> Svc: updateItemQuantity(itemId, newQty)
+
+Svc -> ItemRepo: findById(itemId)
+ItemRepo --> Svc: CartItem (kèm ProductVariant)
+
+Svc -> Svc: check(newQty <= variant.stockQuantity)
+alt newQty > stockQuantity (E2)
+    Svc --> Ctrl: throw Exception("Không đủ trong kho")
+    Ctrl --> UI: Hiển thị lỗi "Số lượng không đủ trong kho"
+else Hợp lệ
+    Svc -> ItemRepo: save(item.setQuantity(newQty))
+    ItemRepo -> DB: UPDATE cart_items
+    Svc --> Ctrl: CartResponse (đã update total)
+    Ctrl --> UI: Render lại Giỏ hàng với số tiền mới
+end
+
+@enduml

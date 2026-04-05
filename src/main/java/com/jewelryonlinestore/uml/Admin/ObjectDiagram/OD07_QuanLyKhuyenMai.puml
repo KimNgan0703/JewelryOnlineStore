@@ -1,0 +1,23 @@
+@startuml
+title Object Diagram - Ví dụ về Mã khuyến mãi
+
+object "promo1 : Promotion" as p1 {
+    id = 10
+    name = "Khuyến mãi hè 2026"
+    code = "GIAM20"
+    discountType = PERCENTAGE
+    discountValue = 20
+    minOrderValue = 500000
+    usageLimit = 100
+    startDate = "2026-06-01T00:00"
+    endDate = "2026-06-30T23:59"
+}
+
+object "cond1 : PromotionCondition" as c1 {
+    id = 25
+    conditionType = CATEGORY
+    targetId = 5 (ID của danh mục Nhẫn)
+}
+
+p1 *-- c1
+@enduml

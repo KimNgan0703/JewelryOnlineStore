@@ -1,4 +1,5 @@
 package com.jewelryonlinestore.dto.request;
+
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.time.LocalDate;
@@ -21,7 +22,7 @@ public class RegisterRequest {
     @NotBlank(message = "Xác nhận mật khẩu không được để trống")
     private String confirmPassword;
 
-    // --- Thông tin cá nhân (bước 2) ---
+    // --- Thông tin cá nhân ---
     @NotBlank(message = "Họ tên không được để trống")
     @Size(max = 255)
     private String fullName;
@@ -29,26 +30,14 @@ public class RegisterRequest {
     @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{8})$", message = "Số điện thoại không hợp lệ")
     private String phone;
 
-    private String gender; // male | female | other
-
+    private String gender;
     private LocalDate birthDate;
 
-    // --- Địa chỉ mặc định ---
-    @NotBlank(message = "Tên người nhận không được để trống")
+    // --- Địa chỉ mặc định (ĐÃ XÓA @NotBlank ĐỂ FORM KHÔNG BỊ LỖI KẸT) ---
     private String recipientName;
-
-    @NotBlank(message = "SĐT người nhận không được để trống")
     private String recipientPhone;
-
-    @NotBlank(message = "Tỉnh/thành không được để trống")
     private String province;
-
-    @NotBlank(message = "Quận/huyện không được để trống")
     private String district;
-
-    @NotBlank(message = "Phường/xã không được để trống")
     private String ward;
-
-    @NotBlank(message = "Địa chỉ chi tiết không được để trống")
     private String streetAddress;
 }

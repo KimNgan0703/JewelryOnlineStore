@@ -1,36 +1,136 @@
 package com.jewelryonlinestore.service.impl;
 
+import com.jewelryonlinestore.entity.Order;
+import com.jewelryonlinestore.repository.OrderRepository;
 import com.jewelryonlinestore.service.EmailService;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
+    private final JavaMailSender javaMailSender;
+    private final TemplateEngine templateEngine;
+    private final OrderRepository orderRepository;
+
+    @Value("${spring.mail.username}")
+    private String senderEmail;
+
+    // URL gốc của website, thay đổi thành domain thật khi deploy
+    private final String baseUrl = "http://localhost:8080";
+
     @Override
-    @Async("asyncExecutor")
-    public void sendVerificationEmail(String email, String token) {
-        log.info("Send verification email to {} with token {}", email, token);
+    // @Async
+    public void sendVerificationEmail(String toEmail, String token) {
+        try {
+            Context context = new Context();
+            context.setVariable("verifyUrl", baseUrl + "/auth/verify?token=" + token);
+
+            sendMimeMessage(toEmail, "Xác minh tài khoản Jewelry Store", "email/verify-account", context);
+            log.info("Đã gửi email xác minh tài khoản tới {}", toEmail);
+        } catch (Exception e) {
+            log.error("Lỗi gửi email xác minh tới {}: {}", toEmail, e.getMessage());
+        }
     }
 
     @Override
-    @Async("asyncExecutor")
-    public void sendPasswordResetEmail(String email, String token) {
-        log.info("Send password reset email to {} with token {}", email, token);
+    @Async("taskExecutor")
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        try {
+            Context context = new Context();
+            context.setVariable("resetLink", baseUrl + "/auth/reset-password?token=" + token);
+            context.setVariable("contactUrl", baseUrl + "/contact");
+            context.setVariable("companyUrl", baseUrl);
+            context.setVariable("privacyUrl", baseUrl + "/privacy");
+
+            sendMimeMessage(toEmail, "Đặt lại mật khẩu Jewelry Store", "email/reset-password", context);
+            log.info("Đã gửi email đặt lại mật khẩu tới {}", toEmail);
+        } catch (Exception e) {
+            log.error("Lỗi gửi email đặt lại mật khẩu tới {}: {}", toEmail, e.getMessage());
+        }
     }
 
     @Override
-    @Async("asyncExecutor")
-    public void sendOrderConfirmation(String email, String orderNumber) {
-        log.info("Send order confirmation to {} for order {}", email, orderNumber);
+    @Async
+    @Transactional(readOnly = true)
+    public void sendOrderConfirmationEmail(String orderNumber) {
+        try {
+            Order order = orderRepository.findByOrderNumber(orderNumber).orElse(null);
+            if (order == null || order.getCustomer() == null)
+                return;
+
+            // Ép Hibernate tải danh sách items để tránh lỗi LazyInit trong Template
+            if (order.getItems() != null)
+                order.getItems().size();
+
+            Context context = new Context();
+            context.setVariable("order", order);
+
+            String subject = "Đặt hàng thành công! Mã đơn #" + order.getOrderNumber();
+            sendMimeMessage(order.getCustomer().getUser().getEmail(), subject, "email/order-confirm", context);
+
+            log.info("Đã gửi email xác nhận đơn hàng #{} thành công", orderNumber);
+        } catch (Exception e) {
+            log.error("Lỗi gửi email xác nhận đơn hàng {}: {}", orderNumber, e.getMessage());
+        }
     }
 
     @Override
-    @Async("asyncExecutor")
-    public void sendOrderStatusUpdate(String email, String orderNumber, String newStatus) {
-        log.info("Send order status update to {} for order {} => {}", email, orderNumber, newStatus);
+    @Async("taskExecutor")
+    @Transactional(readOnly = true)
+    public void sendOrderStatusUpdateEmail(String orderNumber) {
+        try {
+            Order order = orderRepository.findByOrderNumber(orderNumber).orElse(null);
+            if (order == null || order.getCustomer() == null)
+                return;
+
+            Context context = new Context();
+            context.setVariable("order", order);
+
+            String subject = "Cập nhật trạng thái đơn hàng #" + order.getOrderNumber();
+            if (order.getOrderStatus() == Order.OrderStatus.CANCELLED) {
+                subject = "Đơn hàng #" + order.getOrderNumber() + " đã hủy";
+                if (order.getPaymentStatus() == Order.PaymentStatus.REFUNDED) {
+                    subject += " và đã hoàn tiền";
+                }
+            }
+            sendMimeMessage(order.getCustomer().getUser().getEmail(), subject, "email/order-status", context);
+
+            System.out.println("Đã gửi email cập nhật trạng thái đơn hàng #" + orderNumber + " thành công: "
+                    + order.getOrderStatus());
+            log.info("Đã gửi email cập nhật trạng thái đơn hàng #{} thành công", orderNumber);
+        } catch (Exception e) {
+            log.error("Lỗi gửi email cập nhật trạng thái {}: {}", orderNumber, e.getMessage());
+        }
+    }
+
+    /**
+     * Hàm hỗ trợ gửi Email định dạng HTML
+     */
+    private void sendMimeMessage(String to, String subject, String templateName, Context context)
+            throws MessagingException {
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+        String htmlContent = templateEngine.process(templateName, context);
+
+        helper.setFrom(senderEmail);
+        helper.setTo(to);
+        helper.setSubject(subject + " - Jewelry Store");
+        helper.setText(htmlContent, true);
+
+        javaMailSender.send(message);
     }
 }
-

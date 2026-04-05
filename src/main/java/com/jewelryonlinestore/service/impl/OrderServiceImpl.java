@@ -10,28 +10,38 @@ import com.jewelryonlinestore.entity.CartItem;
 import com.jewelryonlinestore.entity.Customer;
 import com.jewelryonlinestore.entity.Order;
 import com.jewelryonlinestore.entity.OrderItem;
+import com.jewelryonlinestore.entity.Promotion;
 import com.jewelryonlinestore.entity.User;
+import com.jewelryonlinestore.entity.ProductVariant;
 import com.jewelryonlinestore.repository.AddressRepository;
 import com.jewelryonlinestore.repository.CartItemRepository;
 import com.jewelryonlinestore.repository.CartRepository;
 import com.jewelryonlinestore.repository.CustomerRepository;
 import com.jewelryonlinestore.repository.OrderRepository;
 import com.jewelryonlinestore.repository.UserRepository;
+import com.jewelryonlinestore.repository.ProductVariantRepository;
+import com.jewelryonlinestore.service.EmailService;
 import com.jewelryonlinestore.service.OrderService;
+import com.jewelryonlinestore.service.PromotionService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +53,11 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final PromotionService promotionService;
+
+    // Inject EmailService và ProductVariantRepository
+    private final EmailService emailService;
+    private final ProductVariantRepository productVariantRepository;
 
     @Override
     @Transactional
@@ -50,6 +65,10 @@ public class OrderServiceImpl implements OrderService {
         Customer customer = requireCustomer(auth);
         Address address = resolveAddress(req, customer);
         Cart cart = getCheckoutCart(auth, session);
+        List<Long> selectedIds = req.getSelectedCartItemIds();
+        if (selectedIds != null && !selectedIds.isEmpty()) {
+            cart.getItems().removeIf(item -> !selectedIds.contains(item.getId()));
+        }
 
         if (cart.getItems() == null || cart.getItems().isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
@@ -60,16 +79,32 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderItem::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal shippingFee = BigDecimal.ZERO;
+
         BigDecimal discountAmount = BigDecimal.ZERO;
+        Promotion appliedPromotion = null;
+        if (req.getCouponCode() != null && !req.getCouponCode().isBlank()) {
+            // Validate bằng cart
+            Optional<Promotion> promoOpt = promotionService.validateCoupon(req.getCouponCode(), cart);
+            if (promoOpt.isPresent()) {
+                appliedPromotion = promoOpt.get();
+                // ĐÃ SỬA LỖI Ở ĐÂY: Truyền cart vào thay vì subtotal
+                discountAmount = promotionService.calculateDiscount(appliedPromotion, cart);
+            }
+        }
+
         BigDecimal total = subtotal.add(shippingFee).subtract(discountAmount);
+        if (total.compareTo(BigDecimal.ZERO) < 0)
+            total = BigDecimal.ZERO;
 
         Order order = Order.builder()
-                .orderNumber("ORD" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase(Locale.ROOT))
+                .orderNumber("ORD" + UUID.randomUUID().toString().replace("-", "")
+                        .substring(0, 10).toUpperCase(Locale.ROOT))
                 .customer(customer)
                 .address(address)
                 .snapRecipientName(address.getRecipientName())
                 .snapPhone(address.getPhone())
                 .snapAddress(address.getFullAddress())
+                .promotion(appliedPromotion)
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
                 .shippingFee(shippingFee)
@@ -84,6 +119,27 @@ public class OrderServiceImpl implements OrderService {
         order.setItems(orderItems);
 
         Order saved = orderRepository.save(order);
+
+        // CHỈ gửi mail ngay nếu là COD. Nếu là MOMO thì để PaymentService lo sau.
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (emailService != null && saved.getPaymentMethod() == Order.PaymentMethod.COD) {
+                    emailService.sendOrderConfirmationEmail(saved.getOrderNumber());
+                }
+            }
+        });
+
+        List<ProductVariant> variantsToUpdate = cart.getItems().stream()
+                .map(CartItem::getVariant)
+                .filter(Objects::nonNull)
+                .toList();
+        productVariantRepository.saveAll(variantsToUpdate);
+
+        if (appliedPromotion != null) {
+            promotionService.incrementUsedCount(appliedPromotion.getId());
+        }
+
         cartItemRepository.deleteAllByCartId(cart.getId());
         return toDetail(saved);
     }
@@ -112,16 +168,32 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public Page<OrderSummaryResponse> getMyOrders(Authentication auth, String status, int page, int size) {
         Customer customer = requireCustomer(auth);
-        Page<Order> orders = (status == null || status.isBlank())
-                ? orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), PageRequest.of(page, size))
-                : orderRepository.findByCustomerIdAndOrderStatusInOrderByCreatedAtDesc(
-                customer.getId(), List.of(status), PageRequest.of(page, size));
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> orders;
+
+        // 1. Nếu không có status hoặc status là "all" -> Lấy tất cả
+        if (status == null || status.isBlank() || status.equalsIgnoreCase("all")) {
+            orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), pageable);
+        } else {
+            try {
+                // 2. Chuyển String từ URL (pending) -> Enum (PENDING)
+                Order.OrderStatus statusEnum = Order.OrderStatus.valueOf(status.toUpperCase(Locale.ROOT));
+
+                // 3. Gọi hàm repository đã sửa ở Bước 1
+                orders = orderRepository.findByCustomerIdAndOrderStatusOrderByCreatedAtDesc(
+                        customer.getId(), statusEnum, pageable);
+            } catch (IllegalArgumentException e) {
+                // Nếu người dùng nhập status bậy bạ trên URL -> Mặc định lấy tất cả
+                orders = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId(), pageable);
+            }
+        }
+
         return orders.map(this::toSummary);
     }
 
     @Override
     @Transactional
-    public void cancelOrder(String orderNumber, String reason, Authentication auth) {
+    public boolean cancelOrder(String orderNumber, String reason, Authentication auth) {
         Customer customer = requireCustomer(auth);
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
@@ -131,9 +203,41 @@ public class OrderServiceImpl implements OrderService {
         if (!order.canCancel()) {
             throw new IllegalStateException("Order cannot be cancelled at current status");
         }
+
+        boolean refunded = false;
+
+        // Symbolic refund for paid MoMo orders: mark refunded locally without calling
+        // gateway.
+        if (order.getPaymentMethod() == Order.PaymentMethod.MOMO
+                && order.getPaymentStatus() == Order.PaymentStatus.PAID) {
+            refunded = true;
+            order.setPaymentStatus(Order.PaymentStatus.REFUNDED);
+        }
+
         order.setOrderStatus(Order.OrderStatus.CANCELLED);
         order.setCancelledReason(reason);
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (emailService != null) {
+                    System.out.println("Don hang hien tai: " + savedOrder.getOrderStatus());
+                    emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
+                }
+            }
+        });
+
+        List<ProductVariant> variantsToRestore = order.getItems().stream().map(item -> {
+            ProductVariant variant = item.getVariant();
+            if (variant != null) {
+                variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
+            }
+            return variant;
+        }).filter(Objects::nonNull).toList();
+        productVariantRepository.saveAll(variantsToRestore);
+
+        return refunded;
     }
 
     @Override
@@ -145,27 +249,109 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Page<OrderSummaryResponse> adminSearchOrders(String keyword, String status,
-                                                        LocalDateTime from, LocalDateTime to,
-                                                        int page, int size) {
+            LocalDateTime from, LocalDateTime to,
+            int page, int size) {
+        Order.OrderStatus statusEnum = null;
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                statusEnum = Order.OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+            }
+        }
+
         return orderRepository
-                .searchOrders(blankToNull(keyword), blankToNull(status), from, to, PageRequest.of(page, size))
+                .searchOrders(blankToNull(keyword), statusEnum, from, to, PageRequest.of(page, size))
                 .map(this::toSummary);
     }
 
     @Override
     @Transactional
-    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req, Authentication auth) {
+    public OrderDetailResponse updateOrderStatus(String orderNumber, UpdateOrderStatusRequest req,
+            Authentication auth) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
-        order.setOrderStatus(Order.OrderStatus.valueOf(req.getNewStatus().toUpperCase(Locale.ROOT)));
+
+        Order.OrderStatus oldStatus = order.getOrderStatus();
+        Order.OrderStatus newStatus = Order.OrderStatus.valueOf(req.getNewStatus().toUpperCase(Locale.ROOT));
+
+        order.setOrderStatus(newStatus);
+
+        if (newStatus == Order.OrderStatus.CANCELLED) {
+            order.setCancelledReason(req.getCancelledReason());
+
+            // Cộng lại số lượng Tồn kho khi ADMIN hủy đơn
+            if (oldStatus != Order.OrderStatus.CANCELLED) {
+                List<ProductVariant> variantsToRestore = order.getItems().stream().map(item -> {
+                    ProductVariant variant = item.getVariant();
+                    if (variant != null) {
+                        variant.setStockQuantity(variant.getStockQuantity() + item.getQuantity());
+                    }
+                    return variant;
+                }).filter(Objects::nonNull).toList();
+                productVariantRepository.saveAll(variantsToRestore);
+            }
+        }
+        // BỔ SUNG LẠI: Tự động chuyển Đã thanh toán khi Đã giao hàng
+        else if (newStatus == Order.OrderStatus.DELIVERED) {
+            order.setPaymentStatus(Order.PaymentStatus.PAID);
+        }
+
         order.setUpdatedAt(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (emailService != null) {
+                    System.out.println("Don hang hien tai: " + savedOrder.getOrderStatus());
+                    emailService.sendOrderStatusUpdateEmail(savedOrder.getOrderNumber());
+                }
+            }
+        });
+
+        return toDetail(savedOrder);
+    }
+
+    @Override
+    @Transactional
+    public OrderDetailResponse markAsPaid(String orderNumber, Authentication auth) {
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderNumber));
+
+        order.setPaymentStatus(Order.PaymentStatus.PAID);
+        order.setUpdatedAt(LocalDateTime.now());
+
+        return toDetail(orderRepository.save(order));
+    }
+
+    @Override
+    @Transactional
+    public OrderDetailResponse markAsDelivered(String orderNumber, Authentication auth) {
+        Customer customer = requireCustomer(auth);
+        Order order = orderRepository.findByOrderNumber(orderNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng: " + orderNumber));
+
+        // Kiểm tra quyền sở hữu
+        if (!order.getCustomer().getId().equals(customer.getId())) {
+            throw new IllegalArgumentException("Đơn hàng này không thuộc về bạn");
+        }
+
+        // Kiểm tra trạng thái phải là SHIPPING mới được nhận
+        if (order.getOrderStatus() != Order.OrderStatus.SHIPPING) {
+            throw new IllegalStateException("Đơn hàng chưa được giao, không thể xác nhận nhận hàng");
+        }
+
+        // Cập nhật trạng thái
+        order.setOrderStatus(Order.OrderStatus.DELIVERED);
+        order.setPaymentStatus(Order.PaymentStatus.PAID); // Nhận hàng xong coi như đã thanh toán (dành cho COD)
+        order.setUpdatedAt(LocalDateTime.now());
+
         return toDetail(orderRepository.save(order));
     }
 
     @Override
     @Transactional(readOnly = true)
     public long countByStatus(String status) {
-        // ✅ Chuyển String → enum trước khi truyền vào repository
         Order.OrderStatus orderStatus = Order.OrderStatus.valueOf(status.toUpperCase(Locale.ROOT));
         return orderRepository.countByOrderStatus(orderStatus);
     }
@@ -193,12 +379,18 @@ public class OrderServiceImpl implements OrderService {
         }
 
         if (req.getNewAddress() != null
-                && req.getNewAddress().getRecipientName() != null && !req.getNewAddress().getRecipientName().isBlank()
-                && req.getNewAddress().getPhone() != null && !req.getNewAddress().getPhone().isBlank()
-                && req.getNewAddress().getProvince() != null && !req.getNewAddress().getProvince().isBlank()
-                && req.getNewAddress().getDistrict() != null && !req.getNewAddress().getDistrict().isBlank()
-                && req.getNewAddress().getWard() != null && !req.getNewAddress().getWard().isBlank()
-                && req.getNewAddress().getStreetAddress() != null && !req.getNewAddress().getStreetAddress().isBlank()) {
+                && req.getNewAddress().getRecipientName() != null
+                && !req.getNewAddress().getRecipientName().isBlank()
+                && req.getNewAddress().getPhone() != null
+                && !req.getNewAddress().getPhone().isBlank()
+                && req.getNewAddress().getProvince() != null
+                && !req.getNewAddress().getProvince().isBlank()
+                && req.getNewAddress().getDistrict() != null
+                && !req.getNewAddress().getDistrict().isBlank()
+                && req.getNewAddress().getWard() != null
+                && !req.getNewAddress().getWard().isBlank()
+                && req.getNewAddress().getStreetAddress() != null
+                && !req.getNewAddress().getStreetAddress().isBlank()) {
             if (req.getNewAddress().isDefault()) {
                 addressRepository.clearDefaultByCustomer(customer.getId());
             }
@@ -241,6 +433,7 @@ public class OrderServiceImpl implements OrderService {
                 throw new IllegalArgumentException("Product is out of stock: "
                         + cartItem.getVariant().getProduct().getName());
             }
+
             cartItem.getVariant().setStockQuantity(
                     cartItem.getVariant().getStockQuantity() - cartItem.getQuantity());
 
@@ -269,6 +462,17 @@ public class OrderServiceImpl implements OrderService {
         return value == null || value.isBlank() ? null : value;
     }
 
+    private boolean canRetryMomoPayment(Order order) {
+        if (order == null || order.getPaymentMethod() != Order.PaymentMethod.MOMO) {
+            return false;
+        }
+        if (order.getOrderStatus() != Order.OrderStatus.PENDING) {
+            return false;
+        }
+        return order.getPaymentStatus() == Order.PaymentStatus.FAILED
+                || order.getPaymentStatus() == Order.PaymentStatus.PENDING;
+    }
+
     private OrderSummaryResponse toSummary(Order order) {
         return OrderSummaryResponse.builder()
                 .id(order.getId())
@@ -281,10 +485,12 @@ public class OrderServiceImpl implements OrderService {
                 .paymentStatus(order.getPaymentStatus().name().toLowerCase(Locale.ROOT))
                 .itemCount(order.getItems() == null ? 0 : order.getItems().size())
                 .firstProductName(order.getItems() == null || order.getItems().isEmpty()
-                        ? null : order.getItems().get(0).getProductName())
+                        ? null
+                        : order.getItems().get(0).getProductName())
                 .firstProductImage(null)
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
+                .canRetryMomoPayment(canRetryMomoPayment(order))
                 .build();
     }
 
@@ -295,18 +501,23 @@ public class OrderServiceImpl implements OrderService {
                         .orderItemId(item.getId())
                         .variantId(item.getVariant() != null ? item.getVariant().getId() : null)
                         .productId(item.getVariant() != null && item.getVariant().getProduct() != null
-                                ? item.getVariant().getProduct().getId() : null)
+                                ? item.getVariant().getProduct().getId()
+                                : null)
+                        .productSlug(item.getVariant() != null && item.getVariant().getProduct() != null
+                                ? item.getVariant().getProduct().getSlug()
+                                : null)
                         .productName(item.getProductName())
                         .variantSize(item.getVariantSize())
                         .imageUrl(item.getVariant() != null && item.getVariant().getProduct() != null
-                                ? item.getVariant().getProduct().getPrimaryImageUrl() : null)
+                                ? item.getVariant().getProduct().getPrimaryImageUrl()
+                                : null)
                         .quantity(item.getQuantity())
                         .price(item.getPrice())
                         .total(item.getTotal())
                         .reviewed(item.hasReview())
                         .reviewId(item.getReview() != null ? item.getReview().getId() : null)
                         .build())
-                .toList();
+                        .toList();
 
         return OrderDetailResponse.builder()
                 .id(order.getId())
@@ -333,6 +544,7 @@ public class OrderServiceImpl implements OrderService {
                 .updatedAt(order.getUpdatedAt())
                 .canCancel(order.canCancel())
                 .canReview(order.isDelivered())
+                .canRetryMomoPayment(canRetryMomoPayment(order))
                 .build();
     }
 }

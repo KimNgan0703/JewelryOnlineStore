@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Về Chúng Tôi - Jewelry Online Store</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6f5959",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#271718",
+                        "on-primary-fixed-variant": "#564242",
+                        "primary-container": "#f7dada",
+                        "primary-fixed": "#f9dcdc",
+                        "on-background": "#1a1c1c",
+                        "on-surface": "#1a1c1c",
+                        "on-surface-variant": "#4f4444",
+                        "surface": "#f9f9f9",
+                        "surface-container": "#eeeeee",
+                        "surface-container-low": "#f3f3f3",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#d2c3c3",
+                    },
+                    fontFamily: {
+                        headline: ["Manrope"],
+                        body: ["Be Vietnam Pro"],
+                        label: ["Manrope"],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift-bg {
+            background: rgba(247, 218, 218, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .hero-gradient-overlay {
+            background: linear-gradient(to bottom, rgba(26, 28, 28, 0.3), rgba(26, 28, 28, 0.6));
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-background selection:bg-primary-container selection:text-on-primary-container">
+
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 tonal-shift-bg flex justify-between items-center px-12 py-6 shadow-[0_10px_40px_rgba(26,28,28,0.04)]">
+    <div class="text-2xl font-bold tracking-[-0.02em] text-on-background font-headline" th:text="'Jewelry Store'">Jewelry Store</div>
+    <div class="hidden md:flex items-center gap-10">
+        <a class="font-headline tracking-tight text-sm uppercase font-semibold text-primary hover:text-on-background transition-all duration-300" href="/products">Sản phẩm</a>
+        <a class="font-headline tracking-tight text-sm uppercase font-semibold text-primary hover:text-on-background transition-all duration-300" href="/about">Về chúng tôi</a>
+        <a class="font-headline tracking-tight text-sm uppercase font-semibold text-on-background border-b border-on-background pb-1" href="#">Câu chuyện</a>
+    </div>
+    <div class="flex items-center gap-6">
+        <a href="/cart" class="transition-all duration-300 hover:opacity-70 active:scale-95">
+            <span class="material-symbols-outlined text-primary text-2xl">shopping_bag</span>
+        </a>
+        <a href="/account/profile
+" class="transition-all duration-300 hover:opacity-70 active:scale-95">
+            <span class="material-symbols-outlined text-primary text-2xl">person</span>
+        </a>
+    </div>
+</nav>
+
+<main class="pt-24">
+    <!-- Hero Section -->
+    <section class="relative h-[619px] w-full overflow-hidden flex items-center justify-center">
+        <img alt="Xưởng chế tác trang sức cao cấp" class="absolute inset-0 w-full h-full object-cover"
+             src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxW7RnyOZkqQu9c7dsrBNsrMDc-m8wSoWZguUYAUSpC8Vn2FSrkm8jJPZtbEHtlKbESzqUaC0etuwZInbbvvT-miUtsYGvqnlxuTA5Aezaq4WNE9y_l6r-xc_7EYimRhlIJS3RSktluI8AaAt-wV_4FIHneGV0plh3iD9Gbl4Ndgj49NeBre5txSI7EP2pOcgds2wRcO3RUAwqTHoYAhtF7jw8t7NB6UWdaCkqnwOlhy2o4oAl50t6T7clIuCQBWCYZ1bQZ94SK57v">
+        <div class="absolute inset-0 hero-gradient-overlay"></div>
+        <div class="relative z-10 text-center px-6">
+            <h1 class="text-surface-container-lowest font-headline text-5xl md:text-7xl font-bold tracking-[-0.03em] max-w-4xl mx-auto leading-tight">
+                Câu Chuyện Của Chúng Tôi
+            </h1>
+            <div class="mt-8 w-12 h-[2px] bg-primary-container mx-auto"></div>
+        </div>
+    </section>
+
+    <!-- Our Story Section -->
+    <section class="py-32 px-12 md:px-24 bg-surface max-w-screen-2xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+            <div class="relative order-2 md:order-1">
+                <div class="absolute -top-10 -left-10 w-64 h-64 bg-primary-container/30 rounded-full blur-3xl"></div>
+                <div class="relative p-4 bg-surface-container-lowest shadow-[0_40px_100px_rgba(26,28,28,0.05)] rounded-lg">
+                    <img alt="Trang sức hàng cao cấp" class="w-full h-auto rounded-md"
+                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ8kTyde2XsitC2A9dhWoXstv0Ls1tSAMJ9ujEsD4Q7BXUuwqsWPfnfVfhVcACCSmd1_S7omQ0KALKT0GJQZ0y0yjOh2hR6fx09dIpKByFnQ34DajyZdHP1t6siaJWVjUSsMemkTj_CLrZhENReekkHQciddaSZ_7Vlh0fLSfaWzy4g06oachxXQ5AgFrnGZ9IZp_fikO5QXElFQiYZZlt2g4sPLNmqdBaJ8iwKCw4UmX0WMyuHOiUJQHUWlIw0dLDBEIb4Tf-sRCP">
+                </div>
+            </div>
+            <div class="order-1 md:order-2 space-y-8">
+                <span class="font-headline text-primary tracking-[0.2em] text-xs uppercase font-bold">Khởi nguồn từ 2026</span>
+                <h2 class="font-headline text-on-background text-4xl md:text-5xl font-bold leading-tight">
+                    Kiến tạo vẻ đẹp vượt thời gian
+                </h2>
+                <p class="font-body text-on-surface-variant text-lg leading-relaxed max-w-lg">
+                    Được thành lập vào năm 2026, Jewelry Online Store ra đời với sứ mệnh mang đến những tuyệt tác trang sức không chỉ là phụ kiện, mà là những câu chuyện về sự tinh xảo và tâm hồn. Mỗi thiết kế của chúng tôi đều chứa đựng sự rạng rỡ của ánh sáng và sự mềm mại của thiên nhiên.
+                </p>
+                <p class="font-body text-on-surface-variant text-lg leading-relaxed max-w-lg">
+                    Chúng tôi tin rằng trang sức là ngôn ngữ thầm lặng của phong cách cá nhân, nơi mỗi viên đá quý và đường nét kim loại đều phản chiếu một phần con người bạn.
+                </p>
+                <div class="pt-4">
+                    <a href="/products" class="inline-block bg-on-primary-fixed text-primary-fixed px-10 py-4 font-headline text-sm uppercase tracking-widest font-bold rounded-md hover:opacity-90 transition-opacity active:scale-95 duration-200">
+                        Tìm hiểu thêm
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Values Section -->
+    <section class="py-32 px-12 md:px-24 bg-surface-container-low">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-24">
+                <h2 class="font-headline text-on-background text-3xl md:text-4xl font-bold mb-4">Giá Trị Cốt Lõi</h2>
+                <p class="font-body text-on-surface-variant text-base">Những triết lý làm nên thương hiệu Jewelry Online Store</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-16">
+                <!-- Value 1 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 flex items-center justify-center bg-primary-container rounded-full mb-8 transition-transform duration-500 group-hover:-translate-y-2">
+                        <span class="material-symbols-outlined text-on-primary-fixed text-4xl">diamond</span>
+                    </div>
+                    <h3 class="font-headline text-on-background text-xl font-bold mb-4">Chất lượng tuyệt đối</h3>
+                    <p class="font-body text-on-surface-variant leading-relaxed">100% sản phẩm được kiểm định nghiêm ngặt, sử dụng vàng, bạc và đá quý có nguồn gốc rõ ràng.</p>
+                </div>
+                <!-- Value 2 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 flex items-center justify-center bg-primary-container rounded-full mb-8 transition-transform duration-500 group-hover:-translate-y-2">
+                        <span class="material-symbols-outlined text-on-primary-fixed text-4xl">handyman</span>
+                    </div>
+                    <h3 class="font-headline text-on-background text-xl font-bold mb-4">Chế tác thủ công</h3>
+                    <p class="font-body text-on-surface-variant leading-relaxed">Sự tỉ mỉ trong từng đường nét cắt khắc giúp trang sức bắt sáng hoàn hảo mọi góc nhìn.</p>
+                </div>
+                <!-- Value 3 -->
+                <div class="flex flex-col items-center text-center group">
+                    <div class="w-20 h-20 flex items-center justify-center bg-primary-container rounded-full mb-8 transition-transform duration-500 group-hover:-translate-y-2">
+                        <span class="material-symbols-outlined text-on-primary-fixed text-4xl">favorite</span>
+                    </div>
+                    <h3 class="font-headline text-on-background text-xl font-bold mb-4">Tận tâm phục vụ</h3>
+                    <p class="font-body text-on-surface-variant leading-relaxed">Đội ngũ tư vấn am hiểu, chính sách bảo hành trọn đời giúp bạn hoàn toàn an tâm khi mua sắm.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-32 px-12 md:px-24">
+        <div class="relative bg-on-background rounded-xl p-12 md:p-24 overflow-hidden">
+            <div class="absolute top-0 right-0 w-1/3 h-full hidden lg:block">
+                <img alt="Nhẫn kim cương sang trọng" class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
+                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaDuzrXvgOv9dIke4-A4JvcEw_by2WymBotS3PYBG7t9s8DSX5ys4wVLmru5cn4JgWtOZoLeYDq7LOblegQiizT1gwBdiO6MLVSG8yFolCD2Xs84_UcFRADc-lSep3GUmJnBY8rBBeGA7Sn4BT9Ny7G-rMWulz-FiIUMDxDvLFPz_RBWUq90H8duP1DxoIFX6YOK1CIzGoC59_nOZAG67finasD1EQg1ByeyzN6WargwDvq_fP9OoOCzbFF901-XEBBmYMWoAUTQz-">
+            </div>
+            <div class="relative z-10 max-w-2xl">
+                <h2 class="font-headline text-primary-fixed text-4xl md:text-5xl font-bold leading-tight mb-8">
+                    Khám phá thế giới rực rỡ tại Jewelry Online Store
+                </h2>
+                <p class="font-body text-primary-fixed/70 text-lg mb-10 leading-relaxed">
+                    Hãy để chúng tôi cùng bạn viết nên những khoảnh khắc đáng nhớ qua những thiết kế độc bản.
+                </p>
+                <a href="/products" class="inline-block border-b-2 border-primary-container pb-2 font-headline text-primary-container text-sm uppercase tracking-[0.2em] font-bold hover:text-white hover:border-white transition-all">
+                    Xem các bộ sưu tập
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer class="w-full py-20 px-12 bg-surface-container-low mt-auto">
+    <div class="flex flex-col md:flex-row justify-between items-center gap-8 w-full max-w-7xl mx-auto">
+        <div class="text-lg font-bold text-on-background font-headline">Jewelry Store</div>
+        <div class="flex flex-wrap justify-center gap-8">
+            <a class="font-body text-xs tracking-widest uppercase text-primary opacity-60 hover:opacity-100 hover:text-on-background transition-opacity" href="/about">Về chúng tôi</a>
+            <a class="font-body text-xs tracking-widest uppercase text-primary opacity-60 hover:opacity-100 hover:text-on-background transition-opacity" href="/privacy">Chính sách bảo mật</a>
+        </div>
+        <div class="font-body text-xs tracking-widest uppercase text-primary opacity-60">
+            © 2026 Jewelry Online Store. Bảo lưu mọi quyền.
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

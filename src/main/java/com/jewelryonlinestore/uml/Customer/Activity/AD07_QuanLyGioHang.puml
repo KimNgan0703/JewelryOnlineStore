@@ -1,0 +1,67 @@
+@startuml
+title Activity Diagram - Use Case: Quản lý giỏ hàng
+
+|Khách hàng|
+start
+split
+   label Thêm_sản_phẩm
+   :Nhấn "Thêm vào giỏ hàng";
+   |Hệ thống|
+   :Kiểm tra stock_quantity (Tồn kho);
+   if (stock_quantity == 0?) then (Có - E1)
+      :Vô hiệu hóa nút / Báo "Hết hàng";
+      stop
+   else (Không)
+      :Xác định User ID / Session ID;
+      :Truy vấn bảng carts;
+      if (Đã có giỏ hàng?) then (Chưa)
+         :Tạo bản ghi mới;
+      else (Có)
+         :Sử dụng giỏ hàng hiện tại;
+      endif
+
+      :Truy vấn bảng cart_items;
+      if (Sản phẩm đã có?) then (Chưa)
+         :Thêm bản ghi mới;
+      else (Có)
+         :Cộng thêm số lượng;
+      endif
+      :Hiển thị "Thêm thành công";
+   endif
+
+split again
+   label Xem_Cập_nhật
+   |Khách hàng|
+   :Mở trang Giỏ hàng;
+   |Hệ thống|
+   :Hiển thị danh sách cart_items;
+
+   |Khách hàng|
+   switch (Thao tác?)
+   case ( Cập nhật )
+      :Nhập số lượng mới;
+      |Hệ thống|
+      if (Vượt quá tồn kho?) then (Có)
+         :Báo lỗi;
+      else (Không)
+         :Cập nhật & Tính lại tiền;
+      endif
+   case ( Xóa )
+      |Hệ thống|
+      :Xóa bản ghi & Tính lại tiền;
+   endswitch
+
+split again
+   label Đăng_nhập_Hợp_nhất
+   |Khách hàng|
+   :Thực hiện Đăng nhập;
+   |Hệ thống|
+   if (Có giỏ hàng ẩn danh?) then (Có)
+      :Chuyển items sang User ID;
+      :Xóa giỏ hàng ẩn danh;
+   endif
+end split
+
+|Khách hàng|
+stop
+@enduml

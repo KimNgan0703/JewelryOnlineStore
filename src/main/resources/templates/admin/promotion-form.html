@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout/admin-base :: admin_layout(~{::#admin-content})}">
+<head>
+    <title th:text="${pageTitle}">Promotion Form - Admin</title>
+</head>
+<body>
+<div id="admin-content">
+
+    <input type="hidden" id="csrfToken" th:value="${_csrf.token}"/>
+    <input type="hidden" id="csrfHeader" th:value="${_csrf.headerName}"/>
+
+    <style>
+        :root { --primary-color: #d4af37; --secondary-color: #2c3e50; }
+        .page-shell { padding: 10px 0; background: #f4f6f9; }
+        .form-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 20px; margin-bottom: 20px; }
+        .form-title { font-size: 1.05rem; font-weight: 700; color: var(--secondary-color); margin-bottom: 14px; }
+        .error-message { color: #dc3545; font-size: 0.875em; margin-top: 0.25rem; }
+    </style>
+
+    <div class="page-shell">
+        <form th:action="@{${isEdit != null and isEdit ? '/admin/promotions/' + id : '/admin/promotions'}}"
+              th:object="${promotionRequest}"
+              method="POST"
+              id="promotionForm">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-0" style="color: var(--secondary-color);" th:text="${pageTitle}">Quản Lý Mã Khuyến Mãi</h1>
+                    <p class="text-muted mb-0">Tạo và chỉnh sửa các chương trình giảm giá cho khách hàng.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/admin/promotions}" class="btn btn-outline-secondary">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-dark">
+                        <i class="fas fa-floppy-disk me-1"></i> Lưu Mã Giảm Giá
+                    </button>
+                </div>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            <div th:if="${toast_success}" class="alert alert-success" th:text="${toast_success}"></div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="form-card">
+                        <div class="form-title">Thông tin cơ bản</div>
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label">Tên chương trình *</label>
+                                <input type="text" class="form-control" th:field="*{name}" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" placeholder="VD: Siêu Sale Mùa Hè 2026">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Mã Code (Nhập vào khi thanh toán) *</label>
+                                <input type="text" class="form-control" th:field="*{code}" th:classappend="${#fields.hasErrors('code')} ? 'is-invalid'" placeholder="VD: SUMMER26" style="text-transform: uppercase;">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('code')}" th:errors="*{code}"></div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Loại giảm giá</label>
+                                <select class="form-select" th:field="*{type}">
+                                    <option value="PERCENTAGE">Giảm theo Phần trăm (%)</option>
+                                    <option value="FIXED">Giảm số tiền Cố định (VNĐ)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giá trị giảm *</label>
+                                <input type="number" step="0.01" class="form-control" th:field="*{value}" th:classappend="${#fields.hasErrors('value')} ? 'is-invalid'" placeholder="VD: Nhập 10 (nếu là 10%) hoặc 50000 (nếu là VNĐ)">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('value')}" th:errors="*{value}"></div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Giá trị đơn hàng tối thiểu (VNĐ)</label>
+                                <input type="number" class="form-control" th:field="*{minOrderValue}" placeholder="VD: 500000">
+                                <small class="text-muted" style="font-size: 0.75rem;">Để trống nếu áp dụng cho mọi đơn</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Lượt sử dụng tối đa</label>
+                                <input type="number" class="form-control" th:field="*{usageLimit}" placeholder="VD: 100">
+                                <small class="text-muted" style="font-size: 0.75rem;">Để trống nếu không giới hạn số người dùng</small>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Thời gian Bắt đầu *</label>
+                                <input type="datetime-local" class="form-control" th:field="*{startDate}" th:classappend="${#fields.hasErrors('startDate')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('startDate')}" th:errors="*{startDate}"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Thời gian Kết thúc *</label>
+                                <input type="datetime-local" class="form-control" th:field="*{endDate}" th:classappend="${#fields.hasErrors('endDate')} ? 'is-invalid'">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                            </div>
+
+                            <div class="col-12 mt-4">
+                                <div class="form-title text-primary border-top pt-3"><i class="fas fa-filter"></i> Điều Kiện Khuyến Mãi Nâng Cao</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Áp dụng cho</label>
+                                <select class="form-select" th:field="*{applyTo}" id="applyToSelect" onchange="toggleConditions()">
+                                    <option value="ALL">Tất cả sản phẩm</option>
+                                    <option value="CATEGORY">Theo Danh mục</option>
+                                    <option value="PRODUCT">Theo Sản phẩm nhất định</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4" id="categoryGroup" style="display: none;">
+                                <label class="form-label fw-bold">Chọn Danh mục</label>
+                                <select class="form-select" th:field="*{categoryId}">
+                                    <option value="">-- Chọn danh mục --</option>
+                                    <option th:if="${categories != null}" th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4" id="productGroup" style="display: none;">
+                                <label class="form-label fw-bold">Chọn Sản phẩm</label>
+                                <select class="form-select" th:field="*{productId}">
+                                    <option value="">-- Chọn sản phẩm --</option>
+                                    <option th:if="${products != null}" th:each="prod : ${products}" th:value="${prod.id}" th:text="${prod.name}"></option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Số lượng SP yêu cầu</label>
+                                <input type="number" class="form-control" th:field="*{minQuantity}" placeholder="VD: Mua 2 cái mới được giảm">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Mô tả điều kiện (Tùy chọn)</label>
+                                <textarea class="form-control" rows="3" th:field="*{description}" placeholder="Mô tả chi tiết các điều kiện áp dụng mã giảm giá này..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="form-card">
+                        <div class="form-title">Trạng thái Kích hoạt</div>
+                        <div class="form-check form-switch mt-3 mb-2">
+                            <input class="form-check-input" type="checkbox" role="switch" id="activeSwitch" th:field="*{active}" style="transform: scale(1.3); margin-right: 10px;">
+                            <label class="form-check-label fw-bold" for="activeSwitch">Cho phép sử dụng mã này</label>
+                        </div>
+                        <p class="text-muted small mt-2">Nếu tắt, khách hàng sẽ không thể nhập mã này ở trang Thanh toán kể cả khi mã còn hạn.</p>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // JS Tự động ẩn/hiện ô chọn Danh mục hoặc Sản phẩm
+        function toggleConditions() {
+            const applyTo = document.getElementById('applyToSelect').value;
+            document.getElementById('categoryGroup').style.display = (applyTo === 'CATEGORY') ? 'block' : 'none';
+            document.getElementById('productGroup').style.display = (applyTo === 'PRODUCT') ? 'block' : 'none';
+        }
+
+        // Chạy lần đầu khi load trang
+        document.addEventListener('DOMContentLoaded', toggleConditions);
+    </script>
+</div>
+</body>
+</html>

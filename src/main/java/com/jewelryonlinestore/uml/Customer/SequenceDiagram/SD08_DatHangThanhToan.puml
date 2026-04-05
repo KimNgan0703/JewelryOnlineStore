@@ -1,0 +1,79 @@
+@startuml
+title Sequence Diagram - Use Case: Đặt hàng và Thanh toán
+actor "Khách hàng" as C
+participant "UI" as UI
+participant "OrderController" as Ctrl
+participant "OrderService" as OrderSvc
+participant "InventoryService" as InvSvc
+participant "PaymentService" as PaySvc
+participant "EmailService" as MailSvc
+database "Database" as DB
+
+C -> UI: Nhấn "Thanh toán"
+UI -> Ctrl: GET /checkout
+Ctrl -> OrderSvc: prepareCheckoutData(userId)
+OrderSvc -> DB: Lấy dữ liệu Giỏ hàng & Địa chỉ
+OrderSvc --> Ctrl: CheckoutData
+Ctrl --> UI: Trả về trang Đặt hàng
+
+opt Khách hàng nhập mã khuyến mãi (A1)
+  C -> UI: Nhập mã & Nhấn Áp dụng
+  UI -> Ctrl: POST /checkout/apply-coupon
+  Ctrl -> OrderSvc: validatePromotion(code)
+  OrderSvc -> DB: SELECT * FROM promotions WHERE code = ...
+  OrderSvc --> Ctrl: Thông tin giảm giá
+  Ctrl --> UI: Cập nhật lại UI tổng tiền
+end
+
+C -> UI: Chọn thanh toán Momo & Nhấn "Xác nhận đặt hàng"
+UI -> Ctrl: POST /checkout/place-order
+Ctrl -> OrderSvc: createOrder(request)
+
+== Xác thực tồn kho (Transaction Start) ==
+OrderSvc -> InvSvc: checkAndDeductStock(cartItems)
+InvSvc -> DB: Kiểm tra tồn kho (product_variants)
+
+alt Hết hàng (E1)
+    InvSvc --> OrderSvc: throw Exception("Hết hàng")
+    OrderSvc --> Ctrl: Báo lỗi tồn kho
+    Ctrl --> UI: Hiển thị lỗi, Yêu cầu quay lại giỏ
+else Còn hàng (Main Flow)
+    InvSvc -> DB: UPDATE product_variants SET stock = stock - qty
+
+    == Lưu trữ Dữ liệu Đơn hàng ==
+    OrderSvc -> DB: INSERT orders (status = PENDING)
+    OrderSvc -> DB: INSERT order_items
+    OrderSvc -> DB: INSERT payments (status = PENDING)
+    OrderSvc -> DB: INSERT order_status_history
+    OrderSvc -> DB: DELETE FROM cart_items (Xóa giỏ)
+
+    == Gửi Email ==
+    OrderSvc -> MailSvc: sendOrderConfirmationEmail(order)
+
+    OrderSvc --> Ctrl: Order Entity
+
+    == Xử lý Thanh toán (Momo Flow) ==
+    Ctrl -> PaySvc: createMomoPaymentUrl(order)
+    PaySvc --> Ctrl: momoRedirectUrl
+    Ctrl --> UI: Chuyển hướng đến momoRedirectUrl
+
+    UI --> C: Hiển thị cổng thanh toán Momo
+    C -> UI: Quét mã QR / Thanh toán
+
+    == Momo IPN/Callback ==
+    note right of Ctrl: Momo gọi về Webhook/IPN Server
+    UI -> Ctrl: GET /payment/momo/return (params)
+    Ctrl -> PaySvc: processPaymentResult(params)
+
+    alt Thanh toán Thành công
+        PaySvc -> DB: UPDATE payments SET status = PAID
+        Ctrl --> UI: Redirect /order/success
+        UI --> C: Hiển thị "Đặt hàng thành công"
+    else Thanh toán Thất bại/Hủy (E2)
+        PaySvc -> DB: UPDATE payments SET status = FAILED
+        Ctrl --> UI: Redirect /order/failed
+        UI --> C: Báo lỗi thanh toán & Cho phép thử lại
+    end
+end
+
+@enduml

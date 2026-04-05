@@ -1,0 +1,35 @@
+@startuml
+title Activity Diagram - Quản lý khách hàng (Admin)
+
+|Admin|
+start
+:Truy cập mục "Quản lý khách hàng";
+
+|Hệ thống|
+:Truy vấn danh sách khách hàng từ CSDL;
+:Hiển thị danh sách (ID, Tên, Email, SĐT, Trạng thái);
+
+|Admin|
+split
+  :Nhập từ khóa tìm kiếm (Tên, Email, SĐT);
+  |Hệ thống|
+  :Truy vấn theo từ khóa;
+  if (Tìm thấy kết quả?) then (Có)
+    :Cập nhật danh sách hiển thị;
+  else (Không - E1)
+    :Hiển thị "Không tìm thấy khách hàng phù hợp";
+  endif
+split again
+  :Chọn một khách hàng để xem chi tiết;
+  |Hệ thống|
+  :Lấy thông tin cá nhân và danh sách địa chỉ;
+  :Hiển thị trang chi tiết khách hàng;
+split again
+  :Nhấn nút "Khóa/Mở khóa" tài khoản;
+  |Hệ thống|
+  :Cập nhật cột status trong bảng users;
+  :Hiển thị thông báo thành công;
+end split
+
+stop
+@enduml

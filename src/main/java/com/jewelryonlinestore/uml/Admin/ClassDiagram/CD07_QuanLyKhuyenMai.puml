@@ -1,0 +1,59 @@
+@startuml
+title Class Diagram - Quản lý khuyến mãi
+skinparam classAttributeIconSize 0
+
+class AdminPromotionController {
+    - promotionService: PromotionService
+    + listPromotions(model: Model): String
+    + showCreateForm(model: Model): String
+    + processCreate(request: PromotionRequest): String
+    + deletePromotion(id: Long): String
+}
+
+interface PromotionService {
+    + getAllPromotions(): List<Promotion>
+    + createPromotion(request: PromotionRequest): Promotion
+    + deletePromotion(id: Long): void
+    + isCodeExists(code: String): boolean
+}
+
+class PromotionServiceImpl {
+    - promotionRepository: PromotionRepository
+    - conditionRepository: PromotionConditionRepository
+}
+
+class Promotion {
+    - id: Long
+    - name: String
+    - code: String
+    - discountType: DiscountType
+    - discountValue: BigDecimal
+    - minOrderValue: BigDecimal
+    - usageLimit: Integer
+    - startDate: LocalDateTime
+    - endDate: LocalDateTime
+}
+
+class PromotionCondition {
+    - id: Long
+    - conditionType: ConditionType
+    - targetId: Long
+}
+
+enum DiscountType {
+    PERCENTAGE
+    FIXED_AMOUNT
+}
+
+enum ConditionType {
+    ALL_PRODUCTS
+    CATEGORY
+    PRODUCT
+}
+
+AdminPromotionController --> PromotionService
+PromotionServiceImpl ..|> PromotionService
+Promotion "1" *-- "many" PromotionCondition : has
+Promotion --> DiscountType
+PromotionCondition --> ConditionType
+@enduml

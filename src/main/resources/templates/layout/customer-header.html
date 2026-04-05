@@ -1,48 +1,174 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: linear-gradient(135deg, var(--secondary-color) 0%, #34495e 100%);" th:fragment="customerHeader">
-    <div class="container">
-        <a class="navbar-brand" th:href="@{/}" style="color: var(--primary-color) !important; font-weight: bold;">
-            <i class="fas fa-gem"></i> Jewelry Store
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#customerNavbar" aria-controls="customerNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="customerNavbar">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" th:href="@{/}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/products}">Shop</a></li>
+<header th:fragment="customerHeader">
+    <style>
+        :root {
+            --primary-pink: #f7dada;
+            --dark-charcoal: #2d2d2d;
+            --soft-gray: #f8f9fa;
+            --medium-gray: #717171;
+            --border-color: #eee;
+            --accent-gold: #d4af37;
+        }
+        .customer-header-top {
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+        }
+        .customer-header-brand {
+            text-decoration: none;
+            color: var(--dark-charcoal);
+            font-size: 1.4rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .customer-header-brand i {
+            color: #000;
+        }
+        .customer-header-nav {
+            background: #fff;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+            padding: 0;
+        }
+        .customer-header-link {
+            color: var(--dark-charcoal) !important;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        .customer-header-link:hover,
+        .customer-header-icon:hover {
+            color: var(--medium-gray) !important;
+        }
+        .customer-header-icon {
+            color: var(--dark-charcoal) !important;
+            font-size: 1.1rem;
+        }
+        .customer-header-user {
+            font-size: 0.82rem;
+            font-weight: 500;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .customer-header-nav .dropdown-menu {
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+        }
+        .customer-header-nav .dropdown-item:hover,
+        .customer-header-nav .dropdown-item:focus {
+            background-color: var(--primary-pink);
+            color: var(--dark-charcoal);
+        }
+    </style>
 
-                <li class="nav-item" sec:authorize="isAnonymous()">
-                    <a class="nav-link" th:href="@{/auth/login}">Login</a>
-                </li>
-                <li class="nav-item" sec:authorize="isAnonymous()">
-                    <a class="nav-link" th:href="@{/auth/register}">Register</a>
-                </li>
-                <li class="nav-item" sec:authorize="isAuthenticated()"><a class="nav-link" th:href="@{/cart}"><i class="fas fa-shopping-cart"></i> Cart</a></li>
-
-                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                    <a class="nav-link dropdown-toggle" href="#" id="customerUserDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user"></i>
-                        <span sec:authentication="name">Account</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="customerUserDropdown">
-                        <li><a class="dropdown-item" th:href="@{/account/profile}">My Account</a></li>
-                        <li><a class="dropdown-item" th:href="@{/orders}">My Orders</a></li>
-                        <li><a class="dropdown-item" th:href="@{/wishlist}">Wishlist</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form th:action="@{/auth/logout}" method="post" class="m-0">
-                                <button class="dropdown-item" type="submit">Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+    <div class="customer-header-top">
+        <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+            <a th:href="@{/}" class="customer-header-brand">
+                <i class="fas fa-gem"></i> Jewelry Store
+            </a>
         </div>
     </div>
-</nav>
+
+    <nav class="navbar navbar-expand-lg navbar-light customer-header-nav">
+        <div class="container-fluid px-4">
+            <button class="navbar-toggler my-2" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#customerNavbar"
+                    aria-controls="customerNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="customerNavbar">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-3 customer-header-link" th:href="@{/}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-3 customer-header-link" th:href="@{/products}">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 py-3 customer-header-link" th:href="@{/privacy}">Privacy &amp; Term</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link px-2 customer-header-icon" th:href="@{/cart}" title="Cart">
+                            <i class="fas fa-shopping-bag"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link px-2 customer-header-icon" th:href="@{/auth/login}" title="Cart">
+                            <i class="fas fa-shopping-bag"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link px-2 customer-header-icon" th:href="@{/orders}" title="My Orders">
+                            <i class="fas fa-box"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link px-2 customer-header-icon" th:href="@{/auth/login}" title="My Orders">
+                            <i class="fas fa-box"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link px-2 customer-header-icon" th:href="@{/wishlist}" title="Wishlist">
+                            <i class="fas fa-heart"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAnonymous()">
+                        <a class="nav-link px-2 customer-header-icon" th:href="@{/auth/login}" title="Wishlist">
+                            <i class="fas fa-heart"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                        <a href="#" class="nav-link px-2 dropdown-toggle d-flex align-items-center gap-1 customer-header-icon"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user"></i>
+                            <span class="customer-header-user" sec:authentication="name"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" th:href="@{/account/profile}">
+                                    <i class="fas fa-user-circle me-2"></i>My Account
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/auth/logout}" method="post" class="m-0">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button class="dropdown-item" type="submit">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown" sec:authorize="isAnonymous()">
+                        <a href="#" class="nav-link px-2 dropdown-toggle customer-header-icon"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-user"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" th:href="@{/auth/login}">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" th:href="@{/auth/register}">
+                                    <i class="fas fa-user-plus me-2"></i>Register
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+</header>
 </body>
 </html>
-

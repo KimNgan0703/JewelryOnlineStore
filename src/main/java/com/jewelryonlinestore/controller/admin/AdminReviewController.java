@@ -10,9 +10,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * A08 — Duyệt / ẩn đánh giá, phản hồi đánh giá.
- */
 @Controller
 @RequestMapping("/admin/reviews")
 @RequiredArgsConstructor
@@ -22,22 +19,23 @@ public class AdminReviewController {
     private final ReviewService reviewService;
 
     @GetMapping
-    public String reviewList(@RequestParam(required = false)   String status,
-                             @RequestParam(required = false)   Integer rating,
+    public String reviewList(@RequestParam(required = false) String status,
+                             @RequestParam(required = false) Integer rating,
+                             @RequestParam(required = false) String keyword,
                              @RequestParam(defaultValue = "0") int page,
                              Model model) {
-        var reviews = reviewService.adminFilterReviews(status, null, rating, page, 15);
-        model.addAttribute("reviews",     reviews.getContent());
+        var reviews = reviewService.adminFilterReviews(status, null, rating, keyword, page, 15);
+        model.addAttribute("reviews", reviews.getContent());
         model.addAttribute("currentPage", reviews.getNumber());
-        model.addAttribute("totalPages",  reviews.getTotalPages());
-        model.addAttribute("totalItems",  reviews.getTotalElements());
-        model.addAttribute("activeStatus",status);
-        model.addAttribute("pendingCount",reviewService.countPendingReviews());
-        model.addAttribute("pageTitle",   "Quản Lý Đánh Giá");
-        return "admin/reviews";
+        model.addAttribute("totalPages", reviews.getTotalPages());
+        model.addAttribute("totalItems", reviews.getTotalElements());
+        model.addAttribute("activeStatus", status);
+        model.addAttribute("activeKeyword", keyword);
+        model.addAttribute("pendingCount", reviewService.countPendingReviews());
+        model.addAttribute("pageTitle", "Quản Lý Đánh Giá");
+        return "admin/reviews"; // Ánh xạ tới reviews.html
     }
 
-    // ── Duyệt (AJAX) ─────────────────────────────────────
     @PatchMapping("/{id}/approve")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> approve(@PathVariable Long id) {
@@ -45,7 +43,6 @@ public class AdminReviewController {
         return ResponseEntity.ok(ApiResponse.ok("Đã duyệt đánh giá", null));
     }
 
-    // ── Ẩn (AJAX) ────────────────────────────────────────
     @PatchMapping("/{id}/reject")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> reject(@PathVariable Long id) {
@@ -53,7 +50,6 @@ public class AdminReviewController {
         return ResponseEntity.ok(ApiResponse.ok("Đã ẩn đánh giá", null));
     }
 
-    // ── Phản hồi (AJAX) ──────────────────────────────────
     @PostMapping("/{id}/respond")
     @ResponseBody
     public ResponseEntity<ApiResponse<Void>> respond(@PathVariable Long id,

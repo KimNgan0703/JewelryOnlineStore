@@ -1,0 +1,43 @@
+@startuml
+title Activity Diagram: Đăng nhập Admin
+
+start
+
+:Admin truy cập trang đăng nhập (/login);
+:Nhập Email và Mật khẩu;
+:Nhấn nút "Đăng nhập";
+
+partition "Hệ thống xác thực (Spring Security)" {
+    if (Dữ liệu trống?) then (có)
+        :Hiển thị lỗi "Vui lòng điền đầy đủ thông tin";
+        stop
+    else (không)
+        :Hệ thống truy vấn User theo Email;
+        if (Tìm thấy User?) then (không)
+            :Thông báo "Tài khoản không tồn tại";
+            stop
+        else (có)
+            :So sánh mật khẩu bằng BCrypt;
+            if (Mật khẩu khớp?) then (không)
+                :Thông báo "Mật khẩu không đúng";
+                stop
+            else (có)
+                :Kiểm tra quyền truy cập (Role);
+                if (Vai trò là ROLE_ADMIN?) then (không)
+                    :Thông báo "Từ chối truy cập: Bạn không có quyền quản trị";
+                    :Chuyển hướng về trang chủ khách hàng;
+                    stop
+                else (có)
+                    :Tạo Authentication Session;
+                    :Lưu thông tin vào SecurityContext;
+                    :Chuyển hướng tới /admin/dashboard;
+                endif
+            endif
+        endif
+    endif
+}
+
+:Hiển thị giao diện Admin;
+stop
+
+@enduml

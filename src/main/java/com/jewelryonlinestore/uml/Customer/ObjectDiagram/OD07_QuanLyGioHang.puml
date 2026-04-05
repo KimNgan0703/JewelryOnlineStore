@@ -1,0 +1,48 @@
+@startuml
+title Object Diagram - Trạng thái Giỏ hàng hiện tại
+
+object "u1 : User" as user {
+  id = 1005
+  email = "binh.jewelry@gmail.com"
+}
+
+object "myCart : Cart" as cart {
+  id = 501
+  sessionId = null
+  userId = 1005
+  totalPrice = 13500000
+}
+
+object "item1 : CartItem" as item1 {
+  id = 2001
+  quantity = 2
+  subTotal = 10000000
+}
+
+object "item2 : CartItem" as item2 {
+  id = 2002
+  quantity = 1
+  subTotal = 3500000
+}
+
+object "varNhan : ProductVariant" as var1 {
+  id = 88
+  size = "12"
+  price = 5000000
+  stockQuantity = 10
+}
+
+object "varDayChuyen : ProductVariant" as var2 {
+  id = 95
+  size = "45cm"
+  price = 3500000
+  stockQuantity = 3
+}
+
+cart --> user : userId = 1005
+item1 --> cart : cartId = 501
+item2 --> cart : cartId = 501
+item1 --> var1 : variantId = 88
+item2 --> var2 : variantId = 95
+
+@enduml

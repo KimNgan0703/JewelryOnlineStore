@@ -15,7 +15,6 @@ import java.util.List;
                 @Index(name = "idx_slug",       columnList = "slug"),
                 @Index(name = "idx_category",   columnList = "category_id"),
                 @Index(name = "idx_brand",      columnList = "brand_id"),
-                @Index(name = "idx_collection", columnList = "collection_id"),
                 @Index(name = "idx_material",   columnList = "material_id"),
                 @Index(name = "idx_active",     columnList = "is_active"),
                 @Index(name = "idx_created",    columnList = "created_at")
@@ -45,6 +44,13 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "average_rating")
+    @Builder.Default
+    private Double averageRating = 0.0;
+
+    @Column(name = "review_count")
+    @Builder.Default
+    private Integer reviewCount = 0;
     // ── Phân loại ────────────────────────────────────────
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -55,11 +61,6 @@ public class Product {
     @JoinColumn(name = "brand_id")
     @ToString.Exclude
     private Brand brand;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "collection_id")
-    @ToString.Exclude
-    private Collection collection;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "material_id")

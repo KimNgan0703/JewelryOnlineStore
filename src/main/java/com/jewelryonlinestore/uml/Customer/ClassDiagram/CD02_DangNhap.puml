@@ -1,0 +1,65 @@
+@startuml
+title Class Diagram - Use Case: Đăng nhập (Spring Security Architecture)
+skinparam classAttributeIconSize 0
+
+class AuthController {
+  + showLoginForm(): String
+  + processLogin(request: LoginRequest): String
+}
+
+class SecurityConfig {
+  + filterChain(HttpSecurity): SecurityFilterChain
+  + authenticationManager(): AuthenticationManager
+  + passwordEncoder(): PasswordEncoder
+}
+
+interface AuthenticationManager {
+  + authenticate(authentication: Authentication): Authentication
+}
+
+class UserDetailsServiceImpl {
+  + loadUserByUsername(email: String): UserDetails
+}
+
+class CustomOAuth2UserService {
+  + loadUser(userRequest: OAuth2UserRequest): OAuth2User
+}
+
+interface UserRepository {
+  + findByEmail(email: String): Optional<User>
+}
+
+class User {
+  - id: Long
+  - email: String
+  - passwordHash: String
+  - status: AccountStatus
+  - role: Role
+  + getEmail(): String
+  + getRole(): Role
+  + getStatus(): AccountStatus
+}
+
+enum Role {
+  ROLE_CUSTOMER
+  ROLE_ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  PENDING
+  BLOCKED
+}
+
+AuthController ..> AuthenticationManager : uses
+SecurityConfig --> UserDetailsServiceImpl : configures
+SecurityConfig --> CustomOAuth2UserService : configures
+AuthenticationManager ..> UserDetailsServiceImpl : calls
+UserDetailsServiceImpl --> UserRepository : uses
+CustomOAuth2UserService --> UserRepository : uses
+UserRepository ..> User : returns
+
+User -> Role
+User -> AccountStatus
+
+@enduml

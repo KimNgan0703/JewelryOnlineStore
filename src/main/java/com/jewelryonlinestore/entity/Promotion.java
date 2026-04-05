@@ -70,6 +70,9 @@ public class Promotion {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "min_quantity")
+    private Integer minQuantity;
+
     @OneToMany(mappedBy = "promotion", cascade = CascadeType.ALL,
             orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default

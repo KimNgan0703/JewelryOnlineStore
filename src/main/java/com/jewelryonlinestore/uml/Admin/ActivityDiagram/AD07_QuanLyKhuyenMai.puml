@@ -1,0 +1,41 @@
+@startuml
+title Activity Diagram - Quản lý khuyến mãi (Admin)
+
+|Admin|
+start
+:Chọn mục "Quản lý khuyến mãi";
+
+|Hệ thống|
+:Truy vấn danh sách chương trình khuyến mãi;
+:Hiển thị danh sách hiện có;
+
+|Admin|
+:Nhấn "Tạo mã mới";
+
+|Hệ thống|
+:Hiển thị form nhập thông tin khuyến mãi;
+
+|Admin|
+repeat
+  :Nhập Tên, Mã code, Loại giảm giá, Giá trị;
+  :Thiết lập phạm vi áp dụng (Tất cả/Danh mục/Sản phẩm);
+  :Nhập Số lượng tối đa và Thời gian hiệu lực;
+  :Nhấn "Lưu";
+
+  |Hệ thống|
+  if (Mã code đã tồn tại? [E1]) then (Có)
+    :Hiển thị lỗi "Mã khuyến mãi đã tồn tại";
+  elseif (Ngày kết thúc < Ngày bắt đầu? [E2]) then (Có)
+    :Hiển thị lỗi "Ngày kết thúc không hợp lệ";
+  else (Không)
+    :Tạo bản ghi trong bảng promotions;
+    :Lưu điều kiện vào bảng promotion_conditions;
+    :Hiển thị thông báo thành công;
+    break
+  endif
+repeat while (Thông tin không hợp lệ)
+
+|Hệ thống|
+:Cập nhật lại danh sách hiển thị;
+stop
+@enduml

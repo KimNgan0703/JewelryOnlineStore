@@ -1,0 +1,56 @@
+@startuml
+title Class Diagram - Use Case: Dashboard và Báo cáo
+skinparam classAttributeIconSize 0
+
+class AdminDashboardController {
+  + viewDashboard(startDate: LocalDate, endDate: LocalDate, model: Model): String
+}
+
+class DashboardService {
+  + getDashboardData(startDate: LocalDate, endDate: LocalDate): DashboardResponse
+}
+
+interface OrderRepository {
+  + calculateTotalRevenue(startDate: LocalDate, endDate: LocalDate): BigDecimal
+  + countOrders(startDate: LocalDate, endDate: LocalDate): long
+  + findTop5ByOrderByCreatedAtDesc(): List<Order>
+  + countOrdersByStatus(startDate: LocalDate, endDate: LocalDate): List<Object[]>
+  + getRevenueByDateRange(startDate: LocalDate, endDate: LocalDate): List<Object[]>
+}
+
+interface CustomerRepository {
+  + countNewCustomers(startDate: LocalDate, endDate: LocalDate): long
+}
+
+class DashboardResponse {
+  - totalRevenue: BigDecimal
+  - totalOrders: long
+  - newCustomers: long
+  - recentOrders: List<Order>
+  - revenueChartData: Map<String, BigDecimal>
+  - statusChartData: Map<String, Long>
+}
+
+class Order {
+  - id: Long
+  - orderNumber: String
+  - totalAmount: BigDecimal
+  - orderStatus: OrderStatus
+  - createdAt: LocalDateTime
+}
+
+class Customer {
+  - id: Long
+  - fullName: String
+  - createdAt: LocalDateTime
+}
+
+AdminDashboardController --> DashboardService : uses
+DashboardService --> OrderRepository : queries
+DashboardService --> CustomerRepository : queries
+DashboardService ..> DashboardResponse : creates
+DashboardResponse o-- Order : contains
+OrderRepository ..> Order : manages
+CustomerRepository ..> Customer : manages
+
+@enduml

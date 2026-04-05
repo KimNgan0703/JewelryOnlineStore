@@ -1,0 +1,43 @@
+@startuml
+title Sequence Diagram - Tạo mã khuyến mãi mới
+
+actor Admin
+participant "AdminPromotionController" as Ctrl
+participant "PromotionService" as Svc
+participant "PromotionRepository" as PromoRepo
+participant "ConditionRepository" as CondRepo
+database "Database" as DB
+
+Admin -> Ctrl: POST /admin/promotions/create (PromotionRequest)
+activate Ctrl
+
+Ctrl -> Svc: createPromotion(request)
+activate Svc
+
+Svc -> Svc: validateDates(start, end)
+Svc -> PromoRepo: existsByCode(request.code)
+activate PromoRepo
+PromoRepo --> Svc: false (không trùng)
+deactivate PromoRepo
+
+Svc -> PromoRepo: save(new Promotion)
+activate PromoRepo
+PromoRepo -> DB: INSERT INTO promotions
+DB --> PromoRepo: Promotion (id)
+PromoRepo --> Svc: p
+deactivate PromoRepo
+
+loop Cho từng điều kiện trong request
+    Svc -> CondRepo: save(new PromotionCondition)
+    activate CondRepo
+    CondRepo -> DB: INSERT INTO promotion_conditions
+    CondRepo --> Svc: void
+    deactivate CondRepo
+end
+
+Svc --> Ctrl: Promotion
+deactivate Svc
+
+Ctrl --> Admin: Redirect to List (Success)
+deactivate Ctrl
+@enduml

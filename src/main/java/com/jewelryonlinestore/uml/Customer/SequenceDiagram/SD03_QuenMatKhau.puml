@@ -1,0 +1,60 @@
+@startuml
+title Sequence Diagram - Use Case: Quên mật khẩu
+actor "Customer" as C
+participant "UI/View" as UI
+participant "AuthController" as Ctrl
+participant "AuthService" as Svc
+participant "UserRepository" as UserRepo
+participant "TokenRepository" as TokenRepo
+participant "EmailService" as Mail
+
+== Giai đoạn 1: Gửi yêu cầu Quên mật khẩu ==
+C -> UI: Nhập Email & Submit
+UI -> Ctrl: POST /forgot-password (email)
+Ctrl -> Svc: processForgotPassword(email)
+Svc -> UserRepo: findByEmail(email)
+
+alt Email tồn tại (Main Flow)
+    UserRepo --> Svc: User Entity
+    Svc -> TokenRepo: save(new VerificationToken)
+    Svc -> Mail: sendPasswordResetEmail(email, token)
+    Svc --> Ctrl: Thành công
+else Email không tồn tại (A1)
+    UserRepo --> Svc: null
+    Svc --> Ctrl: (Giả vờ) Thành công để bảo mật
+end
+
+Ctrl --> UI: "Vui lòng kiểm tra email"
+UI --> C: Hiển thị thông báo
+
+== Giai đoạn 2: Đặt lại mật khẩu mới ==
+C -> Ctrl: Click link GET /reset-password?token=...
+Ctrl -> Svc: validateResetToken(token)
+Svc -> TokenRepo: findByToken(token)
+
+alt Token hết hạn / Đã dùng (E1)
+    Svc --> Ctrl: false
+    Ctrl --> UI: Hiển thị lỗi E1 & Yêu cầu làm lại
+else Token hợp lệ (Main Flow)
+    Svc --> Ctrl: true
+    Ctrl --> UI: Hiển thị form nhập mật khẩu mới
+end
+
+C -> UI: Nhập Mật khẩu mới & Xác nhận
+UI -> Ctrl: POST /reset-password (token, newPass, confirmPass)
+
+alt Mật khẩu không hợp lệ/Không khớp (E2)
+    Ctrl -> Ctrl: Validate inputs
+    Ctrl --> UI: Hiển thị lỗi E2
+else Mật khẩu hợp lệ
+    Ctrl -> Svc: resetPassword(token, newPass)
+    Svc -> TokenRepo: findByToken(token)
+    TokenRepo --> Svc: VerificationToken Entity
+    Svc -> Svc: hashPassword = BCrypt(newPass)
+    Svc -> UserRepo: save(User updated passwordHash)
+    Svc -> TokenRepo: markAsUsed() & save()
+    Svc --> Ctrl: Hoàn tất cập nhật
+    Ctrl --> UI: Redirect (/auth/login?reset_success=true)
+    UI --> C: Thông báo Cập nhật thành công, Mời đăng nhập
+end
+@enduml

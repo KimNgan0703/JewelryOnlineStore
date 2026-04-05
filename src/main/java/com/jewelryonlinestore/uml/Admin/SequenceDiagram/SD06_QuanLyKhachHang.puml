@@ -1,0 +1,35 @@
+@startuml
+title Sequence Diagram - Khóa/Mở khóa tài khoản khách hàng
+
+actor Admin
+participant "AdminCustomerController" as Ctrl
+participant "CustomerService" as Svc
+participant "UserRepository" as UserRepo
+database "Database" as DB
+
+Admin -> Ctrl: POST /admin/customers/toggle-status/{id}
+activate Ctrl
+
+Ctrl -> Svc: toggleUserStatus(userId)
+activate Svc
+
+Svc -> UserRepo: findById(userId)
+activate UserRepo
+UserRepo --> Svc: User entity
+deactivate UserRepo
+
+Svc -> Svc: Cập nhật status (ACTIVE <-> LOCKED)
+Svc -> UserRepo: save(user)
+activate UserRepo
+UserRepo -> DB: UPDATE users SET status = ? WHERE id = ?
+DB --> UserRepo: success
+UserRepo --> Svc: void
+deactivate UserRepo
+
+Svc --> Ctrl: void
+deactivate Svc
+
+Ctrl --> Admin: Trả về thông báo cập nhật thành công
+deactivate Ctrl
+
+@enduml

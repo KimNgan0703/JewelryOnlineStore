@@ -1,0 +1,51 @@
+@startuml
+title Activity Diagram - Use Case: Quên mật khẩu
+
+|Khách hàng|
+start
+:Nhấn "Quên mật khẩu?" tại trang đăng nhập;
+|Hệ thống|
+:Hiển thị form nhập Email;
+
+|Khách hàng|
+:Nhập Email đã đăng ký & Gửi yêu cầu;
+
+|Hệ thống|
+:Truy vấn DB kiểm tra Email;
+if (Email tồn tại?) then (Có - Main Flow)
+  :Tạo Token đặt lại mật khẩu (có thời hạn);
+  :Lưu Token vào bảng verification_tokens;
+  :Gửi email chứa link reset mật khẩu kèm token;
+else (Không - Alternate Flow A1)
+  :Bỏ qua bước gửi email;
+endif
+:Hiển thị thông báo "Vui lòng kiểm tra email";
+
+|Khách hàng|
+:Nhấn link đặt lại mật khẩu trong email;
+
+|Hệ thống|
+:Kiểm tra Token hợp lệ;
+if (Token hợp lệ?) then (Hết hạn/Đã dùng - E1)
+  :Hiển thị thông báo lỗi;
+  :Yêu cầu thực hiện lại từ đầu;
+  stop
+else (Hợp lệ)
+  :Hiển thị form nhập mật khẩu mới;
+
+  |Khách hàng|
+  repeat
+    :Nhập mật khẩu mới & Xác nhận mật khẩu;
+    |Hệ thống|
+    :Kiểm tra quy tắc mật khẩu & Khớp xác nhận;
+  repeat while (Đạt yêu cầu?) is (Không - E2)
+  ->Có;
+
+  :Mã hóa mật khẩu mới (BCrypt);
+  :Cập nhật mật khẩu vào bảng users;
+  :Đánh dấu Token đã sử dụng;
+  :Hiển thị thông báo "Cập nhật thành công";
+  :Chuyển hướng về trang Đăng nhập;
+  stop
+endif
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+title Object Diagram - Trạng thái quản lý khách hàng
+
+object "u1: User" as user1 {
+    id = 50
+    email = "khachhang@gmail.com"
+    status = Status.ACTIVE
+    role = Role.CUSTOMER
+}
+
+object "c1: Customer" as customer1 {
+    id = 10
+    fullName = "Nguyễn Văn A"
+    phone = "0901234567"
+}
+
+object "addr1: Address" as address1 {
+    id = 1
+    streetAddress = "123 Lê Lợi"
+    city = "Hồ Chí Minh"
+    isDefault = true
+}
+
+customer1 -- user1
+customer1 -- address1
+@enduml

@@ -32,5 +32,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // Kiểm tra danh mục có sản phẩm không (trước khi xóa)
     @Query("SELECT COUNT(p) > 0 FROM Product p WHERE p.category.id = :categoryId")
     boolean hasProducts(Long categoryId);
+    // Thêm dòng này để kiểm tra trùng tên (không phân biệt hoa/thường)
+    boolean existsByNameIgnoreCase(String name);
 }
 

@@ -1,0 +1,72 @@
+@startuml
+title Sequence Diagram: Dashboard và Báo cáo (Lọc Hôm nay / Tháng này / Năm nay)
+
+actor "Admin" as admin
+participant "Trình duyệt (UI)" as ui
+participant "AdminDashboardController" as ctrl
+participant "DashboardService" as svc
+participant "OrderRepository" as orderRepo
+participant "CustomerRepository" as cusRepo
+database "Cơ sở dữ liệu\n(MySQL/PostgreSQL)" as db
+
+admin -> ui: Chọn bộ lọc thời gian (vd: "Tháng này")
+ui -> ctrl: GET /api/admin/dashboard?filter=THIS_MONTH
+activate ctrl
+
+ctrl -> svc: getDashboardMetrics(TimeFilter.THIS_MONTH)
+activate svc
+
+svc -> svc: Tính toán startDate, endDate\ntừ giá trị THIS_MONTH
+
+== Truy vấn Tổng doanh thu ==
+svc -> orderRepo: sumTotalRevenueByDate(startDate, endDate)
+activate orderRepo
+orderRepo -> db: Thực thi câu lệnh SELECT SUM(total_amount)...
+activate db
+db --> orderRepo: Trả về kết quả (Dữ liệu số)
+deactivate db
+orderRepo --> svc: BigDecimal (Tổng doanh thu)
+deactivate orderRepo
+
+== Truy vấn Tổng đơn hàng ==
+svc -> orderRepo: countOrdersByDate(startDate, endDate)
+activate orderRepo
+orderRepo -> db: Thực thi câu lệnh SELECT COUNT(*)...
+activate db
+db --> orderRepo: Trả về kết quả (Dữ liệu số)
+deactivate db
+orderRepo --> svc: Long (Tổng đơn hàng)
+deactivate orderRepo
+
+== Truy vấn Số khách hàng mới ==
+svc -> cusRepo: countNewCustomersByDate(startDate, endDate)
+activate cusRepo
+cusRepo -> db: Thực thi câu lệnh SELECT COUNT(*)...
+activate db
+db --> cusRepo: Trả về kết quả (Dữ liệu số)
+deactivate db
+cusRepo --> svc: Long (Khách hàng mới)
+deactivate cusRepo
+
+== Truy vấn 5 Đơn hàng mới nhất ==
+svc -> orderRepo: findTop5ByOrderByCreatedAtDesc()
+activate orderRepo
+orderRepo -> db: Thực thi câu lệnh SELECT * FROM orders LIMIT 5...
+activate db
+db --> orderRepo: Trả về tập kết quả (ResultSet)
+deactivate db
+orderRepo --> svc: List<Order>
+deactivate orderRepo
+
+== Tổng hợp và Trả kết quả ==
+svc -> svc: Tập hợp DTO DashboardResponse
+svc --> ctrl: DashboardResponse
+deactivate svc
+
+ctrl --> ui: Trả về JSON DashboardResponse
+deactivate ctrl
+
+ui -> ui: Vẽ lại biểu đồ và danh sách
+ui --> admin: Cập nhật hiển thị KPI & Báo cáo chi tiết
+
+@enduml
